@@ -4,7 +4,7 @@
  * Handle INPUT instruction.
  * More testing.
  * Clean up the code and add good comments.
- * Handle verbose option.
+ * Handle verbose option. (khodra fo9 t3am)
 */
 
 
@@ -303,6 +303,3 @@ int main () {
     display_vm_state();
 	return 0;
 }
-
-
-
