@@ -120,12 +120,13 @@ double perform_arithmetic(int operation, int indicator, int opd1, int opd2) {
         case 7: a = -opd1; b = data_memory[opd2]; break;
         case 8: a = data_memory[opd1]; b = opd2; break;
         case 9: a = data_memory[opd1]; b = -opd2; break;
+        default: printf("Problem with indicator for arithmetic operation.\n"); return;
     }
     // now determine what to do based on operation (2, 3, 4, 5)
     switch (operation) {
         case 2: return (a+b)*1.0;
         case 3: return (a-b)*1.0;
-;        case 4: return a*b*1.0;
+        case 4: return a*b*1.0;
         case 5: if (b == 0) return 1.5;
             // return some invalid value or a default value
             // but what would that be?
@@ -145,7 +146,7 @@ void perform_loop(int indicator, int opd1, int jump_loc) {
         decode_execute(instruction_memory[jump_loc]);
     }
 }
-// some warnings here...
+
 void decode_execute(char* instruction) {
     char sign;
     instruction_struct instr_struct;
@@ -164,8 +165,9 @@ void decode_execute(char* instruction) {
             // MOV
             // from address to address OR from literal value to address
             // so indicator is either 2 or (6 or 7)
-            if (indicator == 2) data_memory[opd1] = data_memory[opd2];
-            else if (indicator == 6 || indicator == 7) data_memory[opd1] = opd2;
+            if (indicator == 1) data_memory[opd1] = data_memory[opd2];
+            else if (indicator == 8) data_memory[opd1] = opd2;
+            else if (indicator == 9) data_memory[opd1] = -opd2;
             break;
         case 1:
             // MOV AC
@@ -194,25 +196,29 @@ void decode_execute(char* instruction) {
             // opd1 is always an address, and opd2 can be either an address or a value
             // so indicator can be 1, or (8 or 9)
             if (indicator == 1) {
-                if (data_memory[opd2] == AC) IP = opd1;
+                if (data_memory[opd2] == AC)
+                    IP = opd1;
             }
             else if (indicator == 8 || indicator == 9) {
-                if (opd2 == AC) IP = opd1;
+                if (opd2 == AC)
+                    IP = opd1;
             }
-            else printf("Invalid indicator value for this operation.\n");
+            else printf("Invalid indicator value for operation EQ.\n");
             break;
         case 7: // Vacant opcode for now.
             break;
         case 8:
             // GTE
             // can find a way to abstract this into a function along with EQ, if we want
-            if (indicator == 1) {
-                if (data_memory[opd2] >= AC) IP = opd1;
+            if (indicator == 2) {
+                if (data_memory[opd2] >= AC)
+                    IP = opd1;
             }
             else if (indicator == 8 || indicator == 9) {
-                if (opd2 >= AC) IP = opd1;
+                if (opd2 >= AC)
+                    IP = opd1;
             }
-            else printf("Invalid indicator value for this operation.\n");
+            else printf("Invalid indicator value for operation GTE.\n");
             break;
         case 9:
             // Vacant opcode for now.
@@ -230,7 +236,7 @@ void decode_execute(char* instruction) {
             // opd1 is array start loc, idx is in AC
             if (indicator == 1) data_memory[opd1 + AC] = data_memory[opd2];
             else if (indicator == 8 || indicator == 9) data_memory[opd1 + AC] = opd2;
-            else printf("Invalid indicator value for this operation.\n");
+            else printf("Invalid indicator value for operation WARR.\n");
             break;
         case 12:
             // while AC is less than opd1, execute instruction at opd2
@@ -240,6 +246,7 @@ void decode_execute(char* instruction) {
         case 13:
             // label instruction is useful when code is originally written in ML
             // but we're translating from AL to ML, labels would be removed in that process, at the level of the assembler
+            // not implementing this at the moment, quite complicated, not even sure if we're required to
             break;
         case 14:
             // Input
@@ -252,17 +259,17 @@ void decode_execute(char* instruction) {
             // what exactly can indicator be here? is this fine?
             if (indicator == 1 || indicator == 6 || indicator == 7) printf(">>> %d\n", data_memory[opd2]);
             else if (indicator == 5 || indicator == 8) printf(">>> %d\n", opd2);
-            else printf(">>> -%d\n", opd2); // negative
+            else if (indicator == 4 || indicator == 9) printf(">>> %d\n", -opd2); // negative
+            else printf("Indicator in operation OUTPUT %d was not allowed.\n", indicator);
             break;
         case 16:
-            // halt
+            // HALT, just stop
             return;
-        case 17: break; // unused opcodes at the moment
+        case 17: break; // free opcodes at the moment
         case 18: break;
         case 19: break;
-        default: printf("Issue with lookup.\n"); // Shouldn't happen.
+        default: printf("Issue with lookup.\n"); // Shouldn't happen though.
     }
-
 }
 
 void read_decode_execute() {
