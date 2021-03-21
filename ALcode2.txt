@@ -5,7 +5,7 @@ DEC       N         0
 DEC       ARR       0
 DEC       TEMP      0
 DEC       TEMPID    0
-CODE.START
+CODE.SECTION
 IN      N
 ADD       0000      BASE
 LBL       L1
@@ -29,7 +29,7 @@ ADD       0000      TEMPID
 MOVE      MAX       TEMP
 OUT       MAX
 HLT
-CODE.END
+INPUT.SECTION
 0 0 0000 0005
 0 0 0000 0029
 0 0 0000 0785

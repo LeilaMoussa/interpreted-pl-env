@@ -492,18 +492,20 @@ void initProgram() {
 void initData () {
     char line[STRSIZE];
     char help[STRSIZE];//helper string used in many instances for formatting
-    char instruction[STRSIZE]; //used to format the ML instruction before writing
+    char ML_line[STRSIZE]; //used to format the ML line before writing
                                 //it in the file
+                            // calling it a line as opposed to an instruction
     //first string stores the opcode, second stores the two operands
-    char opcode [STRSIZE], op[2][STRSIZE];
+    char opcode[STRSIZE], op[2][STRSIZE];
     //the line code will allow us to address data memory
     int lineNumber = 0;
+    int literal_value;
     //read first line of code
     fscanf (ALFile, "%s", line);
     if (strcmp(line, "DATA.SECTION") == 0) {
         //scan first line of actual declarations
         fscanf (ALFile, "%s", line);
-        while (strcmp (line, "PROGRAM.SECTION") != 0) {
+        while (strcmp (line, "CODE.SECTION") != 0) {
             //we still didn't reach the end of the initialization section
             //extract opcode and operands of DEC instructions
             sscanf(line, "%s %s %s", opcode, op[0], op[1]); // DEC VAR_NAME VALUE, line number is address
@@ -517,11 +519,15 @@ void initData () {
             sprintf(help, "%04d", lineNumber);
             //use line number as address
             //insert op[0] in symbol table using lineNumber as address
-            insert (symbols, op[0], help); // variable name: address
-            //convert op[1] to string with leading zeros
-            sprintf (help, "%04d",op[1]);
-            sprintf (instruction, "+0 0 0000 %s",help); //$ WHAT?? should be just the number, no?
-            // not really an instruction, just a number
+            insert(symbols, op[0], help); // hashtable entry: (variable name: address)
+
+            // the value, op[1] is an integer, could be positive or negative
+            // need to pad it with zeros and simply print it in the ML file
+            //format op[1] as a string with leading zeros
+            literal_value = atoi(op[1]);
+            sprintf (instruction, "%011d", literal_value); //11 characters overall with leading zeros if needed
+
+
             //write instructions to ML file
             fprintf (MLFile, "%s\n", instruction);
             lineNumber++;

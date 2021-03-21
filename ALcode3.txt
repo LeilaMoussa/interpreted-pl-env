@@ -2,7 +2,7 @@ DATA.SECTION
 DEC       BASE      0
 DEC       N         0
 DEC       TEMP      0
-CODE.START
+CODE.SECTION
 IN        N
 ADD       0010      BASE
 JMPGE     L1        N
@@ -30,6 +30,6 @@ OUT       TEMP
 ADD       0001      TEMP
 LOOP      N         L6
 HLT
-CODE.END
+INPUT.SECTION
 0 0 0000 0018
 
