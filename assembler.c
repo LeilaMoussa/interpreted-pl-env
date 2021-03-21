@@ -154,7 +154,7 @@ void initProgram() {
     fscanf(ALFile, "%s", line);
     while (strcmp (line, "INPUT.SECTION") != 0) {
         //extract opcode and operands
-        sscanf (line, "%s %s %s", opcode, op[0], op[1]);
+        sscanf (line, "%s %s %s", opcode, op[0], op[1]); // supports empty operand
         //lookup opcode in hashtable
         temp = getOpcode(opcode); // index in the opcodes hashtable
         //if opcode was found, a valid index is returned
@@ -527,8 +527,7 @@ void initData () {
             literal_value = atoi(op[1]);
             sprintf (instruction, "%011d", literal_value); //11 characters overall with leading zeros if needed
 
-
-            //write instructions to ML file
+            //finally write to ML file
             fprintf (MLFile, "%s\n", instruction);
             lineNumber++;
             //scan next line

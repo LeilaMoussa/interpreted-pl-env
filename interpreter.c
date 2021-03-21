@@ -23,6 +23,8 @@ int operation_lookup[2][10] = {
 int data_memory[memory_size] = {0};
 char instruction_memory[memory_size][word_size+1];
 
+FILE* ml_program;
+
 int AC = 0;
 int IP = 0;
 
@@ -42,11 +44,15 @@ void initialize_memory() {
     // Initialize all data memory locations to the default value 0.
     // Initialize all instruction memory locations to the default instruction HALT.
     for(int i=0; i < memory_size; i++) {
-        strcpy(instruction_memory[i], "+8000000000");
+        strcpy(instruction_memory[i], "+8 0 0000 0000");
     }
 }
 
-void populate_memory(FILE* program) {
+void strip_spaces(char* integer) {
+
+}
+
+void populate_memory() {
     // Read the data initialization section of the ML program
     // to populate some of the data memory.
     // Stop when a separator is found.
@@ -55,17 +61,18 @@ void populate_memory(FILE* program) {
     int code_idx = 0;
     int sep_count = 0;
     long int value;
-    if(program == NULL) {
+    if(ml_program == NULL) {
         printf("problem opening file.");
         return;
     }
-    fscanf(program, "%s", ml_line);
-    while(!feof(program)) {
-        if (strcmp(ml_line, "+9999999999") == 0) {
+    fscanf(ml_program, "%s", ml_line);
+    while(!feof(ml_program)) {
+        if (strcmp(ml_line, "+9 9 9999 9999") == 0) {
             sep_count ++;
         }
         // Parse the line as an integer.
         else if (sep_count == 0) {
+            // remove spaces
             value = atoi(ml_line);
             data_memory[data_idx++] = value;
         }
@@ -73,12 +80,15 @@ void populate_memory(FILE* program) {
             strcpy(instruction_memory[code_idx++], ml_line);
         }
         else if (sep_count == 2) {
-            // input data portion, do this later
-        }
+            return; // Input data will be ready as necessary
+            // There's no way we could reliably save the input data in an array anyway
+            // because we don't know how many input instructions a program could have (theoretically infinitely many)
+            // also not wise because of time & space cost
+            // see input instruction implementation below
         else{
-            printf("too many separators\n");
+            printf("too many separators\n"); // can't happen anyway with this implementation
         }
-        fscanf(program, "%s", ml_line);
+        fscanf(ml_program, "%s", ml_line);
     }
 }
 
@@ -86,8 +96,10 @@ instruction_struct destructure_instruction(char* instruct) {
     char sign_ch;
     char ind_str[2], opcode_str[2], opd1_str[5], opd2_str[5];
     int s, o, i, opd1, opd2;
-
     instruction_struct instr_struct;
+
+    // ALL THIS IS TO BE REDONE
+    // use sscanf, because now we have spaces
     // read the stuff into these and parse the ints and return the struct
     sign_ch = instruct[0];
     if (sign_ch == '+') s = 0;
@@ -107,7 +119,7 @@ instruction_struct destructure_instruction(char* instruct) {
     return instr_struct;
 }
 
-double perform_arithmetic(int operation, int indicator, int opd1, int opd2) {
+float perform_arithmetic(int operation, int indicator, int opd1, int opd2) {
     int a, b; // The 2 final values to be operated on each other.
     // First, get a and b based on indicator
     switch (indicator) {
@@ -130,10 +142,19 @@ double perform_arithmetic(int operation, int indicator, int opd1, int opd2) {
         case 5: if (b == 0) return 1.5;
             // return some invalid value or a default value
             // but what would that be?
-            // could try a double
+            // could try a float
             // 1.5 is very random, anything else would work
                 else return a*1.0/b;
     }
+}
+
+float get_next_input_val() {
+    char input_line[word_size+2];
+    if(feof(ml_program)) return 1.5;
+    fscanf(ml_program, "%s", input_line);
+    // need to remove the spaces
+    // then atoi
+    // and return that number
 }
 
 void perform_loop(int indicator, int opd1, int jump_loc) {
@@ -150,7 +171,7 @@ void perform_loop(int indicator, int opd1, int jump_loc) {
 void decode_execute(char* instruction) {
     char sign;
     instruction_struct instr_struct;
-    int lookup, indicator, operation, opd1, opd2, zero_div_flag = 0, result;
+    int lookup, indicator, operation, opd1, opd2, zero_div_flag = 0, result, input;
 
     instr_struct = destructure_instruction(instruction);
     sign = instr_struct.sign;
@@ -199,7 +220,7 @@ void decode_execute(char* instruction) {
                 if (data_memory[opd2] == AC)
                     IP = opd1;
             }
-            else if (indicator == 8 || indicator == 9) {
+            else if (indicator == 8 || indicator == 9) { // don't care about sign of operand 2
                 if (opd2 == AC)
                     IP = opd1;
             }
@@ -250,16 +271,20 @@ void decode_execute(char* instruction) {
             break;
         case 14:
             // Input
-            // from the third section of the ML program, read a value into the data_memory[opd1]
-            // do i need to store the input data somewhere, like an array?
+            // opd1 is destination address, opd2 is unused
+            // the cursor is still in the input section of the ML file
+            // read the next input value
+            input = get_next_input_val();
+            if ((int)input - input == 0) data_memory[opd1] = (int)input;
+            else printf("Encountered EOF while trying to read input.\n");
             break;
         case 15:
             // output
             // opd1 is unused, opd2 is the value or the address
-            // what exactly can indicator be here? is this fine?
-            if (indicator == 1 || indicator == 6 || indicator == 7) printf(">>> %d\n", data_memory[opd2]);
-            else if (indicator == 5 || indicator == 8) printf(">>> %d\n", opd2);
-            else if (indicator == 4 || indicator == 9) printf(">>> %d\n", -opd2); // negative
+            // decided to just go with 1, 2, 3 as possible indicators, though anything else would technically work
+            if (indicator == 1) printf(">>> %d\n", data_memory[opd2]);
+            else if (indicator == 2) printf(">>> %d\n", opd2);
+            else if (indicator == 3) printf(">>> %d\n", -opd2); // negative
             else printf("Indicator in operation OUTPUT %d was not allowed.\n", indicator);
             break;
         case 16:
@@ -292,14 +317,11 @@ void display_vm_state() {
 }
 
 int main () {
-    FILE* ml_program_file;
-    int separator_position;
     initialize_memory();
-    ml_program_file = fopen("ml_program.txt", "r");
-    populate_memory(ml_program_file); // load data & program into memory
-    fclose(ml_program_file);
-
+    ml_program = fopen("ml_program.txt", "r");
+    populate_memory(); // load data & program into memory
     read_decode_execute();
+    fclose(ml_program); // Don't close before, because input data is read during execution.
     display_vm_state();
 	return 0;
 }
