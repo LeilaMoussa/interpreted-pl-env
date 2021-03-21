@@ -1,3 +1,4 @@
+
 DATA.SECTION
 DEC       BASE      0
 DEC       MAX       0
@@ -7,6 +8,8 @@ DEC       TEMP      0
 DEC       TEMPID    0
 CODE.START
 IN      N
+SUB       0001      N
+MOVAC     N
 ADD       0000      BASE
 LBL       L1
 IN      TEMP
@@ -27,6 +30,7 @@ LBL       L3
 MOVAC     MAX
 ADD       0000      TEMPID
 MOVE      MAX       TEMP
+LOOP      N         L2
 OUT       MAX
 HLT
 CODE.END
@@ -36,4 +40,6 @@ CODE.END
 0 0 0000 0009
 0 0 0000 0002
 0 0 0000 0013
+
+
 
