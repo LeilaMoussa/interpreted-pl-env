@@ -40,8 +40,7 @@ void removeBrackets(char*);//removes brackets from address
 void removeSign(char*);//removes sign from literal value
 void fillOpcodes();
 
-int main (void)
-{
+int main (void) {
     ALFile = fopen ("ALcode.txt", "r");
     MLFile = fopen ("MLCode.txt", "w");
     initHashTables();
@@ -49,13 +48,11 @@ int main (void)
 //    for (int i = 0; i < HTSIZE; i++) {
 //        printf("%s: %s, ", opcodes[i].key, opcodes[i].value);
 //    }
-    return 0;
     initData();
     initProgram();
     initInput();
 
-    if (errorCount)
-    {
+    if (errorCount) {
         printf ("Unsuccessful Assembly. %d errors detected.", errorCount);
         return 0;
     }
@@ -65,46 +62,36 @@ int main (void)
     return 0;
 }
 
-void removeBrackets (char* str)
-{
+void removeBrackets (char* str) {
     int k = 0;
     int i;
-    char* help; // $
+    char help[STRSIZE];
     //remove the brackets
-    for (i = 1; i < strlen(str)-1; i++)
-    {
+    for (i = 1; i < strlen(str)-1; i++) {
         help[k++] = str[i];
     }
-        help[5] = '\0';
-        strcpy(str, help);
-
-}
-
-void removeSign (char* str)
-{
-    int k = 0;
-    int i;
-    char* help; //$
-    for (i = 1; i<=strlen(str); i++)
-        {
-            help[k++] = str[i];
-        }
+    help[5] = '\0';
     strcpy(str, help);
 }
 
-int isAddress(char* str)
-{
-//check if the given string is an address [x1x2x3x4]
-//return 1 if so, return 0 otherwise
+void removeSign (char* str) {
+    int k = 0;
     int i;
-    if (strlen(str) == 6)
-    {
-        if (str[0] == '[' && str[5] == ']')
-        {
-           for (i = 1; i<5; i++)
-           {
-               if (!isdigit(str[i]))
-               {
+    char help[STRSIZE];
+    for (i = 1; i <= strlen(str); i++) { // including \0
+        help[k++] = str[i];
+    }
+    strcpy(str, help);
+}
+
+int isAddress(char* str) {
+    //check if the given string is an address, i.e. of the form [x1x2x3x4]
+    //return 1 if so, return 0 otherwise
+    int i;
+    if (strlen(str) == 6) {
+        if (str[0] == '[' && str[5] == ']') {
+           for (i = 1; i<5; i++) {
+               if (!isdigit(str[i])) {
                    return 0;
                }
            }
@@ -112,34 +99,25 @@ int isAddress(char* str)
         }
     }
     return 0;
-
 }
-int isLiteral (char* str)
-{
-//check if the given string is a literal value, then check its sign
-//return 1 if positive literal
-//return 2 if negative literal
-//return 0 otherwise
+
+int isLiteral (char* str) {
+    //check if the given string is a literal value, then check its sign
+    //return 1 if positive literal
+    //return 2 if negative literal
+    //return 0 otherwise
     int i;
-    if (strlen(str)== 5)
-    {
-        if (str[0] == '+')
-        {
-           for (i = 1; i<5; i++)
-           {
-               if (!isdigit(str[i]))
-               {
+    if (strlen(str)== 5) {
+        if (str[0] == '+') {
+           for (i = 1; i<5; i++) {
+               if (!isdigit(str[i])) {
                    return 0;
                }
            }
            return 1;
-        }
-        else if (str[0] == '-')
-        {
-           for (i = 1; i<5; i++)
-           {
-               if (!isdigit(str[i]))
-               {
+        } else if (str[0] == '-') {
+           for (i = 1; i<5; i++) {
+               if (!isdigit(str[i])) {
                    return 0;
                }
            }
@@ -148,22 +126,19 @@ int isLiteral (char* str)
     }
     return 0;
 }
-void initInput ()
-{
-    //opcode and operands
-
-   char opcode [STRSIZE], op[2][STRSIZE];
+void initInput () {
+    // Input data, i.e. the third section of the AL program
+   //char opcode [STRSIZE], op[2][STRSIZE]; //$
    char line[STRSIZE];
    //read until you reach the end to the file
-   while (!feof (ALFile))
-   {
+   while (!feof (ALFile)) {
        //this is just like ML code, just read and write directly
      fscanf (ALFile, "%s", line);
      fprintf (MLFile, "%s\n", line);
    }
 }
-void initProgram()
-{
+
+void initProgram() {
     //opcode and operands
     char opcode[STRSIZE], op[2][STRSIZE];
     char line[STRSIZE]; //used to read each line
@@ -175,369 +150,304 @@ void initProgram()
     int indicator;
     char instruction[STRSIZE];
     fscanf(ALFile, "%s", line);
-    while (strcmp (line, "INPUT.SECTION") != 0)
-    {
+    while (strcmp (line, "INPUT.SECTION") != 0) {
         //extract opcode and operands
         sscanf (line, "%s %s %s", opcode, op[0], op[1]);
         //lookup opcode in hashtable
         temp = getOpcode(opcode); // idx
         //if opcode was found, a valid index is returned
-        if (temp >= 0)
-        {
+        if (temp >= 0) {
             //copy that opcode
             strcpy(opcode, opcodes[temp].value);
             //handle each opcode
 
             //cases that are handled similarly are grouped together
-            if (strcmp (opcode, "+0")==0 ||strcmp (opcode, "+1")==0 || strcmp (opcode, "-1")==0 || strcmp (opcode, "+2")==0
-                    || strcmp (opcode, "-2")==0)
-                {
+            if (strcmp (opcode, "+0")==0 ||strcmp (opcode, "+1")==0 ||
+                strcmp (opcode, "-1")==0 || strcmp (opcode, "+2")==0 ||
+                strcmp (opcode, "-2")==0) {
+                    //$ rethink: is MOVE really like the arithmetic operations?
                  //check for op[0]: symbol, address, value?
-                            temp = getSymbol(op[0]);
-                            if (temp >= 0)
-                            {
-                                strcpy (op[0], symbols[temp].value);
-                                flag1 = 0;
-                            }
-                            else if (isAddress(op[0]))
-                            {
-                                removeBrackets(op[0]);
-                                flag1 = 0;
 
-                            }
-                            else if (isLiteral(op[0])== 1)
-                            {
-                                //remove the sign
-                                removeSign(op[0]);
-                                flag1 = 1;
-                            }
-                            else if (isLiteral (op[0])== 2)
-                            {
-                                //remove the sign
-                                removeSign(op[0]);
-                                flag1 = 2;
-                            }
-                            else
-                            {
-                                errFlag = 1;
-                            }
-                            //check for op[1]: symbol, address, value?
-                            temp = getSymbol(op[1]);
-                            if (temp >= 0)
-                            {
-                                strcpy (op[1], symbols[temp].value);
-                                flag2 = 0;
-                            }
-                            else if (isAddress(op[1]))
-                            {
-                                removeBrackets(op[1]);
-                                flag2 = 0;
-
-                            }
-                            else if (isLiteral(op[1])== 1)
-                            {
-                                //remove the sign
-                                removeSign(op[1]);
-                                flag2 = 1;
-                            }
-                            else if (isLiteral (op[1])== 2)
-                            {
-                                //remove the sign
-                                removeSign(op[1]);
-                                flag2 = 2;
-                            }
-                            else
-                            {
-                                errFlag = 1;
-                            }
-                            if (errFlag)
-                            {
-                                printf("Error. Invalid MOVE, MULT, ADD, SUB, or DIV statement.");
-                                errorCount++;
-                                return;
-                            }
-                            //build the indicator
-                            if (flag1 == 0)
-                            {
-                                if (flag2 == 0)
-                                {
-                                    indicator = 1;
-                                }
-                                else if (flag2 == 1)
-                                {
-                                    indicator = 8;
-                                }
-                                else if (flag2 == 2)
-                                {
-                                    indicator = 9;
-                                }
-                            }
-                            else if (flag1 == 1)
-                            {
-                               if (flag2 == 0)
-                                {
-                                    indicator = 6;
-                                }
-                                else if (flag2 == 1)
-                                {
-                                    indicator = 2;
-                                }
-                                else if (flag2 == 2)
-                                {
-                                    indicator = 4;
-                                }
-                            }
-                            else if (flag1 == 2)
-                            {
-                                if (flag2 == 0)
-                                {
-                                    indicator = 7;
-                                }
-                                else if (flag2 == 1)
-                                {
-                                    indicator = 5;
-                                }
-                                else if (flag2 == 2)
-                                {
-                                    indicator = 3;
-                                }
-                            }
+                temp = getSymbol(op[0]); // op[0] is operand1
+                if (temp >= 0) {
+                    // It's a variable name.
+                    strcpy (op[0], symbols[temp].value); // replace it by its address, also a string
+                    flag1 = 0;
+                }
+                else if (isAddress(op[0])) {
+                    // $opportunity for optimization: one pass over the address instead of 2
+                    // i.e. return address as an int if address, negative value or double otherwise
+                    removeBrackets(op[0]);
+                    flag1 = 0;
+                }
+                else if (isLiteral(op[0])== 1) {
+                    //remove the sign
+                    removeSign(op[0]);
+                    flag1 = 1;
+                }
+                else if (isLiteral (op[0])== 2) {
+                    //remove the sign
+                    removeSign(op[0]);
+                    flag1 = 2;
+                }
+                else {
+                    errFlag = 1;
                 }
 
-                else if (strcmp(opcode, "-0") == 0)
-                {
-
-                            //make sure that op[1] is unused
-                            //make sure that op[0] is an address
-                            if (strcmp(op[1], "0000")==0 && isAddress(op[0]))
-                            {
-                                //remove brackets
-                                removeBrackets(op[0]);
-                                //build indicator
-                                indicator = 0;
-                            }
-                            //error
-                            else
-                            {
-                                printf ("Error. MOVAC statement invalid.");
-                                errorCount++;
-                                //terminate function
-                                return;
-                            }
+                //check for op[1]: symbol, address, value?
+                // do the same for operand 2
+                // need to put this in a function
+                temp = getSymbol(op[1]);
+                if (temp >= 0) {
+                    strcpy (op[1], symbols[temp].value);
+                    flag2 = 0;
                 }
-                else if (strcmp(opcode, "+3") == 0 || strcmp(opcode, "+4") == 0)
-                {
-                    //make sure op[0] is address or label
-                    //check for type and sign of op[1]
+                else if (isAddress(op[1])) {
+                    removeBrackets(op[1]);
+                    flag2 = 0;
+                }
+                else if (isLiteral(op[1]) == 1) {
+                    //remove the sign
+                    removeSign(op[1]);
+                    flag2 = 1;
+                }
+                else if (isLiteral (op[1])== 2) {
+                    //remove the sign
+                    removeSign(op[1]);
+                    flag2 = 2;
+                }
+                else {
+                    errFlag = 1;
+                }
+                if (errFlag) {
+                    printf("Error. Invalid MOVE, MULT, ADD, SUB, or DIV statement.\n");
+                    errorCount++;
+                    return;
+                }
+                //build the indicator based on the flags
+                // the following can be done in a better way
+                // think 2D array?
+                if (flag1 == 0) {
+                    if (flag2 == 0) {
+                        indicator = 1;
+                    } else if (flag2 == 1) {
+                        indicator = 8;
+                    } else if (flag2 == 2) {
+                        indicator = 9;
+                    }
+                }
+                else if (flag1 == 1) {
+                   if (flag2 == 0) {
+                        indicator = 6;
+                    } else if (flag2 == 1) {
+                        indicator = 2;
+                    } else if (flag2 == 2) {
+                        indicator = 4;
+                    }
+                }
+                else if (flag1 == 2) {
+                    if (flag2 == 0) {
+                        indicator = 7;
+                    } else if (flag2 == 1) {
+                        indicator = 5;
+                    } else if (flag2 == 2) {
+                        indicator = 3;
+                    }
+                }
+            } // END OF MOVE/arithmetic operations case
+
+            else if (strcmp(opcode, "-0") == 0) { // MOVAC
+                //make sure that op[1] is unused
+                //make sure that op[0] is an address
+                if (strcmp(op[1], "0000")==0 && isAddress(op[0])) {
+                    removeBrackets(op[0]);
                     //build indicator
-                    if (temp = getLabel(op[0]))
-                    {
-                        if (temp >= 0)
-                        {
-                            //replace operand with its address
-                            strcpy (op[0], labels[temp].value);
-                            if (isAddress (op[1]))
-                        {
+                    indicator = 0;
+                }
+                else {
+                    printf ("Error. MOVAC statement invalid.");
+                    errorCount++;
+                    //terminate function
+                    return;
+                }
+            }
+                else if (strcmp(opcode, "+3") == 0 || strcmp(opcode, "+4") == 0) {
+                    // JMPE or JUMPGE
+
+                    //make sure op[0] is address or label
+                    temp = getLabel(op[0])
+                    //then check for type and sign of op[1]
+                    if (temp >= 0) {
+                        //operand1 is a label
+                        //replace operand with its address
+                        strcpy (op[0], labels[temp].value);
+
+                        // now, look at operand2
+                        if (isAddress (op[1])) {
                             removeBrackets(op[1]);
                             indicator = 1;
                         }
-                        else if (isLiteral (op[1])== 1)
-                        {
+                        else if (isLiteral (op[1])== 1) {
                             removeSign(op[1]);
                             indicator = 8;
                         }
-                        else if (isLiteral (op[1]) == 2)
-                        {
+                        else if (isLiteral (op[1]) == 2) {
                             removeSign(op[1]);
                             indicator = 9;
                         }
-                        }
-
-
                     }
-                    else if (isAddress(op[0]))
-                    {
+                    else if (isAddress(op[0])) {
+                        // operand1 is not a label, it's an address
                         removeBrackets(op[0]);
-                        if (isAddress (op[1]))
-                        {
+                        // and check operand2 the same way
+                        // repetitive: needs to be put in a function
+                        if (isAddress (op[1])) {
                             removeBrackets(op[1]);
                             indicator = 1;
                         }
-                        else if (isLiteral (op[1])== 1)
-                        {
+                        else if (isLiteral (op[1]) == 1) {
                             removeSign(op[1]);
                             indicator = 8;
                         }
-                        else if (isLiteral (op[1]) == 2)
-                        {
+                        else if (isLiteral (op[1]) == 2) {
                             removeSign(op[1]);
                             indicator = 9;
                         }
                     }
-                    else
-                    {
-                        printf ("Error. JUMPE or JUMPGE statement invalid.");
+                    else {
+                        // operand1 is neither a label nor an address ==> this is an error
+                        printf ("Error. JUMPE or JUMPGE statement invalid. Operand 1 is neither label nor address.\n");
                         errorCount++;
-                        //terminate function
                         return;
                     }
-
-                }
-                else if (strcmp (opcode, "+5") == 0)
-                {
-                   //make sure that both operands are addresses
-                   if (isAddress(op[0]) && isAddress(op[1]))
-                   {
+                } // END JUMPE OR JUMPGE CASE
+                else if (strcmp (opcode, "+5") == 0) {
+                    // RARR
+                    //make sure that both operands are addresses
+                   if (isAddress(op[0]) && isAddress(op[1])) {
                        removeBrackets(op[0]);
                        removeBrackets(op[1]);
                        indicator = 0; //not used
                    }
-                   else
-                   {
-                       printf ("Error. RARR statement invalid.");
+                   else {
+                       printf ("Error. RARR statement invalid.\n");
                        errorCount++;
-                       //terminate function
                        return;
                    }
-                }
-                else if (strcmp (opcode, "-5") == 0)
-                {
+                } // END RARR
+                else if (strcmp (opcode, "-5") == 0) {
+                    // WARR
                     //make sure op[0] is address
                     //check what op[1] is
-                    //build indicator
-                    if (isAddress(op[0]))
-                    {
+                    if (isAddress(op[0])) {
                         removeBrackets(op[0]);
-                        if (isAddress(op[1]))
-                        {
+                        // this process of checking operand 2 is the same as above
+                        if (isAddress(op[1])) {
                             removeBrackets(op[1]);
                             indicator = 1;
                         }
-                        else if (isLiteral(op[1]) == 1)
-                        {
+                        else if (isLiteral(op[1]) == 1) {
                             removeSign(op[1]);
                             indicator = 8;
                         }
-                        else if (isLiteral(op[1]) == 2)
-                        {
+                        else if (isLiteral(op[1]) == 2) {
                             removeSign(op[1]);
                             indicator = 9;
                         }
                     }
-                    else
-                    {
-                        printf ("Error. WARR statement invalid.");
-                       errorCount++;
-                       //terminate function
-                       return;
-                    }
-                }
-                else if (strcmp (opcode, "+6") == 0)
-                {
-                    //make sure op[1] is an address or label and check op[0]
-                    if (temp = getLabel(op[1]))
-                    {
-                        if (temp >= 0)
-                        {
-                            strcpy (op[1], labels[temp].value);
-                            if (isAddress(op[0]))
-                        {
-                            removeBrackets(op[0]);
-                            indicator = 1;
-                        }
-                        else if (isLiteral(op[0]) == 1)
-                        {
-                            removeSign(op[0]);
-                            indicator = 6;
-                        }
-                        else if (isLiteral(op[1]) == 2)
-                        {
-                            removeSign(op[0]);
-                            indicator = 7;
-                        }
-                        }
-                    }
-                    else if (isAddress(op[1]))
-                    {
-                        removeBrackets(op[1]);
-                        if (isAddress(op[0]))
-                        {
-                            removeBrackets(op[0]);
-                            indicator = 1;
-                        }
-                        else if (isLiteral(op[0]) == 1)
-                        {
-                            removeSign(op[0]);
-                            indicator = 6;
-                        }
-                        else if (isLiteral(op[1]) == 2)
-                        {
-                            removeSign(op[0]);
-                            indicator = 7;
-                        }
-                    }
-                    else
-                    {
-                        printf ("Error. LOOP statement invalid.");
+                    else {
+                        printf ("Error. WARR statement invalid. Operand 1 is not an address.\n");
                         errorCount++;
                         return;
                     }
+                } // END WARR
+                else if (strcmp (opcode, "+6") == 0) {
+                    // LOOP
+                    //make sure op[1] is an address or label and check op[0]
+                    temp = getLabel(op[1])
+                    if (temp >= 0) {
+                        strcpy (op[1], labels[temp].value);
 
-                }
-                else if (strcmp (opcode, "-6") == 0)
-                {
+                        if (isAddress(op[0])) {
+                            removeBrackets(op[0]);
+                            indicator = 1;
+                        }
+                        else if (isLiteral(op[0]) == 1) {
+                            removeSign(op[0]);
+                            indicator = 6;
+                        }
+                        else if (isLiteral(op[1]) == 2) {
+                            removeSign(op[0]);
+                            indicator = 7;
+                        }
+                    }
+                    else if (isAddress(op[1])) {
+                        removeBrackets(op[1]);
+                        // again, refactoring needed
+                        if (isAddress(op[0])) {
+                            removeBrackets(op[0]);
+                            indicator = 1;
+                        }
+                        else if (isLiteral(op[0]) == 1) {
+                            removeSign(op[0]);
+                            indicator = 6;
+                        }
+                        else if (isLiteral(op[1]) == 2) {
+                            removeSign(op[0]);
+                            indicator = 7;
+                        }
+                    }
+                    else {
+                        printf ("Error. LOOP statement invalid.\n");
+                        errorCount++;
+                        return;
+                    }
+                } // END LOOP
+                else if (strcmp (opcode, "-6") == 0) {
+                    // LABEL
                     //make sure op[0] is unused
                     //store op[1] in label table
-                    if (strcmp (op[0], "0000") == 0)
-                    {
+                    if (strcmp (op[0], "0000") == 0) {
                        sprintf (help, "%04d", lineNumber+1);
-                       insert (labels, op[1],help );
-                       //strcpy(op[0], help);
+                       insert (labels, op[1], help); // insert the item (operand2, address of the label) in the label table
                        indicator = 0; //unused
                     }
-                    else
-                    {
-                        printf ("Error. LABEL statement invalid.");
+                    else {
+                        printf ("Error. LABEL statement invalid. See operand 1.\n");
                         errorCount++;
                         return;
                     }
-                }
-                else if (strcmp (opcode, "+7") == 0)
-                {
+                } // END LABEL
+                else if (strcmp (opcode, "+7") == 0) {
+                    // INPUT
+
                     //make sure op[1] is unused and op[0] is address
-                    if (strcmp (op[1], "0000") == 0 && isAddress(op[0]))
-                    {
+                    if (strcmp (op[1], "0000") == 0 && isAddress(op[0])) {
                         removeBrackets(op[0]);
                         indicator = 0;
                     }
-                    else
-                    {
-                        printf ("Error. IN statement invalid.");
+                    else {
+                        printf ("Error. IN statement invalid.\n");
                         errorCount++;
                         return;
                     }
-                }
-                else if (strcmp (opcode, "-7") == 0)
-                {
+                } // END INPUT
+                else if (strcmp (opcode, "-7") == 0) {
+                    // OUTPUT
                     //make sure op[0] is unused
                     //check op[1]
-                    if (strcmp (op[0], "0000") == 0)
-                    {
-                        if (isAddress(op[1]))
-                        {
+                    if (strcmp (op[0], "0000") == 0) {
+                        if (isAddress(op[1])) {
                             removeBrackets(op[1]);
                             //ASSIGN INDICATOR TO WHAT
                         }
-                        else if (isLiteral(op[1]) == 1)
-                        {
+                        else if (isLiteral(op[1]) == 1) {
                             removeSign(op[1]);
                             //ASSIGN INDICATOR TO WHAT
                         }
-                        else if (isLiteral(op[1]) == 2)
-                        {
+                        else if (isLiteral(op[1]) == 2) {
                             removeSign(op[1]);
                             //ASSIGN INDICATOR TO WHAT
-
                         }
                     }
                     else
@@ -592,7 +502,7 @@ void initData ()
     int lineNumber = 0;
     //read first line of code
     fscanf (ALFile, "%s", line);
-    if (strcmp(line, "DATA.SECTION") == 0 )
+    if (strcmp(line, "DATA.SECTION") == 0)
     {
         //scan first line of actual declarations
         fscanf (ALFile, "%s", line);
@@ -647,23 +557,6 @@ int getSymbol (char* str)
 {
 
 }
-
-//int hash (char* str)
-//{
-//	// String hashing using the Polynomial Rolling Hash Function
-//	// This is not a good function.
-//	int p = 23;
-//    int m = 1e9 + 9;
-//    long long power = 1;
-//    long long val = 0;
-//
-//    for(int i = 0; i < strlen(str); i++) {
-//        val = (val + (str[i] - 'a' + 1) * power) % m;
-//        power = (power * p) % m;
-//    }
-//    return -(val % HTSIZE);
-//
-//}
 
 int hash(char *str) {
     // Djb2 hash function
