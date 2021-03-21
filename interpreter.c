@@ -49,7 +49,12 @@ void initialize_memory() {
 }
 
 void strip_spaces(char* integer) {
-
+    char output[word_size+2];
+    int j = 0;
+    for(int i=0; i <= strlen(integer); i++) {
+        if (integer[i] != ' ') output[j++] = integer[i];
+    }
+    strcpy(integer, output);
 }
 
 void populate_memory() {
@@ -72,7 +77,7 @@ void populate_memory() {
         }
         // Parse the line as an integer.
         else if (sep_count == 0) {
-            // remove spaces
+            strip_spaces(ml_line);
             value = atoi(ml_line);
             data_memory[data_idx++] = value;
         }
@@ -93,29 +98,19 @@ void populate_memory() {
 }
 
 instruction_struct destructure_instruction(char* instruct) {
-    char sign_ch;
-    char ind_str[2], opcode_str[2], opd1_str[5], opd2_str[5];
-    int s, o, i, opd1, opd2;
+    int ind, opd1, opd2;
+    char sign_opc[4]; // extra byte for safety
     instruction_struct instr_struct;
 
-    // ALL THIS IS TO BE REDONE
-    // use sscanf, because now we have spaces
-    // read the stuff into these and parse the ints and return the struct
-    sign_ch = instruct[0];
-    if (sign_ch == '+') s = 0;
-    else s = 1;
-    opcode_str[0] = instruct[1]; opcode_str[1] = '\0'; o = atoi(opcode_str);
-    ind_str[0] = instruct[2]; ind_str[1] = '\0'; i = atoi(ind_str);
-    for(int i = 3; i <= 6; i++) {
-        opd1_str[i-3] = instruct[i];
-        opd2_str[i-3] = instruct[i+4];
-    }
-    opd1_str[4] = '\0'; opd2_str[4] = '\0';
-    opd1 = atoi(opd1_str); opd2 = atoi(opd2_str);
-    //printf("instruct %d %d %d %d %d\n", s, o, i, opd1, opd2);
+    // instruct is in the form +D D DDDD DDDD
+    sscanf(instruct, "%s %d %d %d", sign_opc, &ind, &opd1, &opd2);
+    if(sign_opc[0] == '+') instr_struct.sign = 0; // positive
+    else instr_struct.sign = 1; // negative
 
-    instr_struct.sign = s; instr_struct.operation = o; instr_struct.indicator = i;
-    instr_struct.operand1 = opd1; instr_struct.operand2 = opd2;
+    instr_struct.opcode = abs(atoi(sign_opc));
+    instr_struct.indicator = ind;
+    instr_struct.operand1 = opd1;
+    instr_struct.operand2 = opd2;
     return instr_struct;
 }
 
@@ -152,9 +147,8 @@ float get_next_input_val() {
     char input_line[word_size+2];
     if(feof(ml_program)) return 1.5;
     fscanf(ml_program, "%s", input_line);
-    // need to remove the spaces
-    // then atoi
-    // and return that number
+    strip_spaces(input_line);
+    return atoi(input_line)*1.0;
 }
 
 void perform_loop(int indicator, int opd1, int jump_loc) {
