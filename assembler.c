@@ -5,6 +5,8 @@
 #include <ctype.h>
 
 #define HTSIZE 200 //Hashtable size
+//$ rethink whether we need all this space
+// and whether we can afford to decrease it (hashing & collisions in mind) $
 #define STRSIZE 20 //Default size used in many instances
 
 //Struct for HashTables
@@ -154,7 +156,7 @@ void initProgram() {
         //extract opcode and operands
         sscanf (line, "%s %s %s", opcode, op[0], op[1]);
         //lookup opcode in hashtable
-        temp = getOpcode(opcode); // idx
+        temp = getOpcode(opcode); // index in the opcodes hashtable
         //if opcode was found, a valid index is returned
         if (temp >= 0) {
             //copy that opcode
@@ -255,7 +257,6 @@ void initProgram() {
                     }
                 }
             } // END OF MOVE/arithmetic operations case
-
             else if (strcmp(opcode, "-0") == 0) { // MOVAC
                 //make sure that op[1] is unused
                 //make sure that op[0] is an address
@@ -275,7 +276,7 @@ void initProgram() {
                     // JMPE or JUMPGE
 
                     //make sure op[0] is address or label
-                    temp = getLabel(op[0])
+                    temp = getLabel(op[0]);
                     //then check for type and sign of op[1]
                     if (temp >= 0) {
                         //operand1 is a label
@@ -291,7 +292,7 @@ void initProgram() {
                             removeSign(op[1]);
                             indicator = 8;
                         }
-                        else if (isLiteral (op[1]) == 2) {
+                        else if (isLiteral (op[1]) == 2) { //$ you're executing this many times!! no no
                             removeSign(op[1]);
                             indicator = 9;
                         }
@@ -362,9 +363,9 @@ void initProgram() {
                     }
                 } // END WARR
                 else if (strcmp (opcode, "+6") == 0) {
-                    // LOOP
+                    // LOOP upper_bound jump_location
                     //make sure op[1] is an address or label and check op[0]
-                    temp = getLabel(op[1])
+                    temp = getLabel(op[1]);
                     if (temp >= 0) {
                         strcpy (op[1], labels[temp].value);
 
@@ -420,7 +421,6 @@ void initProgram() {
                 } // END LABEL
                 else if (strcmp (opcode, "+7") == 0) {
                     // INPUT
-
                     //make sure op[1] is unused and op[0] is address
                     if (strcmp (op[1], "0000") == 0 && isAddress(op[0])) {
                         removeBrackets(op[0]);
@@ -438,60 +438,58 @@ void initProgram() {
                     //check op[1]
                     if (strcmp (op[0], "0000") == 0) {
                         if (isAddress(op[1])) {
+                            // output the contents of an address
                             removeBrackets(op[1]);
-                            //ASSIGN INDICATOR TO WHAT
+                            indicator = 1;
                         }
                         else if (isLiteral(op[1]) == 1) {
+                            // output a positive literal
                             removeSign(op[1]);
-                            //ASSIGN INDICATOR TO WHAT
+                            indicator = 2;
                         }
                         else if (isLiteral(op[1]) == 2) {
+                            // output a negative literal
                             removeSign(op[1]);
-                            //ASSIGN INDICATOR TO WHAT
+                            indicator = 3;
                         }
                     }
-                    else
-                    {
-                        printf ("Error. OUT statement invalid.");
+                    else {
+                        printf ("Error. OUT statement invalid. See operand 1.\n");
                         errorCount++;
                         return;
                     }
-                }
-                else if (strcmp (opcode, "+8") == 0)
-                {
+                } // END OUTPUT
+                else if (strcmp (opcode, "+8") == 0) {
+                    // HALT
                     //check that both operands are unused
-                    if (strcmp(op[0], "0000") == 0 && strcmp (op[1], "0000") == 0)
-                    {
+                    if (strcmp(op[0], "0000") == 0 && strcmp (op[1], "0000") == 0) {
                         indicator = 0;
                     }
-                    else
-                    {
+                    else {
                         printf ("Error. HLT statement invalid.");
                         errorCount++;
                         return;
                     }
                 }
-                //format the instruction
+                //now format the instruction we obtained
                 sprintf (instruction, "%s %d %s %s", opcode, indicator, op[0], op[1]);
                 //write instruction to output file
                 fprintf (MLFile, "%s\n", instruction);
                 lineNumber++;
                 //scan new line of AL code
-                fscanf (ALFile, "%s", line);
+                fscanf (ALFile, "%s", line); // next AL line
             }
-            else
-            {
-                //error
-                printf ("Error. Invalid Opcode in line %d.\n", lineNumber);
-                errorCount++;
-                //terminate
-                return;
-            }
-
+        else {
+            //the opcode we just read is not valid
+            printf ("Error. Invalid Opcode in line %d.\n", lineNumber);
+            errorCount++;
+            //terminate
+            return;
         }
+    } // END WHILE. File cursor is at INPUT.SECTION line.
 }
-void initData ()
-{
+
+void initData () {
     char line[STRSIZE];
     char help[STRSIZE];//helper string used in many instances for formatting
     char instruction[STRSIZE]; //used to format the ML instruction before writing
@@ -502,64 +500,75 @@ void initData ()
     int lineNumber = 0;
     //read first line of code
     fscanf (ALFile, "%s", line);
-    if (strcmp(line, "DATA.SECTION") == 0)
-    {
+    if (strcmp(line, "DATA.SECTION") == 0) {
         //scan first line of actual declarations
         fscanf (ALFile, "%s", line);
-       while (strcmp (line, "PROGRAM.SECTION") != 0)
-       {
-           //we still didn't reach the end
-           //extract opcode and operands
-           sscanf(line, "%s %s %s", opcode, op[0], op[1]);
-           //make sure that it's the right opcode
-           if (strcmp (opcode, "DEC") != 0)
-           {
+        while (strcmp (line, "PROGRAM.SECTION") != 0) {
+            //we still didn't reach the end of the initialization section
+            //extract opcode and operands of DEC instructions
+            sscanf(line, "%s %s %s", opcode, op[0], op[1]); // DEC VAR_NAME VALUE, line number is address
+            //make sure that it's the right opcode
+            if (strcmp (opcode, "DEC") != 0) {
                printf ("Error. Invalid declaration operation.\n");
                errorCount++;
                return;
-           }
-
-           //convert line number to string with leading zeros
-           sprintf(help, "%04d", lineNumber);
-           //use line number as address
-           //insert op[0] in symbol table using lineNumber as address
-           insert (symbols, op[0], help);
-           //convert op[1] to string with leading zeros
-           //I guess this is how we pad with zeros in C
-           sprintf (help, "%04d",op[1]);
-           sprintf (instruction, "+0 0 0000 %s",help);
-           //write instructions to ML file
-           fprintf (MLFile, "%s\n", instruction);
-           lineNumber++;
-           //scan next line
-           fscanf(ALFile, "%s", line);
-
-       }
+            }
+            //convert line number to string with leading zeros
+            sprintf(help, "%04d", lineNumber);
+            //use line number as address
+            //insert op[0] in symbol table using lineNumber as address
+            insert (symbols, op[0], help); // variable name: address
+            //convert op[1] to string with leading zeros
+            sprintf (help, "%04d",op[1]);
+            sprintf (instruction, "+0 0 0000 %s",help); //$ WHAT?? should be just the number, no?
+            // not really an instruction, just a number
+            //write instructions to ML file
+            fprintf (MLFile, "%s\n", instruction);
+            lineNumber++;
+            //scan next line
+            fscanf(ALFile, "%s", line);
+        }
     }
-    else
-    {
-        printf ("Error. DATA.SECTION unspecified.");
+    else {
+        printf ("Error. DATA.SECTION unspecified.\n");
         errorCount++;
         return;
     }
-
-
 }
-int getOpcode(char* str)
-{
 
+// $ need to squash the 3 following functions into one since they do very similar things
+
+int getOpcode(char* str) {
+    // given an AL opcode str, return the index of the entry in the opcodes hashtable
+    int idx = hash(str);
+    if (strcmp(opcodes[idx].key, str) == 0) {
+        // This should always be true, just making sure.
+        return idx;
+    }
+    return -1;
 }
-int getLabel (char* str)
-{
 
+int getLabel(char* str) {
+    // given a label str, return the index of the entry in the labels hashtable
+    int idx = hash(str);
+    if (strcmp(labels[idx].key, str) == 0) {
+        // again, should always be true
+        return idx;
+    }
+    return -1;
 }
-int getSymbol (char* str)
-{
 
+int getSymbol(char* str) {
+    int idx = hash(str);
+    if (strcmp(symbols[idx].key, str) == 0) {
+        // should always be true
+        return idx;
+    }
+    return -1;
 }
 
 int hash(char *str) {
-    // Djb2 hash function
+    // Djb2 hash function, should be a very good function
     unsigned long hash = 5381;
     int c;
     while ((c = *str++))
@@ -567,8 +576,7 @@ int hash(char *str) {
     return hash % HTSIZE;
 }
 
-void insert (HashTable* HT, char* key, char* value)
-{
+void insert (HashTable* HT, char* key, char* value) {
 	//Given an item consisting of a key and value,
 	// insert the item into the specified hashtable.
 	//Opcodes hashtable: key is the Assembly opcode,
@@ -590,9 +598,7 @@ void insert (HashTable* HT, char* key, char* value)
 	}
 }
 
-void initHashTables()
-{
-
+void initHashTables() {
     //allocate memory for all our hashtables
     opcodes = (HashTable*)malloc (HTSIZE*sizeof(HashTable));
     symbols = (HashTable*)malloc (HTSIZE*sizeof(HashTable));
@@ -609,8 +615,7 @@ void initHashTables()
     }
 }
 
-void fillOpcodes ()
-{
+void fillOpcodes () {
     //these are the opcode entries
     char* entries[15][2] = {{"MOVE", "+0"}, {"MOVAC", "-0"},
     						{"ADD", "+1"}, {"SUB", "-1"},
@@ -624,9 +629,7 @@ void fillOpcodes ()
                             };
     						// Opcodes -3, -4, -8, +9, -9 free for now.
 
-    for (int i = 0; i < 15; i++)
-    {
+    for (int i = 0; i < 15; i++) {
         insert(opcodes, entries[i][0], entries[i][1]);
     }
-
 }
