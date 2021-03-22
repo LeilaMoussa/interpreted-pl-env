@@ -207,6 +207,8 @@ void initInput () {
     char line[STRSIZE];
     while (!feof (ALFile)) {
         fgets(line, STRSIZE, ALFile);
+        /*format this string by adding sign and relevant spaces*/
+        formatML(line);
         fprintf (MLFile, "%s\n", line);
     }
 }
@@ -742,6 +744,8 @@ void initData () {
     char opcode[STRSIZE], op[2][STRSIZE];
     int lineNumber = 1;
     int literal_value;
+    /*write the very first line of the ML*/
+    fprintf (MLFile, "%s\n", "+0 0 0000 0000");
     fgets(line, STRSIZE, ALFile);
     /*Read data section from AL file line by line, make sure that the right
     opcode is being used i.e. DEC, extract the operands, insert symbols
@@ -918,5 +922,3 @@ void fillOpcodes () {
         insert(opcodes, entries[i][0], entries[i][1]);
     }
 }
-
-
