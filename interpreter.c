@@ -4,7 +4,7 @@
 
 #define MEMORY_SIZE 10000   /* Size of each of the arrays. */
 #define WORD_SIZE 15        /* Length of an ML instruction, spaces and zero delimiter included. */
-#define TRUE 0
+#define TRUE 1
 #define FALSE 0
 #define ERROR_CODE 1.5      /* To differentiate between a good numerical return value and a bad one,
                              * we use a float return value for errors.
@@ -24,7 +24,7 @@ FILE* ml_program;                       /* Input ML program file to be executed.
 int AC = 0;                             /* Accumulator */
 int IP = 0;                             /* Instruction pointer */
 
-int verbose = FALSE;                    /* If verbose is TRUE, many messages will be printed. */
+int verbose = TRUE;                    /* If verbose is TRUE, many messages will be printed. */
 
 typedef struct {
     int sign;           /* 0 for positive, 1 for negative. */
@@ -94,7 +94,7 @@ void populate_memory() {
         }
         else if (sep_count == 2)
             return;
-            /* Input data section, stop reading. 
+            /* Input data section, stop reading.
              * Input data will be read when necessary, i.e. with each IN instruction. */
         else {
             if (verbose)
@@ -205,7 +205,8 @@ int perform_loop(int indicator, int opd1, int jump_loc) {
         case 6: upper_bound = opd1; break;
     }
     while(AC < upper_bound) {                                       /* Loop condition */
-        return_code = decode_execute(instruction_memory[jump_loc]); /* Loop body. */
+        IP = jump_loc;                                              /* Jump. */
+        return_code = decode_execute(instruction_memory[IP]);       /* Loop body. */
         AC++;                                                       /* Incrementation of index. */
         if(return_code == 0) return 0;
     }
@@ -294,7 +295,7 @@ int decode_execute(char* instruction) {
             break;
         case 10:
             if (verbose) printf("Encountered RARR.\n");
-            data_memory[opd1] = data_memory[opd2 + AC];                 /* Indicator does not matter, because we know that both 
+            data_memory[opd1] = data_memory[opd2 + AC];                 /* Indicator does not matter, because we know that both
                                                                          * operand are addresses. The offset is in the accumulator. */
             break;
         case 11:
@@ -322,10 +323,6 @@ int decode_execute(char* instruction) {
             break;
         case 14:
             if(verbose) printf("Encountered IN.\n");
-            // Input
-            // opd1 is destination address, opd2 is unused
-            // the cursor is still in the input section of the ML file
-            // read the next input value
             input = get_next_input_val();                               /* Get the next input data value as an integer from the file. */
             if ((int)input - input == 0)                                /* Fractional part of 0 if properly read */
                 data_memory[opd1] = (int)input;                         /* Store integer in destination location. */
@@ -353,7 +350,7 @@ int decode_execute(char* instruction) {
     }
     return 1;                                                           /* ... or it returns 1 if we stopped because any other instruction
                                                                          * was executed. It's important to differentiate between HALT
-                                                                         * and other ways of terminating decode_execute() because 
+                                                                         * and other ways of terminating decode_execute() because
                                                                          * this has implications on the rest of the execution. */
 }
 
@@ -377,7 +374,7 @@ void read_decode_execute() {
 
 void display_vm_state() {
     /* This function shows what the memory and registers look like at the end of all execution. */
-    printf("--State of the VM.--\n")
+    printf("--State of the VM.--\n");
     printf("ACC: %d\n", AC);
     printf("IP: %d\n", IP);
     printf("\nData memory:\n");
@@ -388,7 +385,7 @@ void display_vm_state() {
 
 int main () {
     initialize_memory();
-    ml_program = fopen("MLcode1.txt", "r"); /* The input ML file is assumed to be in the same directory. */
+    ml_program = fopen("MLcode2.txt", "r"); /* The input ML file is assumed to be in the same directory. */
     populate_memory();                      /* Read data and program from file and populate data & instruction memory. */
     read_decode_execute();
     fclose(ml_program);                     /* Input file should not be closed before,
