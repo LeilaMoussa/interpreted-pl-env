@@ -88,38 +88,42 @@ void populate_memory() {
         else if (sep_count == 0) {                      /* Still in initialization section. */
             strip_spaces(ml_line);
             value = atoi(ml_line);                      /* Parse line as signed integer. */
-            data_memory[data_idx++] = value;
-            printf("populated data loc %d with value %d\n", data_idx, value);
+            data_memory[data_idx++] = value;            /* Write it in memory. */
+            if(verbose)
+                printf("Data location %d has value %d.\n", data_idx, value);
         }
-        else if (sep_count == 1) {
-            strcpy(instruction_memory[code_idx++], ml_line);
+        else if (sep_count == 1) {                              /* In code section. */
+            strcpy(instruction_memory[code_idx++], ml_line);    /* Load instruction into memory. */
         }
         else if (sep_count == 2)
-                return; // Input data will be ready as necessary
-            // There's no way we could reliably save the input data in an array anyway
-            // because we don't know how many input instructions a program could have (theoretically infinitely many)
-            // also not wise because of time & space cost
-            // see input instruction implementation below
-        else{
-            printf("too many separators\n"); // can't happen anyway with this implementation
+            return;
+            /* Input data section, stop reading. 
+             * Input data will be read when necessary, i.e. with each IN instruction. */
+        else {
+            if (verbose)
+                printf("Bad input: too many separators.\n");   /* This should never happen with a correct file. */
         }
-        fgets(ml_line, WORD_SIZE, ml_program);
-        while (ml_line[0] == '\n' && sep_count < 2)
-            fgets(ml_line, WORD_SIZE, ml_program);
+
+        fgets(ml_line, WORD_SIZE, ml_program);                  /* Continue reading. */
+        while (ml_line[0] == '\n' && sep_count < 2)             /* This is an implementation-specific issue with fgets() */
+            fgets(ml_line, WORD_SIZE, ml_program);              /* Sometimes a blank line is read, in which case we should skip it, */
+                                                                /* unless we're in the input data section, because otherwise
+                                                                 * we would be skipping an actual data line. */
     }
 }
 
 instruction_struct destructure_instruction(char* instruct) {
+    /* Given an instruction as a string in the form '+I I XXXX YYYY'
+     * return a container with all the relevent instruction parts as integers. */
     int ind, opd1, opd2;
-    char sign_opc[4]; // extra byte for safety
+    char sign_opc[3];
     instruction_struct instr_struct;
 
-    // instruct is in the form +D D DDDD DDDD
-    sscanf(instruct, "%s %d %d %d", sign_opc, &ind, &opd1, &opd2);
-    if(sign_opc[0] == '+') instr_struct.sign = 0; // positive
-    else instr_struct.sign = 1; // negative
+    sscanf(instruct, "%s %d %d %d", sign_opc, &ind, &opd1, &opd2);  /* Break up the string. */
+    if(sign_opc[0] == '+') instr_struct.sign = 0;                   /* Check sign. */
+    else instr_struct.sign = 1;
 
-    instr_struct.operation = abs(atoi(sign_opc));
+    instr_struct.operation = abs(atoi(sign_opc));                   /* Read integers into instruction struct. */
     instr_struct.indicator = ind;
     instr_struct.operand1 = opd1;
     instr_struct.operand2 = opd2;
@@ -127,8 +131,12 @@ instruction_struct destructure_instruction(char* instruct) {
 }
 
 float perform_arithmetic(int operation, int indicator, int opd1, int opd2) {
-    int a, b; // The 2 final values to be operated on each other.
-    // First, get a and b based on indicator
+    /* Since the four arithmetic operations (ADD, SUB, MULT, DIV) operate similarly,
+     * we should put them in a function that determines what to do
+     * based on the operation (given by sign and opcode digit) and the indicator digit. */
+
+    int a, b;   /* All operations are binary. These are the 2 operands
+                 * to be determined based on the indicator. */
     switch (indicator) {
         case 1: a = data_memory[opd1]; b = data_memory[opd2]; break;
         case 2: a = opd1; b = opd2; break;
