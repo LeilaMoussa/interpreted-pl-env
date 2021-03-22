@@ -153,8 +153,11 @@ void initProgram() {
     int errFlag = 0;
     int indicator;
     char instruction[STRSIZE];
-    fscanf(ALFile, "%s", line);
-    while (strcmp (line, "INPUT.SECTION") != 0) {
+    //fscanf(ALFile, "%s", line);
+    fgets(line, STRSIZE, ALFile);
+    while(line[0] == '\n') fgets(line, STRSIZE, ALFile);
+    printf("read instr line %s.\n", line);
+    while (strcmp (line, "INPUT.SECTION\n") != 0) {
         //extract opcode and operands
         sscanf (line, "%s %s %s", opcode, op[0], op[1]); // supports empty operand
         //lookup opcode in hashtable
@@ -479,7 +482,10 @@ void initProgram() {
                 fprintf (MLFile, "%s\n", instruction);
                 lineNumber++;
                 //scan new line of AL code
-                fscanf (ALFile, "%s", line); // next AL line
+                //fscanf (ALFile, "%s", line);
+                fgets(line, STRSIZE, ALFile);
+                while(line[0] == '\n') fgets(line, STRSIZE, ALFile);
+                printf("read instr line %s.\n", line);
             }
         else {
             //the opcode we just read is not valid
@@ -504,12 +510,17 @@ void initData () {
     int lineNumber = 0;
     int literal_value;
     //read first line of code
-    fscanf (ALFile, "%s", line);
-    if (strcmp(line, "DATA.SECTION") == 0) {
+    //fscanf (ALFile, "%s", line);
+    fgets(line, STRSIZE, ALFile);
+    while (line[0] == '\n') fgets(line, STRSIZE, ALFile);
+    printf("first line ever %s.\n", line);
+    if (strcmp(line, "DATA.SECTION\n") == 0) {
         //scan first line of actual declarations
-        fgets(line, 100, ALFile); // dump
-        fgets(line, 100, ALFile);
-        while (strcmp (line, "CODE.SECTION") != 0) {
+        fgets(line, STRSIZE, ALFile);
+        while (line[0] == '\n') fgets(line, STRSIZE, ALFile);
+        printf("then %s.\n", line);
+        while (strcmp (line, "CODE.SECTION\n") != 0) {
+            printf("bdhcc\n");
             //we still didn't reach the end of the initialization section
             //extract opcode and operands of DEC instructions
             sscanf(line, "%s %s %s", opcode, op[0], op[1]); // DEC VAR_NAME VALUE, line number is address
@@ -530,12 +541,15 @@ void initData () {
             //format op[1] as a string with leading zeros
             literal_value = atoi(op[1]);
             sprintf (ML_line, "%011d", literal_value); //11 characters overall with leading zeros if needed
+            // $ spaces needed here!!
 
             //finally write to ML file
             fprintf (MLFile, "%s\n", ML_line);
             lineNumber++;
             //scan next line
-            fscanf(ALFile, "%s", line);
+
+            fgets(line, STRSIZE, ALFile);
+            while (line[0] == '\n') fgets(line, STRSIZE, ALFile);
         }
         fprintf (MLFile, "%s\n", "+8 8 8888 8888");
     }
@@ -578,7 +592,6 @@ int getSymbol(char* str) {
 }
 
 int hash(char *str) {
-    // Djb2 hash function, should be a very good function
     int key = 0;
     int i = 0;
     for (i = 0; str[i] != '\0'; i++)
@@ -594,6 +607,7 @@ void insert (HashTable* HT, char* key, char* value) {
 	//Since we want constant lookup when we want to the corresponding value,
 	// we need to hash the AL opcode
 	// to assign each item to specific position in the hashtable, which is an array
+
 	/*HashTable new_item;
 	int idx = hash(key);
 	strcpy(new_item.key, key);
@@ -610,6 +624,7 @@ void insert (HashTable* HT, char* key, char* value) {
 		printf("Hash collision at idx %d.\n", idx);
 		errorCount++;
 	}*/
+
 	int n = hash(key);
     int collisions = 0, tablesize = 20;
     if (HT[n].key[0] == '\0')
