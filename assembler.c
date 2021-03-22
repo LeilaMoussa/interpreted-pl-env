@@ -3,70 +3,106 @@
 #include <stdlib.h>
 #include <math.h>
 #include <ctype.h>
+/*Defining constant hash table size and string size*/
+#define HTSIZE 200
+#define STRSIZE 50
 
-#define HTSIZE 200 //Hashtable size
-//$ rethink whether we need all this space
-// and whether we can afford to decrease it (hashing & collisions in mind) $
-#define STRSIZE 50 //Default size used in many instances
-
-//Struct for HashTables
-// in fact, this is the struct for items, not the table
+/*Struct definition for hash table entries*/
 typedef struct HashTable
 {
     char key[STRSIZE];
     char value[STRSIZE];
-}HashTable;  // considering whether key has to be here, since key is used to hashing and lookup only
-			// it doesn't hurt to keep it, in fact it could help in error handling and debugging
-			// but technically, it's a waste of space
+}HashTable;
 
-int opLength = 4; //length of our operators
-FILE* ALFile; //this is our AL input file
-FILE* MLFile; //this is our ML output file
-HashTable* opcodes; //this is our opcode HashTable
-HashTable* symbols; //this is our symbol table
-HashTable* labels; //this is our label table
-int errorCount = 0; //will include this in error messages when assembler fails
+/*Global Variables Declaration*/
 
-void initHashTables(); //initializing our three hashtables
-void insert (HashTable*, char*, char*); //insert entries into hashtables
-int hash(char*); //hash function
-void initData(); //function that will read the initialization data section and print it in the output file
-int getSymbol(char*); //get symbol from symbol table
-int getLabel(char*); //get label from label table
-int getOpcode(char*); //get opcode from opcode hashtable
-void initProgram();//read code section and write to output file
-void initInput(); //read input section and write to output file
-int isAddress(char*); //checks if operand is an address
-int isLiteral(char*); //checks if operand is literal value
-void removeBrackets(char*);//removes brackets from address
-void removeSign(char*);//removes sign from literal value
+/*Input File, contains AL code*/
+FILE* ALFile;
+/*Output File: contains ML code*/
+FILE* MLFile;
+/*The hashtables*/
+/*The opcodes hash table*/
+HashTable* opcodes;
+/*The symbols hash table (i.e. the symbol table)*/
+HashTable* symbols;
+/*The labels hash table (i.e. the label table)*/
+HashTable* labels;
+/*Variable to count errors if present, used in the error message*/
+int errorCount = 0;
+
+/*Function prototypes*/
+
+/*Function to allocate memory for hash tables and initialize values to '\0'*/
+void initHashTables();
+/*Function to inset entry in hash table*/
+void insert (HashTable*, char*, char*);
+/*Function to hash key*/
+int hash(char*);
+/*Function to read data section from the AL file,
+process it, and write to ML file*/
+void initData();
+/*Function to get index of an entry if it exists in the
+symbol table*/
+int getSymbol(char*);
+/*Function to get index of an entry if it exists in the
+label table*/
+int getLabel(char*);
+/*Function to get index of an entry if it exists in the
+opcode table*/
+int getOpcode(char*);
+/*Function to read program section from the AL file,
+process it, and write to ML file*/
+void initProgram();
+/*Function to read input data section from the AL file,
+process it, and write to ML file*/
+void initInput();
+/*Function to check if a given string is an address in AL*/
+int isAddress(char*);
+/*Function to check if a given string is a literal in AL*/
+int isLiteral(char*);
+/*Function to omit brackets from an address in Al*/
+void removeBrackets(char*);
+/*Function to remove sign character from literal in Al*/
+void removeSign(char*);
+/*Function to fill opcode table with {AL opcode, ML opcode} entries*/
 void fillOpcodes();
+/*Function to format ML instruction*/
 void formatML(char*, int);
+
+/*Main: Entry Point and Driver Program*/
+
 int main (void) {
+
     ALFile = fopen ("ALcode1.txt", "r");
-    if (ALFile == NULL) return 0;
+
+    if (ALFile == NULL)
+    {
+        printf ("Failed to open Assembly Language File.\n");
+        return 0;
+    }
     MLFile = fopen ("MLCode.txt", "w");
     initHashTables();
-    //printf("%s %s\n", symbols[39].key, symbols[39].value);
     fillOpcodes();
-    //for (int i = 0; i < 200; i++) {
-    //    printf("%s: %s  \n", symbols[i].key, symbols[i].value);
-    //}
     initData();
     initProgram();
     initInput();
 
-    if (errorCount) {
-        printf ("Unsuccessful Assembly. %d errors detected.", errorCount);
+    if (errorCount)
+    {
+        printf ("Unsuccessful Assembly. %d errors detected.\n", errorCount);
         return 0;
     }
-    printf ("Assembly Successful. Open ML File.");
-    fclose(ALFile); // put somewhere before
+    printf ("Assembly Successful. Open ML File.\n");
+    fclose(ALFile);
     fclose(MLFile);
     return 0;
 }
 void formatML(char* str, int flag)
 {
+    /*Take the unformatted string, add a sign at the beginning,
+    insert spaces between ML instruction components, and copy
+    to the instruction*/
+
     char help[STRSIZE];
     int i;
     int k;
@@ -92,13 +128,16 @@ void formatML(char* str, int flag)
     {
         help[i] = str[k++];
     }
+    help[i] = '\0';
     strcpy(str, help);
 }
 void removeBrackets (char* str) {
+    /*Take address in AL (written an [xxxx]
+    and remove the brackets to make it in ML
+    form*/
     int k = 0;
     int i;
     char help[STRSIZE];
-    //remove the brackets
     for (i = 1; i < strlen(str)-1; i++) {
         help[k++] = str[i];
     }
@@ -107,18 +146,22 @@ void removeBrackets (char* str) {
 }
 
 void removeSign (char* str) {
+    /*Take literal in AL (written with a sign at
+    beginning), and remove sign to make it in
+    ML form*/
     int k = 0;
     int i;
     char help[STRSIZE];
-    for (i = 1; i <= strlen(str); i++) { // including \0
+    for (i = 1; i <= strlen(str); i++) {
         help[k++] = str[i];
     }
     strcpy(str, help);
 }
 
 int isAddress(char* str) {
-    //check if the given string is an address, i.e. of the form [x1x2x3x4]
-    //return 1 if so, return 0 otherwise
+    /*Check if given string is an address
+    (i.e. it's 4 digits enclosed in brackets).
+    Return 0 if so and return 1 if otherwise*/
     int i;
     if (strlen(str) == 6) {
         if (str[0] == '[' && str[5] == ']') {
@@ -134,10 +177,9 @@ int isAddress(char* str) {
 }
 
 int isLiteral (char* str) {
-    //check if the given string is a literal value, then check its sign
-    //return 1 if positive literal
-    //return 2 if negative literal
-    //return 0 otherwise
+    /*Check if a given string is a literal in AL (i.e. it's
+    written as 4 digits preceded by a sign). Return 1 if it's
+    a positive integer, 2 if it's a negative integer, and 0 otherwise*/
     int i;
     if (strlen(str)== 5) {
         if (str[0] == '+') {
@@ -159,47 +201,61 @@ int isLiteral (char* str) {
     return 0;
 }
 void initInput () {
-    // Input data, i.e. the third section of the AL program
-    //char opcode [STRSIZE], op[2][STRSIZE]; //$
+    /*Read the input data section line by line
+    and write to ML file*/
+    /*String to reach each line*/
     char line[STRSIZE];
-    //read until you reach the end to the file
     while (!feof (ALFile)) {
-       //this is just like ML code, just read and write directly
         fgets(line, STRSIZE, ALFile);
-        fprintf (MLFile, "%s\n", line); //$ formatting
+        fprintf (MLFile, "%s\n", line);
     }
 }
 
 void initProgram() {
-    //opcode and operands
+    /*Read code section line by line, extract opcodes and operands,
+    perform necessary checks, format an instruction, write the instruction to
+    the ML file*/
+    /*String for the opcode, array of 2 elements for the two operands*/
     char opcode[STRSIZE], op[2][STRSIZE];
-    char line[STRSIZE]; //used to read each line
-    int temp; //temporary opcode, symbol, and label index storage
-    char help [5]; //useful string for formatting
-    int lineNumber = 1; //needed for referencing
-    int flag1, flag2; //used to build the indicator
+    /*String to read each line*/
+    char line[STRSIZE];
+    /*used to store opcode, symbol, or label index in hash table*/
+    int temp;
+    /*Useful helper string in formatting*/
+    char help [5];
+    /*Used to keep track of the line number*/
+    int lineNumber = 1;
+    /*Flags used to build the indicator digit (D2) in the instruction*/
+    int flag1, flag2;
+    /*Flag to keep track of errors with operands*/
     int errFlag = 0;
+    /*The D2 component in the ML instruction*/
     int indicator;
+    /*String to store formatted ML instruction*/
     char instruction[STRSIZE];
-    //fscanf(ALFile, "%s", line);
     fgets(line, STRSIZE, ALFile);
-    while(line[0] == '\n') fgets(line, STRSIZE, ALFile);
-    printf("read instr line %s.\n", line);
+    /*In line in empty, just skip*/
+    while(line[0] == '\n')
+    {
+        fgets(line, STRSIZE, ALFile);
+    }
     while (strcmp (line, "INPUT.SECTION\n") != 0) {
-        //extract opcode and operands
+        /*Extract opcode and operands*/
         sscanf (line, "%s %s %s", opcode, op[0], op[1]); // supports empty operand
-        //lookup opcode in hashtable
-        temp = getOpcode(opcode); // index in the opcodes hashtable
-        //if opcode was found, a valid index is returned
+        /*Lookup opcode in hashtable*/
+        temp = getOpcode(opcode);
         if (temp >= 0) {
-            //copy that opcode
+                /*Case of valid opcode*/
             strcpy(opcode, opcodes[temp].value);
-            //handle each opcode
-
-            //cases that are handled similarly are grouped together
-
+        /*Now, we will handle the operations. We will check if the operand is
+        unused, a symbol, an address, or a literal according to the operation which
+        we are checking. We will use these checks to progressively build the
+        ML instruction. Operations that are handled similarly are grouped together.
+        An error message is thrown whenever mandatory conditions are not met*/
             if (strcmp(opcode, "+0") == 0)
-            {
+
+            {//START MOVE
+                /*op[0] can be symbol or address, op[1] can be symbol, address, or literal*/
                 temp = getSymbol(op[0]);
                 if (temp >= 0)
                 {
@@ -243,7 +299,7 @@ void initProgram() {
                 }
                 if (errFlag)
                 {
-                    printf ("Error. Invalid MOVE operation\n");
+                    printf ("Error. Invalid MOVE operation at line %d.\n", lineNumber);
                     errorCount++;
                     return;
                 }
@@ -259,43 +315,33 @@ void initProgram() {
                 {
                     indicator = 9;
                 }
-            }
+            }//END MOVE
 
             else if (strcmp (opcode, "+1")==0 ||
                 strcmp (opcode, "-1")==0 || strcmp (opcode, "+2")==0 ||
-                strcmp (opcode, "-2")==0) {
-                 //check for op[0]: symbol, address, value?
-
-                temp = getSymbol(op[0]); // op[0] is operand1
+                strcmp (opcode, "-2")==0) { //START ADD, SUB, MULT, DIV
+                /*both op[0] can be either symbol, address, or literal value*/
+                temp = getSymbol(op[0]);
                 if (temp >= 0) {
-                    // It's a variable name.
-                    strcpy (op[0], symbols[temp].value); // replace it by its address, also a string
+                    strcpy (op[0], symbols[temp].value);
                     flag1 = 0;
                 }
                 else if (isAddress(op[0])) {
-                    // $opportunity for optimization: one pass over the address instead of 2
-                    // i.e. return address as an int if address, negative value or double otherwise
                     removeBrackets(op[0]);
                     flag1 = 0;
                 }
                 else if (isLiteral(op[0])== 1) {
-                    //remove the sign
                     removeSign(op[0]);
                     flag1 = 1;
                 }
                 else if (isLiteral (op[0])== 2) {
-                    //remove the sign
                     removeSign(op[0]);
                     flag1 = 2;
                 }
                 else {
-                    printf("err1\n");
                     errFlag = 1;
                 }
 
-                //check for op[1]: symbol, address, value?
-                // do the same for operand 2
-                // need to put this in a function
                 temp = getSymbol(op[1]);
                 if (temp >= 0) {
                     strcpy (op[1], symbols[temp].value);
@@ -306,27 +352,21 @@ void initProgram() {
                     flag2 = 0;
                 }
                 else if (isLiteral(op[1]) == 1) {
-                    //remove the sign
                     removeSign(op[1]);
                     flag2 = 1;
                 }
                 else if (isLiteral (op[1])== 2) {
-                    //remove the sign
                     removeSign(op[1]);
                     flag2 = 2;
                 }
                 else {
-                    printf("err1\n");
                     errFlag = 1;
                 }
                 if (errFlag) {
-                    printf("Error. Invalid MULT, ADD, SUB, or DIV statement.\n");
+                    printf("Error. Invalid MULT, ADD, SUB, or DIV statement at line %d.\n", lineNumber);
                     errorCount++;
                     return;
                 }
-                //build the indicator based on the flags
-                // the following can be done in a better way
-                // think 2D array?
                 if (flag1 == 0) {
                     if (flag2 == 0) {
                         indicator = 1;
@@ -354,10 +394,11 @@ void initProgram() {
                         indicator = 3;
                     }
                 }
-            } // END OF MOVE/arithmetic operations case
-            else if (strcmp(opcode, "-0") == 0) { // MOVAC
-                //make sure that op[1] is unused
-                //make sure that op[0] is an address
+            } //END ADD, SUB, MULT, DIV
+            else if (strcmp(opcode, "-0") == 0) {
+                //START MOVAC
+                /*op[1] is unused and op[0] is symbol or address*/
+
                 if (strcmp(op[1], "0000") == 0)
                 {
                     temp = getSymbol (op[0]);
@@ -374,30 +415,24 @@ void initProgram() {
                     }
                     else
                     {
-                        printf  ("Error. Invalid MOVAC operation. \n");
+                        printf  ("Error. Invalid MOVAC statement at line %d.\n", lineNumber);
                         errorCount++;
                         return;
                     }
                 }
                 else
                 {
-                    printf  ("Error. Invalid MOVAC operation. \n");
+                    printf  ("Error. Invalid MOVAC statement at line %d.\n", lineNumber);
                     errorCount++;
                     return;
                 }
-            }
+            }//END MOVAC
                 else if (strcmp(opcode, "+3") == 0 || strcmp(opcode, "+4") == 0) {
-                    // JMPE or JUMPGE
-
-                    //make sure op[0] is address or label
+                    //START JUMPE, JUMPGE
+                    /*op[0] can be address or label, op[1] can be symbol, address, or literal*/
                     temp = getLabel(op[0]);
-                    //then check for type and sign of op[1]
                     if (temp >= 0) {
-                        //operand1 is a label
-                        //replace operand with its address
                         strcpy (op[0], labels[temp].value);
-
-                        // now, look at operand2
                         temp = getSymbol(op[1]);
                         if (temp >= 0)
                         {
@@ -412,16 +447,19 @@ void initProgram() {
                             removeSign(op[1]);
                             indicator = 8;
                         }
-                        else if (isLiteral (op[1]) == 2) { //$ you're executing this many times!! no no
+                        else if (isLiteral (op[1]) == 2) {
                             removeSign(op[1]);
                             indicator = 9;
                         }
+                        else
+                        {
+                            printf ("Error. JUMPE or JUMPGE statement invalid at line %d.\n", lineNumber);
+                            errorCount++;
+                            return;
+                        }
                     }
                     else if (isAddress(op[0])) {
-                        // operand1 is not a label, it's an address
                         removeBrackets(op[0]);
-                        // and check operand2 the same way
-                        // repetitive: needs to be put in a function
                         temp = getSymbol(op[1]);
                         if (temp >= 0)
                         {
@@ -440,17 +478,23 @@ void initProgram() {
                             removeSign(op[1]);
                             indicator = 9;
                         }
+                        else
+                        {
+                            printf ("Error. JUMPE or JUMPGE statement invalid at line %d.\n", lineNumber);
+                            errorCount++;
+                            return;
+                        }
                     }
                     else {
-                        // operand1 is neither a label nor an address ==> this is an error
-                        printf ("Error. JUMPE or JUMPGE statement invalid. Operand 1 is neither label nor address.\n");
+
+                        printf ("Error. JUMPE or JUMPGE statement invalid at line %d.\n", lineNumber);
                         errorCount++;
                         return;
                     }
-                } // END JUMPE OR JUMPGE CASE
+                } //END JUMPE, JUMPGE
                 else if (strcmp (opcode, "+5") == 0) {
-                    // RARR
-                    //make sure that both operands are addresses
+                //START RARR
+                /*op[1] is an address and op[0] can be symbol or address*/
                    if (isAddress(op[1])) {
                        removeBrackets(op[1]);
                        temp = getSymbol(op[0]);
@@ -464,20 +508,24 @@ void initProgram() {
                            removeBrackets(op[0]);
                            indicator = 0;
                        }
+                       else
+                       {
+                            printf ("Error. RARR statement invalid at line %d.\n", lineNumber);
+                            errorCount++;
+                            return;
+                       }
                    }
                    else {
-                       printf ("Error. RARR statement invalid.\n");
+                       printf ("Error. RARR statement invalid at line %d.\n", lineNumber);
                        errorCount++;
                        return;
                    }
-                } // END RARR
+                } //END RARR
                 else if (strcmp (opcode, "-5") == 0) {
-                    // WARR
-                    //make sure op[0] is address
-                    //check what op[1] is
+                    //START WARR
+                    /*op[0] is address and op[1] can be symbol, address, or literal*/
                     if (isAddress(op[0])) {
                         removeBrackets(op[0]);
-                        // this process of checking operand 2 is the same as above
                         temp = getSymbol (op[1]);
                         if (temp >= 0)
                         {
@@ -496,16 +544,22 @@ void initProgram() {
                             removeSign(op[1]);
                             indicator = 9;
                         }
+                        else
+                        {
+                            printf ("Error. WARR statement invalid at line %d.\n", lineNumber);
+                            errorCount++;
+                            return;
+                        }
                     }
                     else {
-                        printf ("Error. WARR statement invalid. Operand 1 is not an address.\n");
+                        printf ("Error. WARR statement invalid at line %d.\n", lineNumber);
                         errorCount++;
                         return;
                     }
-                } // END WARR
+                }//END WARR
                 else if (strcmp (opcode, "+6") == 0) {
-                    // LOOP upper_bound jump_location
-                    //make sure op[1] is an address or label and check op[0]
+                    //START LOOP
+                    /*op[1] is address and op[0] can be symbol, address, or literal*/
                     temp = getLabel(op[1]);
                     if (temp >= 0) {
                         strcpy (op[1], labels[temp].value);
@@ -526,6 +580,12 @@ void initProgram() {
                         else if (isLiteral(op[1]) == 2) {
                             removeSign(op[0]);
                             indicator = 7;
+                        }
+                        else
+                        {
+                            printf ("Error. LOOP statement invalid at line %d.\n", lineNumber);
+                            errorCount++;
+                            return;
                         }
                     }
                     else if (isAddress(op[1])) {
@@ -548,31 +608,36 @@ void initProgram() {
                             removeSign(op[0]);
                             indicator = 7;
                         }
+                        else
+                        {
+                            printf ("Error. LOOP statement invalid at line %d.\n", lineNumber);
+                            errorCount++;
+                            return;
+                        }
                     }
                     else {
-                        printf ("Error. LOOP statement invalid.\n");
+                        printf ("Error. LOOP statement invalid at line %d.\n", lineNumber);
                         errorCount++;
                         return;
                     }
-                } // END LOOP
+                } //END LOOP
                 else if (strcmp (opcode, "-6") == 0) {
-                    // LABEL
-                    //make sure op[0] is unused
-                    //store op[1] in label table
+                    //START LABEL
+                    /*op[0] is unused, op[1] is label*/
                     if (strcmp (op[0], "0000") == 0) {
                        sprintf (help, "%04d", lineNumber+1);
-                       insert (labels, op[1], help); // insert the item (operand2, address of the label) in the label table
-                       indicator = 0; //unused
+                       insert (labels, op[1], help);
+                       indicator = 0;
                     }
                     else {
-                        printf ("Error. LABEL statement invalid. See operand 1.\n");
+                        printf ("Error. LABEL statement invalid at line %d.\n", lineNumber);
                         errorCount++;
                         return;
                     }
-                } // END LABEL
+                } //END LABEL
                 else if (strcmp (opcode, "+7") == 0) {
-                    // INPUT
-                    //make sure op[1] is unused and op[0] is address
+                    //START IN
+                    /*op[1] is unused and op[0] is symbol or address*/
                     if (strcmp (op[1], "0000") == 0)
                     {
                         temp = getSymbol(op[0]);
@@ -588,16 +653,21 @@ void initProgram() {
                         }
                         else
                         {
-                            printf ("Error. IN statement invalid.\n");
+                            printf ("Error. IN statement invalid at line %d.\n", lineNumber);
                             errorCount++;
                             return;
                         }
                     }
-                } // END INPUT
+                    else
+                    {
+                            printf ("Error. IN statement invalid at line %d.\n", lineNumber);
+                            errorCount++;
+                            return;
+                    }
+                } //END IN
                 else if (strcmp (opcode, "-7") == 0) {
-                    // OUTPUT
-                    //make sure op[0] is unused
-                    //check op[1]
+                    //START OUT
+                    /*op[0] is unused and op[1] is address, symbol or literal*/
                     if (strcmp (op[0], "0000") == 0) {
                         temp = getSymbol(op[1]);
                         if (temp >= 0)
@@ -606,104 +676,107 @@ void initProgram() {
                             indicator = 1;
                         }
                         if (isAddress(op[1])) {
-                            // output the contents of an address
                             removeBrackets(op[1]);
                             indicator = 1;
                         }
                         else if (isLiteral(op[1]) == 1) {
-                            // output a positive literal
                             removeSign(op[1]);
                             indicator = 2;
                         }
                         else if (isLiteral(op[1]) == 2) {
-                            // output a negative literal
                             removeSign(op[1]);
                             indicator = 3;
                         }
+                        else
+                        {
+                            printf ("Error. OUT statement invalid at line %d.\n", lineNumber);
+                            errorCount++;
+                            return;
+                        }
                     }
                     else {
-                        printf ("Error. OUT statement invalid. See operand 1.\n");
+                        printf ("Error. OUT statement invalid at line %d.\n", lineNumber);
                         errorCount++;
                         return;
                     }
-                } // END OUTPUT
+                } //END OUT
                 else if (strcmp (opcode, "+8") == 0) {
-                    // HALT
-                    //check that both operands are unused
+                    //START HLT
+                    /*op[0] and op[1] are unused*/
                     if (strcmp(op[0], "0000") == 0 && strcmp (op[1], "0000") == 0) {
                         indicator = 0;
                     }
                     else {
-                        printf ("Error. HLT statement invalid.");
+                        printf ("Error. HLT statement invalid at line %d.", lineNumber);
                         errorCount++;
                         return;
                     }
-                }
-                //now format the instruction we obtained
+                }//END HLT
+                /*now format the instruction we obtained*/
                 sprintf (instruction, "%s %d %s %s", opcode, indicator, op[0], op[1]);
-                //write instruction to output file
+                /*write instruction to output file*/
                 fprintf (MLFile, "%s\n", instruction);
                 lineNumber++;
-                //scan new line of AL code
-                //fscanf (ALFile, "%s", line);
+                /*scan new line of AL code*/
                 fgets(line, STRSIZE, ALFile);
-                while(line[0] == '\n') fgets(line, STRSIZE, ALFile);
-                printf("read instr line %s.\n", line);
+                while(line[0] == '\n')
+                {
+                    fgets(line, STRSIZE, ALFile);
+                }
             }
         else {
-            //the opcode we just read is not valid
+            /* Case in which the opcode in invalid*/
             printf ("Error. Invalid Opcode in line %d.\n", lineNumber);
             errorCount++;
-            //terminate
             return;
         }
-    } // END WHILE. Input file cursor is at INPUT.SECTION line.
+    } //END WHILE
+    /*write separator*/
     fprintf (MLFile, "%s\n", "+8 8 8888 8888");
 }
 
 void initData () {
     char line[STRSIZE];
-    char help[STRSIZE];//helper string used in many instances for formatting
-    char ML_line[STRSIZE]; //used to format the ML line before writing
-                                //it in the file
-                            // calling it a line as opposed to an instruction
-    //first string stores the opcode, second stores the two operands
+    char help[STRSIZE];
+    char ML_line[STRSIZE];
     char opcode[STRSIZE], op[2][STRSIZE];
-    //the line code will allow us to address data memory
     int lineNumber = 1;
     int literal_value;
-    //read first line of code
-    //fscanf (ALFile, "%s", line);
     fgets(line, STRSIZE, ALFile);
-    while (line[0] == '\n') fgets(line, STRSIZE, ALFile);
-    printf("first line ever %s.\n", line);
-    if (strcmp(line, "DATA.SECTION\n") == 0) {
-        //scan first line of actual declarations
+    /*Read data section from AL file line by line, make sure that the right
+    opcode is being used i.e. DEC, extract the operands, insert symbols
+    in symbol table using lineNumber as address, format ML instruction the write it
+    in the ML file*/
+    /*if line is empty, just skip*/
+    while (line[0] == '\n')
+    {
         fgets(line, STRSIZE, ALFile);
-        while (line[0] == '\n') fgets(line, STRSIZE, ALFile);
-        printf("then %s.\n", line);
+    }
+    if (strcmp(line, "DATA.SECTION\n") == 0) {
+        /*scan first line of actual declarations*/
+        fgets(line, STRSIZE, ALFile);
+        while (line[0] == '\n')
+        {
+            fgets(line, STRSIZE, ALFile);
+        }
         while (strcmp (line, "CODE.SECTION\n") != 0) {
-            printf("bdhcc\n");
-            //we still didn't reach the end of the initialization section
-            //extract opcode and operands of DEC instructions
-            sscanf(line, "%s %s %s", opcode, op[0], op[1]); // DEC VAR_NAME VALUE, line number is address
-            //make sure that it's the right opcode
+            /*we still didn't reach the end of the initialization section*/
+            /*extract opcode and operands of DEC instructions*/
+            sscanf(line, "%s %s %s", opcode, op[0], op[1]);
             if (strcmp (opcode, "DEC") != 0) {
-               printf ("Error. Invalid declaration operation.\n");
+               printf ("Error. Invalid declaration operation at line %d.\n", lineNumber);
                errorCount++;
                return;
             }
-            //convert line number to string with leading zeros
+            /*convert line number to string with leading zeros*/
             sprintf(help, "%04d", lineNumber);
-            //use line number as address
-            //insert op[0] in symbol table using lineNumber as address
-            insert(symbols, op[0], help); // hashtable entry: (variable name: address)
-
-            // the value, op[1] is an integer, could be positive or negative
-            // need to pad it with zeros and simply print it in the ML file
-            //format op[1] as a string with leading zeros
+            /*use line number as address*/
+            insert(symbols, op[0], help);
+            /*convert op[1], the literal value, to integer*/
             literal_value = atoi(op[1]);
-            sprintf (ML_line, "%010d", literal_value); //11 characters overall with leading zeros if needed
+            /*pad with zeros*/
+            sprintf (ML_line, "%010d", literal_value);
+            /*format as necassary*/
             if (literal_value >= 0)
             {
                 formatML(ML_line, 1);
@@ -713,56 +786,56 @@ void initData () {
             {
                 formatML(ML_line, 2);
             }
-
-            //finally write to ML file
             fprintf (MLFile, "%s\n", ML_line);
             lineNumber++;
-            //scan next line
-
             fgets(line, STRSIZE, ALFile);
-            while (line[0] == '\n') fgets(line, STRSIZE, ALFile);
+            while (line[0] == '\n')
+            {
+                fgets(line, STRSIZE, ALFile);
+            }
         }
+        /*write separator*/
         fprintf (MLFile, "%s\n", "+8 8 8888 8888");
     }
     else {
-        printf ("Error. DATA.SECTION unspecified.\n");
+        printf ("Error. DATA.SECTION unspecified at line %d.\n", lineNumber);
         errorCount++;
         return;
     }
 }
 
-// $ need to squash the 3 following functions into one since they do very similar things
-
-int getOpcode(char* str) {
-    // given an AL opcode str, return the index of the entry in the opcodes hashtable
+int getOpcode(char* str)
+    /*hash str, and check if the this entry exists*/
+    /*return the index if it exists, return -1 otherwise*/
     int idx = hash(str);
     if (strcmp(opcodes[idx].key, str) == 0) {
-        // This should always be true, just making sure.
         return idx;
     }
     return -1;
 }
 
 int getLabel(char* str) {
-    // given a label str, return the index of the entry in the labels hashtable
+    /*hash str, and check if the this entry exists*/
+    /*return the index if it exists, return -1 otherwise*/
     int idx = hash(str);
     if (strcmp(labels[idx].key, str) == 0) {
-        // again, should always be true
         return idx;
     }
     return -1;
 }
 
 int getSymbol(char* str) {
+    /*hash str, and check if the this entry exists*/
+    /*return the index if it exists, return -1 otherwise*/
     int idx = hash(str);
     if (strcmp(symbols[idx].key, str) == 0) {
-        // should always be true
         return idx;
     }
     return -1;
 }
 
 int hash(char *str) {
+    /*hashing the key to get an index*/
     int key = 0;
     int i = 0;
     for (i = 0; str[i] != '\0'; i++)
@@ -771,50 +844,31 @@ int hash(char *str) {
 }
 
 void insert (HashTable* HT, char* key, char* value) {
-	//Given an item consisting of a key and value,
-	// insert the item into the specified hashtable.
-	//Opcodes hashtable: key is the Assembly opcode,
-	// value is the corresponding ML opcode
-	//Since we want constant lookup when we want to the corresponding value,
-	// we need to hash the AL opcode
-	// to assign each item to specific position in the hashtable, which is an array
-
-	/*HashTable new_item;
+	/*hash key and get index, insert new element at this index if it's vacant.
+	Collisions are handled using linear probing*/
 	int idx = hash(key);
-	strcpy(new_item.key, key);
-	strcpy(new_item.value, value);
-	// make sure the given index is not taken, i.e. HT[idx].key and .value are blank
-	// if so, simply create a new HT item with key & value (again, key is practically superfluous)
-	// and put it in there
-	//if (strcmp(HT[idx].key, "") == 0) HT[idx] = new_item;
-	if (HT[idx].key[0] == '\0') {
-        HT[idx] = new_item;
-    }
-	else {
-        printf("%s. ", key);
-		printf("Hash collision at idx %d.\n", idx);
-		errorCount++;
-	}*/
-
-	int n = hash(key);
-    int collisions = 0, tablesize = 20;
-    if (HT[n].key[0] == '\0')
+    int collisions = 0;
+    if (HT[idx].key[0] == '\0')
     {
-        strcpy(HT[n].key, key);
-        strcpy(HT[n].value, value);
+        strcpy(HT[idx].key, key);
+        strcpy(HT[idx].value, value);
     }
     else
     {
         collisions++;
         int j;
-        for (j = n; HT[j].key[0] != '\0' && j < tablesize; j++)
-            ;
-        if (j == tablesize)
+        for (j = n; HT[j].key[0] != '\0' && j < HTSIZE; j++)
+            {
+                /*do nothing*/
+            }
+        if (j == HTSIZE)
         {
             j = 0;
-            for (; HT[j].key[0] != '\0' && j < n; j++)
-                ;
-            if (j < n)
+            for (; HT[j].key[0] != '\0' && j < idx; j++)
+                {
+                    /*do nothing*/
+                }
+            if (j < idx)
             {
                 strcpy(HT[j].key, key);
                 strcpy(HT[j].value, value);
@@ -831,23 +885,23 @@ void insert (HashTable* HT, char* key, char* value) {
 }
 
 void initHashTables() {
-    //allocate memory for all our hashtables
+    /*allocate memory for all our hashtables*/
     opcodes = (HashTable*)malloc (HTSIZE*sizeof(HashTable));
     symbols = (HashTable*)malloc (HTSIZE*sizeof(HashTable));
     labels = (HashTable*)malloc (HTSIZE*sizeof(HashTable));
-    //initialize the values
+    /*initialize the values to blank strings*/
     for (int i = 0; i < HTSIZE; i++) {
         symbols[i].key[0] = '\0';
         symbols[i].value[0] = '\0';
         labels[i].key[0] = '\0';
         labels[i].value[0] = '\0';
         opcodes[i].key[0] = '\0';
-        opcodes[i].value[0] = '\0'; // Blank strings.
+        opcodes[i].value[0] = '\0';
     }
 }
 
 void fillOpcodes () {
-    //these are the opcode entries
+    /*these are the opcode entries*/
     char* entries[15][2] = {{"MOVE", "+0"}, {"MOVAC", "-0"},
     						{"ADD", "+1"}, {"SUB", "-1"},
     						{"MULT", "+2"},	{"DIV", "-2"},
@@ -858,10 +912,11 @@ void fillOpcodes () {
     						{"IN", "+7"}, {"OUT", "-7"},
     						{"HLT", "+8"}
                             };
-    						// Opcodes -3, -4, -8, +9, -9 free for now.
+    						/* Opcodes -3, -4, -8, +9, -9 free for now*/
 
     for (int i = 0; i < 15; i++) {
         insert(opcodes, entries[i][0], entries[i][1]);
     }
 }
+
 
