@@ -8,45 +8,52 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define memory_size 10000
-#define word_size 15
+#define MEMORY_SIZE 10000   /* Size of each of the arrays. */
+#define WORD_SIZE 15        /* Length of an ML instruction, spaces and zero delimiter included. */
+#define TRUE 0
+#define FALSE 0
 
 int operation_lookup[2][10] = {
     {0, 2, 4, 6, 8, 10, 12, 14, 16, 18},
     {1, 3, 5, 7, 9, 11, 13, 15, 17, 19}
-}; // All sign bit X opcode combinations.
+};                                      /* All possible 20 combinations of signs (2 rows)
+                                         * and opcode digits (10 columns), i.e. 20 operations. */
 
-int data_memory[memory_size];
-char instruction_memory[memory_size][word_size+1];
+int data_memory[MEMORY_SIZE];
+char instruction_memory[MEMORY_SIZE][WORD_SIZE];
 
-FILE* ml_program;
+FILE* ml_program;                       /* Input ML program file to be executed. */
 
-int AC = 0;
-int IP = 0;
+int AC = 0;     /* Accumulator */
+int IP = 0;     /* Instruction pointer */
 
-int verbose = 0;
-// if verbose, a lot of messages will be printed and all of memory will be displayed in the end
-// i'll do it later
+int verbose = FALSE;    /* If verbose is TRUE, many messages will be printed. */
 
 typedef struct {
-    int sign; // 0 is positive, 1 is negative
-    int operation;
-    int indicator;
-    int operand1;
-    int operand2;
-} instruction_struct;
+    int sign;           /* 0 for positive, 1 for negative. */
+    int operation;      /* The first digit of the instruction, i.e. the opcode digit. */
+    int indicator;      /* The second digit, i.e. the indicator digit that defines the type of the operands
+                         * (address or positive/negative value) if applicable. */
+    int operand1;       /* The positive integer given by the subsequent 4 digits of the instruction. */
+    int operand2;       /* The last 4 digits, also a positive integer. */
+} instruction_struct;   /* A sort of container for the instruction being decoded. */
 
 void initialize_memory() {
-    // Initialize all data memory locations to the default value 0.
-    // Initialize all instruction memory locations to the default instruction HALT.
-    for(int i=0; i < memory_size; i++) {
+    /* All data memory locations are initialized to 0.
+     * All instruction memory locations are initialized to the HALT instruction. */
+    if (verbose) printf("Now initializing memory.\n");
+    for(int i=0; i < MEMORY_SIZE; i++) {
         data_memory[i] = 0;
         strcpy(instruction_memory[i], "+8 0 0000 0000");
     }
 }
 
 void strip_spaces(char* integer) {
-    char output[word_size+2];
+    /* A helper function that removes spaces from a given string.
+     * This is needed for literal values that are read as lines from the ML program,
+     * because they need to be parsed as integers. */
+
+    char output[WORD_SIZE]; /* Temporary copy of the string. */
     int j = 0;
     for(int i=0; i <= strlen(integer); i++) {
         if (integer[i] != ' ') output[j++] = integer[i];
@@ -55,28 +62,32 @@ void strip_spaces(char* integer) {
 }
 
 void populate_memory() {
-    // Read the data initialization section of the ML program
-    // to populate some of the data memory.
-    // Stop when a separator is found.
-    char ml_line [word_size+2]; // added a couple of cells just to be safe
-    int data_idx = 0;
-    int code_idx = 0;
-    int sep_count = 0;
-    long int value;
-    if(ml_program == NULL) {
-        printf("problem opening file.");
+    /* This function populates data memory with the initialization data
+     * found in the first section of an ML program.
+     * It also loads all instructions into instruction memory. */
+
+    char ml_line [WORD_SIZE];       /* The line currently being read from the ML program file. */
+    int data_idx = 0;               /* The line number with respect to the initialization data section,
+                                     * which maps directly to the next address in data memory. */
+    int code_idx = 0;               /* Same idea, for the code section. */
+    int sep_count = 0;              /* The number of separators encountered so far.
+                                     * Needed to determine which section we are reading. */
+    long int value;                 /* Integer corresponding to a data line. */
+
+    if(ml_program == NULL) {        /* Make sure the file is there. */
+        if(verbose) printf("Input file does not exist or some other error opening it.\n");
         return;
     }
-    fgets(ml_line, word_size, ml_program);
+
+    fgets(ml_line, WORD_SIZE, ml_program);              /* Read the very first line. Can't use fscanf because we have spaces. */
     while(!feof(ml_program)) {
         if (strcmp(ml_line, "+8 8 8888 8888") == 0) {
-                printf("sep\n");
+            if (verbose) printf("Encountered separator.\n");
             sep_count ++;
         }
-        // Parse the line as an integer.
-        else if (sep_count == 0) {
+        else if (sep_count == 0) {                      /* Still in initialization section. */
             strip_spaces(ml_line);
-            value = atoi(ml_line);
+            value = atoi(ml_line);                      /* Parse line as signed integer. */
             data_memory[data_idx++] = value;
             printf("populated data loc %d with value %d\n", data_idx, value);
         }
@@ -92,9 +103,9 @@ void populate_memory() {
         else{
             printf("too many separators\n"); // can't happen anyway with this implementation
         }
-        fgets(ml_line, word_size, ml_program);
+        fgets(ml_line, WORD_SIZE, ml_program);
         while (ml_line[0] == '\n' && sep_count < 2)
-            fgets(ml_line, word_size, ml_program);
+            fgets(ml_line, WORD_SIZE, ml_program);
     }
 }
 
@@ -145,11 +156,11 @@ float perform_arithmetic(int operation, int indicator, int opd1, int opd2) {
 }
 
 float get_next_input_val() {
-    char input_line[word_size+2];
+    char input_line[WORD_SIZE+2];
     if(feof(ml_program)) return 1.5;
-    fgets(input_line, word_size, ml_program);
+    fgets(input_line, WORD_SIZE, ml_program);
     while (input_line[0] == '\n')
-        fgets(input_line, word_size, ml_program);
+        fgets(input_line, WORD_SIZE, ml_program);
     printf("input data %s\n", input_line);
     strip_spaces(input_line);
     return atoi(input_line)*1.0;
@@ -157,12 +168,14 @@ float get_next_input_val() {
 
 void perform_loop(int indicator, int opd1, int jump_loc) {
     int upper_bound;
+    int return_code;
     switch(indicator) {
         case 1: upper_bound = data_memory[opd1]; break;
         case 6: upper_bound = opd1; break;
     }
     while(AC < upper_bound) {
-        decode_execute(instruction_memory[jump_loc]);
+        return_code = decode_execute(instruction_memory[jump_loc]);
+        if(return_code == 0) return;
     }
 }
 
@@ -291,21 +304,24 @@ void decode_execute(char* instruction) {
         case 16:
             printf("HLT\n");
             // HALT, just stop
-            return;
+            return 0;
         case 17: break; // free opcodes at the moment
         case 18: break;
         case 19: break;
         default: printf("Issue with lookup.\n"); // Shouldn't happen though.
     }
+    return 1;
 }
 
 void read_decode_execute() {
-    char current_instruction [word_size+1];
+    char current_instruction [WORD_SIZE+1];
+    int return_code;
     printf("Started RDE.\n");
-    while (IP < 100) { // memory_size
+    while (IP < 100) { // MEMORY_SIZE
         strcpy(current_instruction, instruction_memory[IP]);
         IP++;
-        decode_execute(current_instruction);
+        return_code = decode_execute(current_instruction);
+        if(return_code == 0) return;
     }
 }
 
@@ -313,7 +329,7 @@ void display_vm_state() {
     printf("ACC: %d\n", AC);
     printf("IP: %d\n", IP);
     printf("\nData memory:\n");
-    for(int i=0; i < 100; i++) printf("%d ", data_memory[i]); // memory_size
+    for(int i=0; i < 100; i++) printf("%d ", data_memory[i]); // MEMORY_SIZE
     printf("\nInstruction memory:\n");
     for(int i=0; i < 100; i++) printf("%s ", instruction_memory[i]);
 }
