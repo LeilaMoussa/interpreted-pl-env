@@ -24,7 +24,7 @@ FILE* ml_program;                       /* Input ML program file to be executed.
 int AC = 0;                             /* Accumulator */
 int IP = 0;                             /* Instruction pointer */
 
-int verbose = TRUE;                    /* If verbose is TRUE, many messages will be printed. */
+int verbose = FALSE;                    /* If verbose is TRUE, many messages will be printed. */
 
 typedef struct {
     int sign;           /* 0 for positive, 1 for negative. */
@@ -87,7 +87,7 @@ void populate_memory() {
             value = atoi(ml_line);                      /* Parse line as signed integer. */
             data_memory[data_idx++] = value;            /* Write it in memory. */
             if(verbose)
-                printf("Data location %d has value %d.\n", data_idx, value);
+                printf("Data location %d has value %d.\n", data_idx-1, value);
         }
         else if (sep_count == 1) {                              /* In code section. */
             strcpy(instruction_memory[code_idx++], ml_line);    /* Load instruction into memory. */
@@ -196,7 +196,8 @@ float get_next_input_val() {
 int perform_loop(int indicator, int opd1, int jump_loc) {
     /* This function is an abstraction of the loop instruction.
      * Given the value OR location of the upper bound and the jump location,
-     * perform a loop. */
+     * perform a loop.
+     * IMPORTANT: the loop body consists of one statement only.*/
     int upper_bound;
     int return_code;
 
@@ -281,7 +282,7 @@ int decode_execute(char* instruction) {
             break;
         case 8:
             if (verbose) printf("Encountered JMPGE.\n");
-            if (indicator == 2) {                                       /* Same idea as JMPE. */
+            if (indicator == 1) {                                       /* Same idea as JMPE. */
                 if (data_memory[opd2] >= AC)
                     IP = opd1;
             }
@@ -398,7 +399,7 @@ void display_vm_state() {
 
 int main () {
     initialize_memory();
-    ml_program = fopen("MLcode2.txt", "r"); /* The input ML file is assumed to be in the same directory. */
+    ml_program = fopen("MLcode3.txt", "r"); /* The input ML file is assumed to be in the same directory. */
     populate_memory();                      /* Read data and program from file and populate data & instruction memory. */
     read_decode_execute();
     fclose(ml_program);                     /* Input file should not be closed before,
