@@ -1,5 +1,4 @@
 DATA.SECTION
-
 DEC       BASE      0
 DEC       B         0
 DEC       H         0
