@@ -1,26 +1,22 @@
 /* TODO
- * Handle input data section of the program.
- * Handle LABEL instruction.
- * Handle INPUT instruction.
  * More testing.
  * Clean up the code and add good comments.
- * Handle verbose option. (khodra fo9 t3am)
+ * Handle verbose option.
 */
-
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 #define memory_size 10000
-#define word_size 11
+#define word_size 15
 
 int operation_lookup[2][10] = {
     {0, 2, 4, 6, 8, 10, 12, 14, 16, 18},
     {1, 3, 5, 7, 9, 11, 13, 15, 17, 19}
 }; // All sign bit X opcode combinations.
 
-int data_memory[memory_size] = {0};
+int data_memory[memory_size];
 char instruction_memory[memory_size][word_size+1];
 
 FILE* ml_program;
@@ -44,6 +40,7 @@ void initialize_memory() {
     // Initialize all data memory locations to the default value 0.
     // Initialize all instruction memory locations to the default instruction HALT.
     for(int i=0; i < memory_size; i++) {
+        data_memory[i] = 0;
         strcpy(instruction_memory[i], "+8 0 0000 0000");
     }
 }
@@ -61,7 +58,7 @@ void populate_memory() {
     // Read the data initialization section of the ML program
     // to populate some of the data memory.
     // Stop when a separator is found.
-    char ml_line [word_size+3]; // added a couple of cells just to be safe
+    char ml_line [word_size+2]; // added a couple of cells just to be safe
     int data_idx = 0;
     int code_idx = 0;
     int sep_count = 0;
@@ -70,9 +67,10 @@ void populate_memory() {
         printf("problem opening file.");
         return;
     }
-    fscanf(ml_program, "%s", ml_line);
+    fgets(ml_line, word_size, ml_program);
     while(!feof(ml_program)) {
-        if (strcmp(ml_line, "+9 9 9999 9999") == 0) {
+        if (strcmp(ml_line, "+8 8 8888 8888") == 0) {
+                printf("sep\n");
             sep_count ++;
         }
         // Parse the line as an integer.
@@ -80,12 +78,13 @@ void populate_memory() {
             strip_spaces(ml_line);
             value = atoi(ml_line);
             data_memory[data_idx++] = value;
+            printf("populated data loc %d with value %d\n", data_idx, value);
         }
         else if (sep_count == 1) {
             strcpy(instruction_memory[code_idx++], ml_line);
         }
-        else if (sep_count == 2) {
-            return; // Input data will be ready as necessary
+        else if (sep_count == 2)
+                return; // Input data will be ready as necessary
             // There's no way we could reliably save the input data in an array anyway
             // because we don't know how many input instructions a program could have (theoretically infinitely many)
             // also not wise because of time & space cost
@@ -93,7 +92,9 @@ void populate_memory() {
         else{
             printf("too many separators\n"); // can't happen anyway with this implementation
         }
-        fscanf(ml_program, "%s", ml_line);
+        fgets(ml_line, word_size, ml_program);
+        while (ml_line[0] == '\n' && sep_count < 2)
+            fgets(ml_line, word_size, ml_program);
     }
 }
 
@@ -107,7 +108,7 @@ instruction_struct destructure_instruction(char* instruct) {
     if(sign_opc[0] == '+') instr_struct.sign = 0; // positive
     else instr_struct.sign = 1; // negative
 
-    instr_struct.opcode = abs(atoi(sign_opc));
+    instr_struct.operation = abs(atoi(sign_opc));
     instr_struct.indicator = ind;
     instr_struct.operand1 = opd1;
     instr_struct.operand2 = opd2;
@@ -127,7 +128,7 @@ float perform_arithmetic(int operation, int indicator, int opd1, int opd2) {
         case 7: a = -opd1; b = data_memory[opd2]; break;
         case 8: a = data_memory[opd1]; b = opd2; break;
         case 9: a = data_memory[opd1]; b = -opd2; break;
-        default: printf("Problem with indicator for arithmetic operation.\n"); return;
+        default: printf("Problem with indicator for arithmetic operation.\n"); return 1.5;
     }
     // now determine what to do based on operation (2, 3, 4, 5)
     switch (operation) {
@@ -146,7 +147,10 @@ float perform_arithmetic(int operation, int indicator, int opd1, int opd2) {
 float get_next_input_val() {
     char input_line[word_size+2];
     if(feof(ml_program)) return 1.5;
-    fscanf(ml_program, "%s", input_line);
+    fgets(input_line, word_size, ml_program);
+    while (input_line[0] == '\n')
+        fgets(input_line, word_size, ml_program);
+    printf("input data %s\n", input_line);
     strip_spaces(input_line);
     return atoi(input_line)*1.0;
 }
@@ -177,7 +181,7 @@ void decode_execute(char* instruction) {
     lookup = operation_lookup[sign][operation];
     switch (lookup) {
         case 0:
-            // MOV
+            printf("MOV\n");
             // from address to address OR from literal value to address
             // so indicator is either 2 or (6 or 7)
             if (indicator == 1) data_memory[opd1] = data_memory[opd2];
@@ -185,29 +189,30 @@ void decode_execute(char* instruction) {
             else if (indicator == 9) data_memory[opd1] = -opd2;
             break;
         case 1:
-            // MOV AC
+            printf("MOVAC\n");
             // opd2 and indicator are unused
             data_memory[opd1] = AC;
             break;
         case 2:
-            // ADD
+            printf("ADD\n");
             AC = (int)perform_arithmetic(2, indicator, opd1, opd2);
             break;
         case 3:
-            // SUB
+            printf("SUB\n");
             AC = (int)perform_arithmetic(3, indicator, opd1, opd2);
             break;
         case 4:
-            // MUL
+            printf("MUL\n");
             AC = (int)perform_arithmetic(4, indicator, opd1, opd2);
+            break;
         case 5:
-            // DIV
+            printf("DIV\n");
             result = perform_arithmetic(5, indicator, opd1, opd2);
             if ((int)result - result == 0) AC = (int)result; // integer
             else printf("You tried to divide by zero.\n");
             break;
         case 6:
-            // EQ
+            printf("JMPE\n");
             // opd1 is always an address, and opd2 can be either an address or a value
             // so indicator can be 1, or (8 or 9)
             if (indicator == 1) {
@@ -223,7 +228,7 @@ void decode_execute(char* instruction) {
         case 7: // Vacant opcode for now.
             break;
         case 8:
-            // GTE
+            printf("JMPGE\n");
             // can find a way to abstract this into a function along with EQ, if we want
             if (indicator == 2) {
                 if (data_memory[opd2] >= AC)
@@ -239,13 +244,13 @@ void decode_execute(char* instruction) {
             // Vacant opcode for now.
             break;
         case 10:
-            // Read from array
+            printf("RARR\n");
             // Indicator is unused.
             // opd2 is array start location, index is in AC, and destination is opd1
             data_memory[opd1] = data_memory[opd2 + AC];
             break;
         case 11:
-            // Write into array
+            printf("WARR\n");
             // opd2 can be a literal value or the address of the value to be written
             // so indicator can be 1 or (8 or 9)
             // opd1 is array start loc, idx is in AC
@@ -254,6 +259,7 @@ void decode_execute(char* instruction) {
             else printf("Invalid indicator value for operation WARR.\n");
             break;
         case 12:
+            printf("LOOP\n");
             // while AC is less than opd1, execute instruction at opd2
             // opd1 can be val (ind 6) or address (ind 1)
             perform_loop(indicator, opd1, opd2);
@@ -264,6 +270,7 @@ void decode_execute(char* instruction) {
             // not implementing this at the moment, quite complicated, not even sure if we're required to
             break;
         case 14:
+            printf("IN\n");
             // Input
             // opd1 is destination address, opd2 is unused
             // the cursor is still in the input section of the ML file
@@ -273,7 +280,7 @@ void decode_execute(char* instruction) {
             else printf("Encountered EOF while trying to read input.\n");
             break;
         case 15:
-            // output
+            printf("OUT\n");
             // opd1 is unused, opd2 is the value or the address
             // decided to just go with 1, 2, 3 as possible indicators, though anything else would technically work
             if (indicator == 1) printf(">>> %d\n", data_memory[opd2]);
@@ -282,6 +289,7 @@ void decode_execute(char* instruction) {
             else printf("Indicator in operation OUTPUT %d was not allowed.\n", indicator);
             break;
         case 16:
+            printf("HLT\n");
             // HALT, just stop
             return;
         case 17: break; // free opcodes at the moment
@@ -293,7 +301,7 @@ void decode_execute(char* instruction) {
 
 void read_decode_execute() {
     char current_instruction [word_size+1];
-    printf("started rde\n");
+    printf("Started RDE.\n");
     while (IP < 100) { // memory_size
         strcpy(current_instruction, instruction_memory[IP]);
         IP++;
@@ -304,15 +312,15 @@ void read_decode_execute() {
 void display_vm_state() {
     printf("ACC: %d\n", AC);
     printf("IP: %d\n", IP);
-    printf("Data memory:\n");
+    printf("\nData memory:\n");
     for(int i=0; i < 100; i++) printf("%d ", data_memory[i]); // memory_size
-    printf("Instruction memory:\n");
+    printf("\nInstruction memory:\n");
     for(int i=0; i < 100; i++) printf("%s ", instruction_memory[i]);
 }
 
 int main () {
     initialize_memory();
-    ml_program = fopen("ml_program.txt", "r");
+    ml_program = fopen("MLcode1.txt", "r");
     populate_memory(); // load data & program into memory
     read_decode_execute();
     fclose(ml_program); // Don't close before, because input data is read during execution.

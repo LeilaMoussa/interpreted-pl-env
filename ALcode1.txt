@@ -3,17 +3,17 @@ DEC       B         0
 DEC       H         0
 DEC       S         0
 CODE.SECTION
-IN        B
-IN        H
+IN        B         0000
+IN        H         0000
 MULT      B         B
-MOVAC     S
+MOVAC     S         0000
 MULT      B         H
-MOVAC     B
+MOVAC     B         0000
 MULT      0002      B
-MOVAC     B
+MOVAC     B         0000
 ADD       B         S
-MOVAC     S
-OUT       S
+MOVAC     S         0000
+OUT       S         0000
 HLT
 INPUT.SECTION
 0 0 0000 0010

@@ -7,7 +7,7 @@
 #define HTSIZE 200 //Hashtable size
 //$ rethink whether we need all this space
 // and whether we can afford to decrease it (hashing & collisions in mind) $
-#define STRSIZE 20 //Default size used in many instances
+#define STRSIZE 50 //Default size used in many instances
 
 //Struct for HashTables
 // in fact, this is the struct for items, not the table
@@ -27,7 +27,7 @@ HashTable* symbols; //this is our symbol table
 HashTable* labels; //this is our label table
 int errorCount = 0; //will include this in error messages when assembler fails
 
-void initHashTables(); //initializing our hashtables $
+void initHashTables(); //initializing our three hashtables
 void insert (HashTable*, char*, char*); //insert entries into hashtables
 int hash(char*); //hash function
 void initData(); //function that will read the initialization data section and print it in the output file
@@ -43,13 +43,15 @@ void removeSign(char*);//removes sign from literal value
 void fillOpcodes();
 
 int main (void) {
-    ALFile = fopen ("ALcode.txt", "r");
+    ALFile = fopen ("ALcode1.txt", "r");
+    if (ALFile == NULL) return 0;
     MLFile = fopen ("MLCode.txt", "w");
     initHashTables();
+    printf("%s %s\n", symbols[39].key, symbols[39].value);
     fillOpcodes();
-//    for (int i = 0; i < HTSIZE; i++) {
-//        printf("%s: %s, ", opcodes[i].key, opcodes[i].value);
-//    }
+    for (int i = 0; i < 200; i++) {
+        printf("%s: %s  \n", symbols[i].key, symbols[i].value);
+    }
     initData();
     initProgram();
     initInput();
@@ -130,14 +132,14 @@ int isLiteral (char* str) {
 }
 void initInput () {
     // Input data, i.e. the third section of the AL program
-   //char opcode [STRSIZE], op[2][STRSIZE]; //$
-   char line[STRSIZE];
-   //read until you reach the end to the file
-   while (!feof (ALFile)) {
+    //char opcode [STRSIZE], op[2][STRSIZE]; //$
+    char line[STRSIZE];
+    //read until you reach the end to the file
+    while (!feof (ALFile)) {
        //this is just like ML code, just read and write directly
-     fscanf (ALFile, "%s", line);
-     fprintf (MLFile, "%s\n", line);
-   }
+        fscanf (ALFile, "%s", line);
+        fprintf (MLFile, "%s\n", line);
+    }
 }
 
 void initProgram() {
@@ -486,7 +488,8 @@ void initProgram() {
             //terminate
             return;
         }
-    } // END WHILE. File cursor is at INPUT.SECTION line.
+    } // END WHILE. Input file cursor is at INPUT.SECTION line.
+    fprintf (MLFile, "%s\n", "+8 8 8888 8888");
 }
 
 void initData () {
@@ -504,7 +507,8 @@ void initData () {
     fscanf (ALFile, "%s", line);
     if (strcmp(line, "DATA.SECTION") == 0) {
         //scan first line of actual declarations
-        fscanf (ALFile, "%s", line);
+        fgets(line, 100, ALFile); // dump
+        fgets(line, 100, ALFile);
         while (strcmp (line, "CODE.SECTION") != 0) {
             //we still didn't reach the end of the initialization section
             //extract opcode and operands of DEC instructions
@@ -525,14 +529,15 @@ void initData () {
             // need to pad it with zeros and simply print it in the ML file
             //format op[1] as a string with leading zeros
             literal_value = atoi(op[1]);
-            sprintf (instruction, "%011d", literal_value); //11 characters overall with leading zeros if needed
+            sprintf (ML_line, "%011d", literal_value); //11 characters overall with leading zeros if needed
 
             //finally write to ML file
-            fprintf (MLFile, "%s\n", instruction);
+            fprintf (MLFile, "%s\n", ML_line);
             lineNumber++;
             //scan next line
             fscanf(ALFile, "%s", line);
         }
+        fprintf (MLFile, "%s\n", "+8 8 8888 8888");
     }
     else {
         printf ("Error. DATA.SECTION unspecified.\n");
@@ -596,8 +601,10 @@ void insert (HashTable* HT, char* key, char* value) {
 	// make sure the given index is not taken, i.e. HT[idx].key and .value are blank
 	// if so, simply create a new HT item with key & value (again, key is practically superfluous)
 	// and put it in there
-	if (strcmp(HT[idx].key, "") == 0) HT[idx] = new_item;
+	//if (strcmp(HT[idx].key, "") == 0) HT[idx] = new_item;
+	if (strlen(HT[idx].key) == 0) HT[idx] = new_item;
 	else {
+        printf("%s. ", key);
 		printf("Hash collision at idx %d.\n", idx);
 		errorCount++;
 	}
@@ -609,8 +616,7 @@ void initHashTables() {
     symbols = (HashTable*)malloc (HTSIZE*sizeof(HashTable));
     labels = (HashTable*)malloc (HTSIZE*sizeof(HashTable));
     //initialize the values
-    for (int i = 0; i < HTSIZE; i++)
-    {
+    for (int i = 0; i < HTSIZE; i++) {
         symbols[i].key[0] = '\0';
         symbols[i].value[0] = '\0';
         labels[i].key[0] = '\0';
