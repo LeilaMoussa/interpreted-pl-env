@@ -180,7 +180,7 @@ float get_next_input_val() {
      * It's called upon each INPUT instruction. */
     /* Again, the float has a zero fractional part if the data is read correctly,
      * otherwise, if there is no input, this is an error, and the fractional part is nonzero. */
-    char input_line[WORD_SIZE+2];
+    char input_line[WORD_SIZE];
     if(feof(ml_program)) {
         if (verbose) printf("No input found!\n");
         return ERROR_CODE;
@@ -374,13 +374,26 @@ void read_decode_execute() {
 
 void display_vm_state() {
     /* This function shows what the memory and registers look like at the end of all execution. */
+    int to_print;
     printf("--State of the VM.--\n");
-    printf("ACC: %d\n", AC);
-    printf("IP: %d\n", IP);
-    printf("\nData memory:\n");
-    for(int i=0; i < MEMORY_SIZE; i++) printf("%d ", data_memory[i]);
-    printf("\nInstruction memory:\n");
-    for(int i=0; i < MEMORY_SIZE; i++) printf("%s ", instruction_memory[i]);
+    if(verbose) {
+        printf("ACC: %d\n", AC);
+        printf("IP: %d\n", IP);
+    }
+    printf("\nData memory, ");
+    if(verbose) {
+        printf("all slots:\n");
+        to_print = MEMORY_SIZE;
+    }
+    else {
+        printf("first 200 slots only:\n");
+        to_print = 200;
+    }
+    for(int i=0; i < to_print; i++) printf("%d ", data_memory[i]);
+    if(verbose) {
+        printf("\nInstruction memory, all slots:\n");
+        for(int i=0; i < MEMORY_SIZE; i++) printf("%s ", instruction_memory[i]);
+    }
 }
 
 int main () {
@@ -390,6 +403,6 @@ int main () {
     read_decode_execute();
     fclose(ml_program);                     /* Input file should not be closed before,
                                              * because input data is read during execution when necessary. */
-    if(verbose) display_vm_state();         /* Display AC, IP, and memory, for transparency & debugging. */
+    display_vm_state();                     /* Display AC, IP, and memory, for transparency & debugging. */
 	return 0;
 }
