@@ -8,7 +8,7 @@ DEC       TEMP      0
 DEC       TEMPID    0
 CODE.SECTION
 IN      N
-SUB       0001      N
+SUB       N         0001
 MOVAC     N
 ADD       0000      BASE
 LBL       L1
