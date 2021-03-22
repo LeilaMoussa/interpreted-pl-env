@@ -138,7 +138,7 @@ void initInput () {
     while (!feof (ALFile)) {
        //this is just like ML code, just read and write directly
         fscanf (ALFile, "%s", line);
-        fprintf (MLFile, "%s\n", line);
+        fprintf (MLFile, "%s\n", line); //$ formatting
     }
 }
 
@@ -148,7 +148,7 @@ void initProgram() {
     char line[STRSIZE]; //used to read each line
     int temp; //temporary opcode, symbol, and label index storage
     char help [5]; //useful string for formatting
-    int lineNumber = 0; //needed for referencing
+    int lineNumber = 1; //needed for referencing
     int flag1, flag2; //used to build the indicator
     int errFlag = 0;
     int indicator;
@@ -261,6 +261,7 @@ void initProgram() {
                     flag1 = 2;
                 }
                 else {
+                    printf("err1\n");
                     errFlag = 1;
                 }
 
@@ -287,10 +288,11 @@ void initProgram() {
                     flag2 = 2;
                 }
                 else {
+                    printf("err1\n");
                     errFlag = 1;
                 }
                 if (errFlag) {
-                    printf("Error. Invalid MOVE, MULT, ADD, SUB, or DIV statement.\n");
+                    printf("Error. Invalid MULT, ADD, SUB, or DIV statement.\n");
                     errorCount++;
                     return;
                 }
@@ -650,7 +652,7 @@ void initData () {
     //first string stores the opcode, second stores the two operands
     char opcode[STRSIZE], op[2][STRSIZE];
     //the line code will allow us to address data memory
-    int lineNumber = 0;
+    int lineNumber = 1;
     int literal_value;
     //read first line of code
     //fscanf (ALFile, "%s", line);
@@ -836,4 +838,3 @@ void fillOpcodes () {
         insert(opcodes, entries[i][0], entries[i][1]);
     }
 }
-
