@@ -1,0 +1,45 @@
+
+DATA.SECTION
+DEC       BASE      0
+DEC       MAX       0
+DEC       N         0
+DEC       ARR       0
+DEC       TEMP      0
+DEC       TEMPID    0
+CODE.SECTION
+IN      N
+SUB       0001      N
+MOVAC     N
+ADD       0000      BASE
+LBL       L1
+IN      TEMP
+WARR      ARR       TEMP
+LOOP      N         L1
+ADD       0000      BASE
+LBL       L2
+RARR      TEMP      ARR
+MOVAC     TEMPID
+ADD       0000      MAX
+JMPGE     L3        TEMP
+MOVAC     MAX
+ADD       0000      TEMPID
+LOOP      N         L2
+OUT       MAX
+HLT
+LBL       L3
+MOVAC     MAX
+ADD       0000      TEMPID
+MOVE      MAX       TEMP
+LOOP      N         L2
+OUT       MAX
+HLT
+INPUT.SECTION
+0 0 0000 0005
+0 0 0000 0029
+0 0 0000 0785
+0 0 0000 0009
+0 0 0000 0002
+0 0 0000 0013
+
+
+
