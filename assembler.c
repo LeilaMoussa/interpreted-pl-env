@@ -47,11 +47,11 @@ int main (void) {
     if (ALFile == NULL) return 0;
     MLFile = fopen ("MLCode.txt", "w");
     initHashTables();
-    printf("%s %s\n", symbols[39].key, symbols[39].value);
+    //printf("%s %s\n", symbols[39].key, symbols[39].value);
     fillOpcodes();
-    for (int i = 0; i < 200; i++) {
-        printf("%s: %s  \n", symbols[i].key, symbols[i].value);
-    }
+    //for (int i = 0; i < 200; i++) {
+    //    printf("%s: %s  \n", symbols[i].key, symbols[i].value);
+    //}
     initData();
     initProgram();
     initInput();
@@ -579,11 +579,11 @@ int getSymbol(char* str) {
 
 int hash(char *str) {
     // Djb2 hash function, should be a very good function
-    unsigned long hash = 5381;
-    int c;
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-    return hash % HTSIZE;
+    int key = 0;
+    int i = 0;
+    for (i = 0; str[i] != '\0'; i++)
+        key = (int)str[i] + 3 * key;
+    return key % HTSIZE;
 }
 
 void insert (HashTable* HT, char* key, char* value) {
@@ -594,7 +594,7 @@ void insert (HashTable* HT, char* key, char* value) {
 	//Since we want constant lookup when we want to the corresponding value,
 	// we need to hash the AL opcode
 	// to assign each item to specific position in the hashtable, which is an array
-	HashTable new_item;
+	/*HashTable new_item;
 	int idx = hash(key);
 	strcpy(new_item.key, key);
 	strcpy(new_item.value, value);
@@ -602,12 +602,46 @@ void insert (HashTable* HT, char* key, char* value) {
 	// if so, simply create a new HT item with key & value (again, key is practically superfluous)
 	// and put it in there
 	//if (strcmp(HT[idx].key, "") == 0) HT[idx] = new_item;
-	if (strlen(HT[idx].key) == 0) HT[idx] = new_item;
+	if (HT[idx].key[0] == '\0') {
+        HT[idx] = new_item;
+    }
 	else {
         printf("%s. ", key);
 		printf("Hash collision at idx %d.\n", idx);
 		errorCount++;
-	}
+	}*/
+	int n = hash(key);
+    int collisions = 0, tablesize = 20;
+    if (HT[n].key[0] == '\0')
+    {
+        strcpy(HT[n].key, key);
+        strcpy(HT[n].value, value);
+    }
+    else
+    {
+        collisions++;
+        int j;
+        for (j = n; HT[j].key[0] != '\0' && j < tablesize; j++)
+            ;
+        if (j == tablesize)
+        {
+            j = 0;
+            for (; HT[j].key[0] != '\0' && j < n; j++)
+                ;
+            if (j < n)
+            {
+                strcpy(HT[j].key, key);
+                strcpy(HT[j].value, value);
+            }
+            else
+                return;
+        }
+        else
+        {
+            strcpy(HT[j].key, key);
+            strcpy(HT[j].value, value);
+        }
+    }
 }
 
 void initHashTables() {
