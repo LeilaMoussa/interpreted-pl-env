@@ -169,10 +169,73 @@ void initProgram() {
             //handle each opcode
 
             //cases that are handled similarly are grouped together
-            if (strcmp (opcode, "+0")==0 ||strcmp (opcode, "+1")==0 ||
+
+            if (strcmp(opcode, "+0") == 0)
+            {
+                temp = getSymbol(op[0]);
+                if (temp >= 0)
+                {
+                    strcpy(op[0], symbols[temp].value);
+                    flag1 = 0;
+
+                }
+                else if (isAddress(op[0]))
+                {
+                    removeBrackets(op[0]);
+                    flag1 = 0;
+                }
+                else
+                {
+                    errFlag = 1;
+                }
+                temp = getSymbol(op[1]);
+                if (temp >= 0)
+                {
+                    strcpy (op[1], symbols[temp].value);
+                    flag2 = 0;
+                }
+                else if (isAddress (op[1]))
+                {
+                    removeBrackets(op[1]);
+                    flag2 = 0;
+                }
+                else if (isLiteral(op[1]) == 1)
+                {
+                    removeSign(op[1]);
+                    flag2 = 1;
+                }
+                else if (isLiteral (op[1]) == 2)
+                {
+                    removeSign(op[1]);
+                    flag2 = 2;
+                }
+                else
+                {
+                    errFlag = 1;
+                }
+                if (errFlag)
+                {
+                    printf ("Error. Invalid MOVE operation\n");
+                    errorCount++;
+                    return;
+                }
+                if (flag2 = 0)
+                {
+                    indicator = 1;
+                }
+                else if (flag2 = 1)
+                {
+                    indicator = 8;
+                }
+                else if (flag2 = 2)
+                {
+                    indicator = 9;
+                }
+            }
+
+            else if (strcmp (opcode, "+1")==0 ||
                 strcmp (opcode, "-1")==0 || strcmp (opcode, "+2")==0 ||
                 strcmp (opcode, "-2")==0) {
-                    //$ rethink: is MOVE really like the arithmetic operations?
                  //check for op[0]: symbol, address, value?
 
                 temp = getSymbol(op[0]); // op[0] is operand1
@@ -265,15 +328,31 @@ void initProgram() {
             else if (strcmp(opcode, "-0") == 0) { // MOVAC
                 //make sure that op[1] is unused
                 //make sure that op[0] is an address
-                if (strcmp(op[1], "0000")==0 && isAddress(op[0])) {
-                    removeBrackets(op[0]);
-                    //build indicator
-                    indicator = 0;
+                if (strcmp(op[1], "0000") == 0)
+                {
+                    temp = getSymbol (op[0]);
+                    if (temp >= 0)
+                    {
+                        strcpy (op[0], symbols[temp].value);
+                        indicator = 0;
+
+                    }
+                    else if (isAddress(op[0]))
+                    {
+                        removeBrackets(op[0]);
+                        indicator = 0;
+                    }
+                    else
+                    {
+                        printf  ("Error. Invalid MOVAC operation. \n");
+                        errorCount++;
+                        return;
+                    }
                 }
-                else {
-                    printf ("Error. MOVAC statement invalid.");
+                else
+                {
+                    printf  ("Error. Invalid MOVAC operation. \n");
                     errorCount++;
-                    //terminate function
                     return;
                 }
             }
@@ -289,7 +368,13 @@ void initProgram() {
                         strcpy (op[0], labels[temp].value);
 
                         // now, look at operand2
-                        if (isAddress (op[1])) {
+                        temp = getSymbol(op[1]);
+                        if (temp >= 0)
+                        {
+                            strcpy (op[1], symbols[temp].value);
+                            indicator = 1;
+                        }
+                        else if (isAddress (op[1])) {
                             removeBrackets(op[1]);
                             indicator = 1;
                         }
@@ -307,7 +392,13 @@ void initProgram() {
                         removeBrackets(op[0]);
                         // and check operand2 the same way
                         // repetitive: needs to be put in a function
-                        if (isAddress (op[1])) {
+                        temp = getSymbol(op[1]);
+                        if (temp >= 0)
+                        {
+                            strcpy (op[1], symbols[temp].value);
+                            indicator = 1;
+                        }
+                        else if (isAddress (op[1])) {
                             removeBrackets(op[1]);
                             indicator = 1;
                         }
@@ -330,10 +421,19 @@ void initProgram() {
                 else if (strcmp (opcode, "+5") == 0) {
                     // RARR
                     //make sure that both operands are addresses
-                   if (isAddress(op[0]) && isAddress(op[1])) {
-                       removeBrackets(op[0]);
+                   if (isAddress(op[1])) {
                        removeBrackets(op[1]);
-                       indicator = 0; //not used
+                       temp = getSymbol(op[0]);
+                       if (temp >= 0)
+                       {
+                           strcpy (op[0], symbols[temp].value);
+                           indicator = 0;
+                       }
+                       else if (isAddress(op[0]))
+                       {
+                           removeBrackets(op[0]);
+                           indicator = 0;
+                       }
                    }
                    else {
                        printf ("Error. RARR statement invalid.\n");
@@ -348,7 +448,13 @@ void initProgram() {
                     if (isAddress(op[0])) {
                         removeBrackets(op[0]);
                         // this process of checking operand 2 is the same as above
-                        if (isAddress(op[1])) {
+                        temp = getSymbol (op[1]);
+                        if (temp >= 0)
+                        {
+                            strcpy (op[1], symbols[temp].value);
+                            indicator = 1;
+                        }
+                        else if (isAddress(op[1])) {
                             removeBrackets(op[1]);
                             indicator = 1;
                         }
@@ -373,8 +479,13 @@ void initProgram() {
                     temp = getLabel(op[1]);
                     if (temp >= 0) {
                         strcpy (op[1], labels[temp].value);
-
-                        if (isAddress(op[0])) {
+                        temp = getSymbol(op[0]);
+                        if (temp >= 0)
+                        {
+                            strcpy (op[0], symbols[temp].value);
+                            indicator = 1;
+                        }
+                        else if (isAddress(op[0])) {
                             removeBrackets(op[0]);
                             indicator = 1;
                         }
@@ -389,8 +500,13 @@ void initProgram() {
                     }
                     else if (isAddress(op[1])) {
                         removeBrackets(op[1]);
-                        // again, refactoring needed
-                        if (isAddress(op[0])) {
+                        temp = getSymbol(op[0]);
+                        if (temp >= 0)
+                        {
+                            strcpy (op[0], symbols[temp].value);
+                            indicator = 1;
+                        }
+                        else if (isAddress(op[0])) {
                             removeBrackets(op[0]);
                             indicator = 1;
                         }
@@ -427,14 +543,35 @@ void initProgram() {
                 else if (strcmp (opcode, "+7") == 0) {
                     // INPUT
                     //make sure op[1] is unused and op[0] is address
-                    if (strcmp (op[1], "0000") == 0 && isAddress(op[0])) {
+                    /*if (strcmp (op[1], "0000") == 0 && isAddress(op[0])) {
                         removeBrackets(op[0]);
                         indicator = 0;
                     }
+                    else if (strcmp(op[1], "0000") == 0 && )
                     else {
                         printf ("Error. IN statement invalid.\n");
                         errorCount++;
                         return;
+                    }*/
+                    if (strcmp (op[1], "0000") == 0)
+                    {
+                        temp = getSymbol(op[0]);
+                        if (temp>=0)
+                        {
+                            strcpy (op[0], symbols[temp].value);
+                            indicator = 0;
+                        }
+                        else if (isAddress(op[0]))
+                        {
+                            removeBrackets(op[0]);
+                            indicator = 0;
+                        }
+                        else
+                        {
+                            printf ("Error. IN statement invalid.\n");
+                            errorCount++;
+                            return;
+                        }
                     }
                 } // END INPUT
                 else if (strcmp (opcode, "-7") == 0) {
@@ -442,6 +579,12 @@ void initProgram() {
                     //make sure op[0] is unused
                     //check op[1]
                     if (strcmp (op[0], "0000") == 0) {
+                        temp = getSymbol(op[1]);
+                        if (temp >= 0)
+                        {
+                            strcpy (op[1], symbols[temp].value);
+                            indicator = 1;
+                        }
                         if (isAddress(op[1])) {
                             // output the contents of an address
                             removeBrackets(op[1]);
@@ -693,3 +836,4 @@ void fillOpcodes () {
         insert(opcodes, entries[i][0], entries[i][1]);
     }
 }
+
