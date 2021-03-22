@@ -41,7 +41,7 @@ int isLiteral(char*); //checks if operand is literal value
 void removeBrackets(char*);//removes brackets from address
 void removeSign(char*);//removes sign from literal value
 void fillOpcodes();
-
+void formatML(char*, int);
 int main (void) {
     ALFile = fopen ("ALcode1.txt", "r");
     if (ALFile == NULL) return 0;
@@ -65,7 +65,35 @@ int main (void) {
     fclose(MLFile);
     return 0;
 }
-
+void formatML(char* str, int flag)
+{
+    char help[STRSIZE];
+    int i;
+    int k;
+    if (flag == 1)
+    {
+        help[0] = '+';
+    }
+    else if (flag == 2)
+    {
+        help[0] = '-';
+    }
+    help[1] = str[0];
+    help[2] = ' ';
+    help[3] = str[1];
+    help[4]= ' ';
+    k = 2;
+    for (i = 5; i<9; i++)
+    {
+        help[i] = str[k++];
+    }
+    help[i] = ' ';
+    for (i = 1; i<14; i++)
+    {
+        help[i] = str[k++];
+    }
+    strcpy(str, help);
+}
 void removeBrackets (char* str) {
     int k = 0;
     int i;
@@ -137,7 +165,7 @@ void initInput () {
     //read until you reach the end to the file
     while (!feof (ALFile)) {
        //this is just like ML code, just read and write directly
-        fscanf (ALFile, "%s", line);
+        fgets(line, STRSIZE, ALFile);
         fprintf (MLFile, "%s\n", line); //$ formatting
     }
 }
@@ -545,16 +573,6 @@ void initProgram() {
                 else if (strcmp (opcode, "+7") == 0) {
                     // INPUT
                     //make sure op[1] is unused and op[0] is address
-                    /*if (strcmp (op[1], "0000") == 0 && isAddress(op[0])) {
-                        removeBrackets(op[0]);
-                        indicator = 0;
-                    }
-                    else if (strcmp(op[1], "0000") == 0 && )
-                    else {
-                        printf ("Error. IN statement invalid.\n");
-                        errorCount++;
-                        return;
-                    }*/
                     if (strcmp (op[1], "0000") == 0)
                     {
                         temp = getSymbol(op[0]);
@@ -685,8 +703,16 @@ void initData () {
             // need to pad it with zeros and simply print it in the ML file
             //format op[1] as a string with leading zeros
             literal_value = atoi(op[1]);
-            sprintf (ML_line, "%011d", literal_value); //11 characters overall with leading zeros if needed
-            // $ spaces needed here!!
+            sprintf (ML_line, "%010d", literal_value); //11 characters overall with leading zeros if needed
+            if (literal_value >= 0)
+            {
+                formatML(ML_line, 1);
+            }
+
+            else if (literal_value < 0)
+            {
+                formatML(ML_line, 2);
+            }
 
             //finally write to ML file
             fprintf (MLFile, "%s\n", ML_line);
@@ -838,3 +864,4 @@ void fillOpcodes () {
         insert(opcodes, entries[i][0], entries[i][1]);
     }
 }
+
