@@ -1,0 +1,36 @@
+
+DATA.SECTION
+DEC       BASE      0
+DEC       N         0
+DEC       TEMP      0
+CODE.SECTION
+IN        N         0000
+ADD       +0010     BASE
+JMPGE     L1        N
+ADD       BASE      BASE
+JMPGE     L2        N
+HLT       0000      0000
+LBL       0000      L2
+JMPE      L3        N
+ADD       +0001     BASE
+LBL       0000      L4
+MOVAC     TEMP      0000
+LBL       0000      L5
+OUT       0000      TEMP
+LOOP      TEMP      L5
+ADD       TEMP      BASE
+LOOP      N         L4
+HLT       0000      0000
+LBL       0000      L3
+HLT       0000      0000
+LBL       0000      L1
+ADD       +0001     BASE
+LBL       0000      L6
+MOVAC     TEMP      0000
+OUT       0000      TEMP
+ADD       +0001      TEMP
+LOOP      N         L6
+HLT       0000      0000
+INPUT.SECTION
+0 0 0000 0018
+
