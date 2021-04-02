@@ -200,27 +200,24 @@ int perform_loop(int indicator, int opd1, int jump_loc, int loop_instr_loc) {
      * perform a loop. */
     int upper_bound;
     int return_code;
-    int idx;
+    int idx = AC;
 
-    idx = AC;
-    IP = jump_loc; // rethink: this is a do while loop, is that what we want?
-    //printf("loop instr loc is %d and jump loc is %d.\n", loop_instr_loc, jump_loc);
+    IP = jump_loc;
 
     switch(indicator) {                                             /* Determine what operand 1 is: a value or an address. */
         case 1: upper_bound = data_memory[opd1]; break;
         case 6: upper_bound = opd1; break;
     }
 
-    while (idx < upper_bound) {
-        if (IP == loop_instr_loc) {
+    while (idx < upper_bound) {                                     /* idx keeps the value of the AC intact */
+        if (IP == loop_instr_loc) {                                 /* and though that's not realistic, it's the only feasible solution */
             IP = jump_loc;
-            idx++;
+            idx++;                                                  /* One iteration is done now that we're back at the loop instruction. */
             continue;
         }
-        //printf("upper_bound %d, idx %d, ip %d\n", upper_bound, idx, IP);
         return_code = decode_execute(instruction_memory[IP]);
         IP++;
-        if(return_code == 0) return 0;
+        if(return_code == 0) return 0;                              /* a HALT was encountered. */
     }
     return 1;
 }
