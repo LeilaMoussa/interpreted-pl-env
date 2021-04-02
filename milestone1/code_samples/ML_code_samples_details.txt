@@ -1,0 +1,148 @@
+============= Low complexity program ===========
+MLcode1.txt: Calculate the area & perimeter of a rectangle given its length and width.
+
+Input:
+18
+20
+Output:
+360
+76
+
+Line	Memory	Address	Content		Explanation
+
+1	Data	0	+0 0 0000 0000	Init data memory location 0 to the number 0
+2	Data	1	+0 0 0000 0000	Location 1 etc.
+3	Data	2	+0 0 0000 0000	...
+4	Data	3	+0 0 0000 0000	...
+5	Data	4	+0 0 0000 0000 	...
+6	Data	5	+0 0 0000 0000	...
+7	---	---	+8 8 8888 8888	Separator
+8	Code	0	+7 0 0001 0000 	Read first input into data loc 0001
+9	Code	1	+7 0 0002 0000	Read second input into data loc 0002
+10	Code	2	+2 1 0001 0002	Multiply contents of addresses 0001 & 0002 (result stored in AC)
+11	Code	3	-0 0 0003 0000	Move AC contents out into data loc 0003
+12	Code	4	-7 1 0000 0003	Output contents of data loc 0003 (the area)
+13	Code	5	+1 1 0001 0002	Add the contents of data locations 1 & 2 (result in AC)
+14	Code	6	-0 0 0005 0000	Move AC out into data loc 0005
+15	Code	7	+2 6 0002 0005	Multiply the contents of data loc 5 by the positive integer 2
+16	Code	8	-0 0 0004 0000	Move result from AC to data location 0004
+17	Code	9	-7 1 0000 0004	Output contents of data loc 0004 (the perimeter)
+18	Code	10	+8 0 0000 0000	Stop
+19	---	---	+8 8 8888 8888	Separator
+20	---	---	+0 0 0000 0018	Input value of 18, read first
+21	---	---	+0 0 0000 0020	Input value of 20, read second
+
+============ Medium complexity program ============
+MLcode2.txt: Print the first n numbers of the Fibonacci sequence, where n is a positive integer given as input.
+
+Input:
+10
+Output:
+0
+1
+1
+2
+3
+5
+8
+13
+21
+34
+
+Line	Memory	Address	Content		Explanation
+
+1	Data	0	+0 0 0000 0000	Init data loc 0 to the value 0, same for the next init data lines
+1	Data	1	+0 0 0000 0000	...
+3	Data	2	+0 0 0000 0000	...
+4	Data	3	+0 0 0000 0000	...
+5	Data	4	+0 0 0000 0000	...
+6	---	---	+8 8 8888 8888	Separator
+7	Code	0	+7 0 0001 0000	Read input into data loc 0001
+8	Code	1	+1 2 0001 0000	Store the value 1 in the AC by adding the numbers 1 & 0
+9	Code	2	+4 1 0004 0001	If the input value is GTE to 0, jump to instruction line 4 (otherwise, continue sequential flow)
+10	Code	3	+8 0 0000 0000	Stop program (if the input is negative)
+11	Code	4	+0 8 0003 0001	Assign the value 1 to data location 0003 (second Fibonacci number)
+12	Code	5	-7 1 0000 0002	Output contents of data loc 0002
+13	Code	6	+1 1 0002 0003	Add contents of data locs 2 & 3 (next number in the sequence)
+14	Code	7	-0 0 0004 0000	Move AC out into data loc 0004
+15	Code	8	+0 1 0002 0003	Move contents of data loc 3 to data loc 2 (second number becomes first number...)
+16	Code	9	+0 1 0003 0004	Move contents of data loc 4 to 3 (...and third number becomes second number in the sequence)
+17	Code	10	+6 1 0001 0005	While the AC < the input (i.e. the number of terms), jump to instruction line 5.
+					Note that the current interpreter implementation preserves the initial value of the AC and increments that initial value,
+					as opposed to referring back to the AC at each iteration. This is convenient but unrealistic -- might revisit.
+18	Code	11	+8 0 0000 0000	Stop.
+19	---	---	+8 8 8888 8888	Separator
+20	---	---	+0 0 0000 0010	Input value 10
+
+=========== High complexity program ===========
+MLcode3.txt: Given an integer n as input, print all integers between 1 and n inclusively, each as many times as the number itself. For example:
+
+Input:
+6
+Output:
+1
+2
+2
+3
+3
+3
+4
+4
+4
+4
+5
+5
+5
+5
+5
+6
+6
+6
+6
+6
+6
+
+Input:
+-2
+Output:
+1
+2
+2
+
+Input:
+0
+Output:
+(nothing)
+
+Line	Memory	Address	Content		Explanation
+
+0	Data	0	+0 0 0000 0000	Init data loc 0 to the value 0, same for the next 2 lines
+1	Data	1	+0 0 0000 0000	...
+2	Data	2	+0 0 0000 0000	...
+3	---	---	+8 8 8888 8888	Separator
+4	Code	0	+7 0 0001 0000	Read input into data loc 1
+5	Code	1	+1 2 0000 0000	Add numbers 0 & 0 ==> Store 0 in AC
+					Note that at the level of the interpreter, the AC is initialized by default to 0,
+					making this specific operation superfluous, but nevertheless important for the understandability
+					and cleanliness of the program
+6	Code	2	+4 1 0005 0001	If the input number at location 1 is GTE to 0, jump to instruction line 5
+7	Code	3	+2 7 0001 0001	Execute this if the number is negative. Multiply the input value by the negative integer -1 ==> its negative is now in the AC
+8	Code	4	-0 0 0001 0000	Move AC into location 1 again ==> Now the negative input is replaced by its negative
+9	Code	5	+1 2 0001 0000	Add the integers 1 & 0 ==> AC is 1
+10	Code	6	+4 1 0008 0001	If the value in data loc 1 (positive input value) is GTE to 1, jump to instruction line 8 (otherwise means the input was 0 ==> do nothing)
+11	Code	7	+8 0 0000 0000	Stop
+12	Code	8	-0 0 0002 0000	Move the AC into data loc 2
+13	Code	9	-7 1 0000 0002	Output data loc 2
+14	Code	10	-0 0 0003 0000	Move the AC into data loc 3 (for incrementing)
+15	Code	11	+1 8 0003 0001	Add 1 to data loc 3 (effectively incrementing the AC)
+16	Code	12	+6 1 0002 0009	Inner loop: while AC < data loc 2, jump to instruction 0009
+17	Code	13	+1 8 0002 0001	Increment data location 2 (result in AC)
+18	Code	14	-0 0 0002 0000	Move incremented data location 2 result from AC to data location 2 (data loc 2 is now incremented)
+19	Code	15	+1 2 0000 0000	Reset AC to 0 for the next iteration of the outer loop
+20	Code	16	+6 1 0001 0012	Outer loop: while AC < input value, jump to the inner loop at line 12
+					Note that data loc 2 holds the number being printed, while the AC determines how many more times it is printed
+21	Code	17	+8 0 0000 0000	Stop
+22	---	---	+8 8 8888 8888	Sep
+23	---	---	+0 0 0000 0005	Input value of 5
+
+End.
