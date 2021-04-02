@@ -68,12 +68,14 @@ void removeSign(char*);
 void fillOpcodes();
 /*Function to format ML instruction*/
 void formatML(char*, int);
+/*Function to format input data*/
+void formatIN (char*, int);
 
 /*Main: Entry Point and Driver Program*/
 
 int main (void) {
 
-    ALFile = fopen ("ALcode1.txt", "r");
+    ALFile = fopen ("ALcode3.txt", "r");
 
     if (ALFile == NULL)
     {
@@ -102,10 +104,10 @@ void formatML(char* str, int flag)
     /*Take the unformatted string, add a sign at the beginning,
     insert spaces between ML instruction components, and copy
     to the instruction*/
-
     char help[STRSIZE];
     int i;
     int k;
+
     if (flag == 1)
     {
         help[0] = '+';
@@ -117,20 +119,44 @@ void formatML(char* str, int flag)
     help[1] = str[0];
     help[2] = ' ';
     help[3] = str[1];
-    help[4]= ' ';
+    help[4] = ' ';
     k = 2;
     for (i = 5; i<9; i++)
     {
         help[i] = str[k++];
     }
     help[i] = ' ';
-    for (i = 1; i<14; i++)
+    for (i = 10; i<14; i++)
     {
         help[i] = str[k++];
     }
     help[i] = '\0';
     strcpy(str, help);
 }
+
+void formatIN (char* str, int flag)
+{
+    int i;
+    int k;
+    char help[STRSIZE];
+    if (flag == 1)
+    {
+        help[0] = '+';
+    }
+    else if (flag == 2)
+    {
+        help[0] = '-';
+    }
+    k = 0;
+    for (i = 1; i<strlen(str); i++)
+    {
+        help[i] = str[k++];
+    }
+    help[i] = '\0';
+    strcpy(str, help);
+
+}
+
 void removeBrackets (char* str) {
     /*Take address in AL (written an [xxxx]
     and remove the brackets to make it in ML
@@ -141,7 +167,7 @@ void removeBrackets (char* str) {
     for (i = 1; i < strlen(str)-1; i++) {
         help[k++] = str[i];
     }
-    help[5] = '\0';
+    help[4] = '\0';
     strcpy(str, help);
 }
 
@@ -204,12 +230,28 @@ void initInput () {
     /*Read the input data section line by line
     and write to ML file*/
     /*String to reach each line*/
+    int input;
     char line[STRSIZE];
     while (!feof (ALFile)) {
         fgets(line, STRSIZE, ALFile);
+        if (line[0] == '\n')
+        {
+
+        }
+        else {
+        input = atoi (line);
         /*format this string by adding sign and relevant spaces*/
-        formatML(line);
+        if (input >= 0)
+        {
+            formatIN(line, 1);
+        }
+        else if (input < 0)
+        {
+            formatIN(line, 2);
+        }
+
         fprintf (MLFile, "%s\n", line);
+        }
     }
 }
 
@@ -496,8 +538,30 @@ void initProgram() {
                 } //END JUMPE, JUMPGE
                 else if (strcmp (opcode, "+5") == 0) {
                 //START RARR
-                /*op[1] is an address and op[0] can be symbol or address*/
-                   if (isAddress(op[1])) {
+                /*op[1] is an address or symbol and op[0] can be symbol or address*/
+                    temp = getSymbol(op[1]);
+                    if (temp >= 0)
+                    {
+                        strcpy (op[1], symbols[temp].value);
+                        temp = getSymbol(op[0]);
+                        if (temp >= 0)
+                       {
+                           strcpy (op[0], symbols[temp].value);
+                           indicator = 0;
+                       }
+                       else if (isAddress(op[0]))
+                       {
+                           removeBrackets(op[0]);
+                           indicator = 0;
+                       }
+                       else
+                       {
+                            printf ("Error. RARR statement invalid at line %d.\n", lineNumber);
+                            errorCount++;
+                            return;
+                       }
+                    }
+                   else if (isAddress(op[1])) {
                        removeBrackets(op[1]);
                        temp = getSymbol(op[0]);
                        if (temp >= 0)
@@ -525,8 +589,37 @@ void initProgram() {
                 } //END RARR
                 else if (strcmp (opcode, "-5") == 0) {
                     //START WARR
-                    /*op[0] is address and op[1] can be symbol, address, or literal*/
-                    if (isAddress(op[0])) {
+                    /*op[0] is address or symbol and op[1] can be symbol, address, or literal*/
+                    temp = getSymbol(op[0]);
+                    if (temp >= 0)
+                    {
+                        strcpy (op[0], symbols[temp].value);
+                        temp = getSymbol (op[1]);
+                        if (temp >= 0)
+                        {
+                            strcpy (op[1], symbols[temp].value);
+                            indicator = 1;
+                        }
+                        else if (isAddress(op[1])) {
+                            removeBrackets(op[1]);
+                            indicator = 1;
+                        }
+                        else if (isLiteral(op[1]) == 1) {
+                            removeSign(op[1]);
+                            indicator = 8;
+                        }
+                        else if (isLiteral(op[1]) == 2) {
+                            removeSign(op[1]);
+                            indicator = 9;
+                        }
+                        else
+                        {
+                            printf ("Error. WARR statement invalid at line %d.\n", lineNumber);
+                            errorCount++;
+                            return;
+                        }
+                    }
+                    else if (isAddress(op[0])) {
                         removeBrackets(op[0]);
                         temp = getSymbol (op[1]);
                         if (temp >= 0)
@@ -629,6 +722,8 @@ void initProgram() {
                     if (strcmp (op[0], "0000") == 0) {
                        sprintf (help, "%04d", lineNumber+1);
                        insert (labels, op[1], help);
+                       temp = getLabel(op[1]);
+                       strcpy(op[1], labels[temp].value);
                        indicator = 0;
                     }
                     else {
@@ -677,7 +772,7 @@ void initProgram() {
                             strcpy (op[1], symbols[temp].value);
                             indicator = 1;
                         }
-                        if (isAddress(op[1])) {
+                        else if (isAddress(op[1])) {
                             removeBrackets(op[1]);
                             indicator = 1;
                         }
@@ -808,10 +903,11 @@ void initData () {
     }
 }
 
-int getOpcode(char* str)
+int getOpcode(char* str){
     /*hash str, and check if the this entry exists*/
     /*return the index if it exists, return -1 otherwise*/
-    int idx = hash(str);
+    int idx;
+    idx = hash(str);
     if (strcmp(opcodes[idx].key, str) == 0) {
         return idx;
     }
@@ -848,9 +944,9 @@ int hash(char *str) {
 }
 
 void insert (HashTable* HT, char* key, char* value) {
-	/*hash key and get index, insert new element at this index if it's vacant.
-	Collisions are handled using linear probing*/
-	int idx = hash(key);
+    /*hash key and get index, insert new element at this index if it's vacant.
+    Collisions are handled using linear probing*/
+    int idx = hash(key);
     int collisions = 0;
     if (HT[idx].key[0] == '\0')
     {
@@ -861,7 +957,7 @@ void insert (HashTable* HT, char* key, char* value) {
     {
         collisions++;
         int j;
-        for (j = n; HT[j].key[0] != '\0' && j < HTSIZE; j++)
+        for (j = idx; HT[j].key[0] != '\0' && j < HTSIZE; j++)
             {
                 /*do nothing*/
             }
@@ -907,16 +1003,16 @@ void initHashTables() {
 void fillOpcodes () {
     /*these are the opcode entries*/
     char* entries[15][2] = {{"MOVE", "+0"}, {"MOVAC", "-0"},
-    						{"ADD", "+1"}, {"SUB", "-1"},
-    						{"MULT", "+2"},	{"DIV", "-2"},
-    						{"JMPE", "+3"},
-    						{"JMPGE", "+4"},
-    						{"RARR", "+5"}, {"WARR", "-5"},
-    						{"LOOP", "+6"}, {"LBL", "-6"},
-    						{"IN", "+7"}, {"OUT", "-7"},
-    						{"HLT", "+8"}
+                            {"ADD", "+1"}, {"SUB", "-1"},
+                            {"MULT", "+2"}, {"DIV", "-2"},
+                            {"JMPE", "+3"},
+                            {"JMPGE", "+4"},
+                            {"RARR", "+5"}, {"WARR", "-5"},
+                            {"LOOP", "+6"}, {"LBL", "-6"},
+                            {"IN", "+7"}, {"OUT", "-7"},
+                            {"HLT", "+8"}
                             };
-    						/* Opcodes -3, -4, -8, +9, -9 free for now*/
+                            /* Opcodes -3, -4, -8, +9, -9 free for now*/
 
     for (int i = 0; i < 15; i++) {
         insert(opcodes, entries[i][0], entries[i][1]);
