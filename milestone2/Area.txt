@@ -1,0 +1,12 @@
+nil => func entry => nil [
+	var num length.
+	var num width.
+	var num area.
+
+	length := read.
+	~ Does read have any parameters? Should we write nil? ~
+	width := read.
+
+	area := length * width.
+	area => write.  ~ print ~
+]

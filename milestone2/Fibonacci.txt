@@ -1,0 +1,35 @@
+~ This is the medium complexity code. ~
+
+num n => func fib => num [
+	~ This function returns the n-th Fibonacci number. ~
+	var num a := 0.
+	var num b := 1.
+	var num next.
+	var num cnt := 2.
+
+	check (n > 2) [
+		iterif (n > cnt) [
+			next := a+b.
+			a := b.
+			b := next.
+			cnt := cnt+1.
+		]
+		give next.
+	]
+	other [
+		check (n = 1) [
+			give 0.
+		]
+		other [
+			give 1.
+		]
+	]
+
+]
+
+nil => func entry => nil [
+	var num n.
+	n := read.  ~ like input() or scanf() ~
+	ans := n => fib.
+	ans => write. ~ like print() ~
+]

@@ -1,0 +1,95 @@
+~ This is the high complexity sample program. ~
+
+fix num size := 10.  ~ Global constant ~
+
+(num@ array) => func mergeSort => nil [
+	~ Iterative merge sort, we're not brave enough for recursion yet ~
+
+	~ Define func merge nested ~
+	(num@ array, num start, num mid, num end) => func merge => nil [
+		var num left_size := mid - start + 1.
+		var num right_size := end - mid.
+		var num#left_size left.
+		var num#right_size right.
+		var num i.
+		var num j.
+		var num k.
+		~ Avoiding defining more than one variable on the same line. ~
+
+		i := 0.
+		iterif (left_size > i) [
+			left#i := array#(start+i). 
+			~ Parentheses for indices that are expressions, but we can just assign to a variable and use that variable, whatever is easier ~
+			i := i+1.
+		]
+		j := 0.
+		iterif (right_size > j) [
+			right#j := array#(mid + 1 + j)
+			j := j+1.
+		]
+
+		i := 0.
+		j := 0.
+		k := start.
+
+		iterif (left_size > i & right_size > j) [
+			check (right#j > left#i) [
+				array#k := left#i.
+				i := i+1.
+			]
+			other [
+				array#k := right#j.
+				j := j+1.
+			]
+			k := k+1.
+		]
+
+		iterif (left_size > i) [
+			array#k := left#i.
+			i := i+1.
+			k := k+1.
+		]
+		iterif (right_size > j) [
+			array#k := right#j.
+			j := j+1.
+			k := k+1.
+		]
+	]
+
+	~ Define utility function min nested as well ~
+	(num a, num b) => func min => num [
+		check (a > b) [
+			give a.
+		]
+		other [
+			give b.
+		]
+	]
+
+	~ mergeSort starts here ~
+	var num current_size := 1.
+	var num start_point.
+	
+	iterif (size > current_size) [
+		start_point := 0.
+		iterif (size-1 > start_point) [
+			~ Block-scoped variable declarations ~
+			var num mid := (start_point + current_size -1, size-1) => min.
+			var num end_point := (start_point + 2*current_size -1, size-1) => min.
+			(array, start_point, mid, end_point) => merge.
+		]
+	]
+
+]
+
+nil => func entry => nil [
+	var num#size array.
+	var num i := 0.
+
+	iterif (size > i) [
+		array#i := read.
+		i := i+1.
+	]
+
+	(array) => mergeSort.  ~ Base address of array, implicitly ~
+]
