@@ -1,0 +1,34 @@
+Notes about some of the notations below:
+-	^ means NOT, so ^'~' means any character except '~'
+-	. means anything, so .* means any number of any character
+-	Reserved words are listed, but the process of handling them at the level of the parser is not depicted.
+
+----------------------------|------------------------------|---------------------------------------------------------
+  Language Element		RE				Explanation
+----------------------------|------------------------------|---------------------------------------------------------
+
+Reserved words			['func' 'entry' 'var'		Class of words that cannot be user-defined identifier.
+				'fix' 'num' 'ascii'
+				'num@' 'ascii@' 'num#'
+				'ascii#' 'give' 'check'
+				'other' 'iterif' 'read'
+				'write' 'nil']
+
+User-defined identifiers	( [a-zA-Z] | '_' ) +		Any combination of alphabet and underscores, no digits
+
+Numeric literals		('+' | '-') [0-9]+		Signed int
+
+Character literals		' " ' .? ' " '			Single character between double quotes, for example "m" or even ""
+
+String literals			' " ' .* ' " '			Any number of characters between double quotes, for example "hello" or even ""
+
+Operators			[':=' '=' '>'			Relational, arithmetic, logical operators
+				 '+' '-' '*' '/'
+				 '^' '&' '|']
+
+Punctuation			['.' ',']			End of statement '.' and ',' separator for paramters or structure elements for example
+
+Comments			'~' ^'~' '~'			Any character except '~' between two '~'s
+
+Whitespace			[' ' '\n']			Spaces & new lines
+----------------------------|-------------------------------|---------------------------------------------------------
