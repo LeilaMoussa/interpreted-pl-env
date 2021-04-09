@@ -420,7 +420,7 @@ int main (int argc, char* argv[]) {
     } else {
         strcpy(filepath, argv[1]);
     }
-    if (argc == 3 && strcmp(argv[2], "--v") == 0) verbose = TRUE;
+    if (argc == 3 && strcmp(argv[2], "-v") == 0) verbose = TRUE;
 
     initialize_memory();
     ml_program = fopen(filepath, "r");      /* The input ML file is assumed to be in the same directory. */
