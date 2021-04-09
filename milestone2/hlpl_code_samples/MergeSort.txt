@@ -65,7 +65,7 @@ fix num size := 10.  ~ Global constant ~
 
 	~ Define utility function min nested as well ~
 	(num a, num b) => func min => (num) [
-		check (isGreater(a, b)) [
+		check (isGreater(b, a)) [
 			give a.
 		]
 		other [
