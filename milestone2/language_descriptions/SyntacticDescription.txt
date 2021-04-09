@@ -1,0 +1,63 @@
+-------------------------------Syntactic description with EBNF--------------------------------
+
+<program> → {<declaration>} {<function>} <mainFunction>
+
+<declaration> →  <varDeclaration> | <fixDeclaration> ‘.’
+
+<varDeclaration> → ‘var’<typeSpecifier> <userDefinedIdentifier>
+
+<fixDeclaration> →  ‘fix’<typeSpecifier> <userDefinedIdentifier> ‘:=’ (<expression> | <operation> | <functionCall> ) 
+
+<typeSpecifier> →  ‘num’ | ‘ascii’|‘num@’ | ‘ascii@’| ‘num#’ <size> | ‘ascii#’ <size> | ‘ ’
+
+<size> → <userDefinedIdentifier> | <digit> {<digit>}
+
+<mainFunction> →  ‘(’ ‘)’ ‘=>’ ‘entry’  ‘=>’   ‘(’ ‘)’ ‘[‘  {<declaration>} {<statement>} ‘]’ 
+
+<function> → ‘(’<parameter> ‘)’ ‘=>’  ‘func’<userDefinedIdentifier>  ‘=>’ ‘(’<typeSpecifier> ‘)’ ‘[‘ {<declaration>} {<statement>} ‘]’
+
+<parameter> → <typeSpecifier> <identifier> {‘,’<typeSpecifier>  <identifier>} 
+
+<statement> → <assignment> | <return> | <selection> | <loop> | <comment> | <functionCall>‘.’
+
+<assignment> → <userDefinedIdentifier> ‘:=’ (<expression> ‘.’| <operation> | <functionCall> ‘.’) 
+
+<return> → ‘give’ <returnedExpression> ‘.’ 
+
+<returnedExpression> →  <expression> | <functionCall>
+
+<selection> → ‘check’ ‘(‘ <conditionStatement> ‘)’ ‘[‘ {<declaration>} {<statement>} ‘]’ ‘other’ ‘[‘ {<declaration>} {<statement>} ‘]’ 
+
+<loop> →  ‘iterif’ ‘(‘ <conditionStatement> ‘)’ ‘[‘ {<declaration>} {<statement>} ‘]’ 
+
+<comment> → ‘~’ {<commentChar>} ‘~’
+
+<operation> → (‘add’ | ‘sub’ | ‘mult’ | ‘div’) ‘(’ <operand> ‘,’ <operand>‘)’ ‘.’
+
+<operand> → <numericLiteral> | <userDefinedIdentifier> | <operation> | <functionCall>
+
+<functionCall> → ‘(’ <expression>{‘,’  <expression>} ‘)’ ‘=>’ <identifier> 
+
+<conditionStatement> → [‘^’] <comparaison>  { (‘&’ | ‘|’ ) [‘^’] <comparaison>}
+
+<comparaison> → (‘isEqual’ | ‘isGreater’) ‘(’ <compared> ‘,’ <compared> ‘)’
+
+<compared> → <numericLiteral> | <userDefinedIdentifier> | <functionCall>
+
+<expression> → ‘ “ ’ <char> ‘ ” ’| <numericLiteral> | <userDefinedIdentifier> 
+
+<identifier> → <userDefinedIdentifier> | <reservedWord>
+
+<userDefinedIdentifier> → (‘_’ | <alpha> ) {(‘_’ | <alpha>) } 
+
+<reservedWord> → ‘read’ | ‘write’
+
+<char> → every keyboard character 
+
+<commentChar> → every keyboard character except ~
+
+<numericLiteral> → [‘-’]{ <digit>}
+
+<digit> → ‘0’| ‘1’ | ‘2’| ’3’ | ’4’ | ‘5’ | ‘6’ | ‘7’ |  ‘8’ | ‘9’
+
+<alpha> → all alphabets
