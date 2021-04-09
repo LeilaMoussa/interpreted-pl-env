@@ -14,9 +14,9 @@ We are constructing a basic but comprehensive programming language environment w
     
     `assembler.c` takes care of translating any valid .asbl file to a .ml with the same purpose and content.
     The folder `code_samples` contains three sample Assembly programs that were tested with the assembler.
-     1. ALcode1.asbl:
-     2. ALcode2.asbl:
-     3. ALcode3.asbl:
+     1. `ALcode1.asbl`:
+     2. `ALcode2.asbl`:
+     3. `ALcode3.asbl`:
     
   * Interpreting
 
@@ -24,9 +24,9 @@ We are constructing a basic but comprehensive programming language environment w
     
     `interpreter.c` is given an .ml file as input, containing a valid ML program, and executes it, thereby simulating a Virtual Machine written in C.
     `code_samples` also contains three sample Machine Language programs:
-      1. Rectangle.ml: This is the low complexity sample program. It simply takes length and width as input and outputs the area and parameter of the corresponding rectangle.
-      2. Fibonacci.ml: This is the medium complexity sample program (one loop). It prints the Fibonacci sequence until the n-th number, where n is taken as input.
-      3. PrintMultiple.ml: This is the higher complexity sample program (nested loop). It prints numbers from 1 to n, each as many times as that number.
+      1. `Rectangle.ml`: This is the low complexity sample program. It simply takes length and width as input and outputs the area and parameter of the corresponding rectangle.
+      2. `Fibonacci.ml`: This is the medium complexity sample program (one loop). It prints the Fibonacci sequence until the n-th number, where n is taken as input.
+      3. `PrintMultiple.ml`: This is the higher complexity sample program (nested loop). It prints numbers from 1 to n, each as many times as that number.
       
 - Milestone 2: The second part of the project looks at the opposite end of the sequence, the high-level programming language, or HLPL.
     This milestone consists of the language description:
@@ -37,9 +37,22 @@ We are constructing a basic but comprehensive programming language environment w
 - Milestone 3: To be added soon...
 
 ### Documentation & Design
-#### Languages
+#### Usage
+To run the interpreter, run the following commands which assume a gcc compiler is installed and functional on your machine:
+`$ gcc  ./interpreter.c`
+then
+`$ ./interpreter.exe <input_file_path> <-v>`
+Where the `-v` refers to `verbose`.
+If these 2 arguments are not specified, the default is `./code_samples/Rectangle.ml` as input file path, and `FALSE` for verbose.
 
-#### Processes
+*Assembler instructions coming soon...*
+
+*Other instructions will be added in future milestones.*
+
+#### Languages
+- Assembly:
+- Machine Language:
+- High Level Programming Language:
 
 ### Todos
 - Patches: continuous work on any previous material, either to fix bugs, introduce enhancements, optimize performance, clean/beautify, or make necessary tweaks due to new information/requirements. See issue#1 for a list of patches.
@@ -48,3 +61,4 @@ We are constructing a basic but comprehensive programming language environment w
 - Milestone 5: Subprogram Call & Return
 
 ### Comments and Notes
+See issue#2 for patches that have been accomplished between deliverables.
