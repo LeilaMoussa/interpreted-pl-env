@@ -16,15 +16,16 @@ Reserved words			['func' 'entry' 'var'		Class of words that cannot be user-defin
 
 User-defined identifiers	( [a-zA-Z] | '_' ) +		Any combination of alphabet and underscores, no digits
 
-Numeric literals		('+' | '-') [0-9]+		Signed int
+Numeric literals		('-'?) [0-9]+			Signed int
 
 Character literals		' " ' .? ' " '			Single character between double quotes, for example "m" or even ""
 
 String literals			' " ' .* ' " '			Any number of characters between double quotes, for example "hello" or even ""
 
-Operators			[':=' '=' '>'			Relational, arithmetic, logical operators
-				 '+' '-' '*' '/'
-				 '^' '&' '|']
+Operators			['add' 'sub' 'mult'		Arithmetic, relational, logical
+				 'div' 'isEqual'
+				 'isGreater' ':=',
+				 '&' '|' '^']
 
 Punctuation			['.' ',']			End of statement '.' and ',' separator for paramters or structure elements for example
 

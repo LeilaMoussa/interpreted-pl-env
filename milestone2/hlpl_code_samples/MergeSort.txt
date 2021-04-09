@@ -1,12 +1,19 @@
 ~ This is the high complexity sample program. ~
 
-fix num size := 10.  ~ Global constant ~
+fix num size.  ~ Global constant ~
+size := 10.
 
-(num@ array) => func mergeSort => nil [
+fix num zero.
+fix num one.
+zero := 0.
+one := 1.
+
+
+(num@ array) => func mergeSort => () [
 	~ Iterative merge sort, we're not brave enough for recursion yet ~
 
 	~ Define func merge nested ~
-	(num@ array, num start, num mid, num end) => func merge => nil [
+	(num@ array, num start, num mid, num end) => func merge => () [
 		var num left_size := mid - start + 1.
 		var num right_size := end - mid.
 		var num#left_size left.
@@ -82,14 +89,15 @@ fix num size := 10.  ~ Global constant ~
 
 ]
 
-nil => func entry => nil [
+() => entry => () [
 	var num#size array.
-	var num i := 0.
+	var num i.
+	i := 0.
 
-	iterif (size > i) [
+	iterif (isGreater(size, i)) [
 		array#i := read.
 		i := i+1.
 	]
 
-	(array) => mergeSort.  ~ Base address of array, implicitly ~
+	(array) => mergeSort.  ~ Base address of array is given, implicitly ~
 ]

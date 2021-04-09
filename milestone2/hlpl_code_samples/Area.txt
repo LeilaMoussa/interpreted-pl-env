@@ -1,12 +1,18 @@
-nil => func entry => nil [
+~ This is the low complexity HLPL code ~
+
+(nil) => entry => (nil) [
 	var num length.
 	var num width.
 	var num area.
 
-	length := read.
-	~ Does read have any parameters? Should we write nil? ~
-	width := read.
+	~ Call function read which takes no parameters. ~
+	length := () => read.
+	width := () => read.
 
-	area := length * width.
-	area => write.  ~ print ~
+	area := mult(length, width).
+	~ mult is the reserved word for * operation ~
+
+	~ Print the result through the function call to write ~
+	~ Parameter is what is being written ~
+	(area) => write.
 ]

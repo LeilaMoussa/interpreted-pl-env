@@ -1,3 +1,5 @@
+/* From milestone 1 */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -24,8 +26,7 @@ FILE* ml_program;                       /* Input ML program file to be executed.
 int AC = 0;                             /* Accumulator */
 int IP = 0;                             /* Instruction pointer */
 
-int verbose = FALSE;                    /* If verbose is TRUE, many messages will be printed.
-                                         * FALSE by default. */
+int verbose = FALSE;                    /* If verbose is TRUE, many messages will be printed. */
 
 typedef struct {
     int sign;           /* 0 for positive, 1 for negative. */
@@ -73,7 +74,7 @@ void populate_memory() {
     long int value;                 /* Integer corresponding to a data line. */
 
     if(ml_program == NULL) {        /* Make sure the file is there. */
-        printf("Input file does not exist or some other error opening it.\n");
+        if(verbose) printf("Input file does not exist or some other error opening it.\n");
         return;
     }
 
@@ -194,30 +195,23 @@ float get_next_input_val() {
     return atoi(input_line)*1.0;
 }
 
-int perform_loop(int indicator, int opd1, int jump_loc, int loop_instr_loc) {
+int perform_loop(int indicator, int opd1, int jump_loc) {
     /* This function is an abstraction of the loop instruction.
      * Given the value OR location of the upper bound and the jump location,
-     * perform a loop. */
+     * perform a loop.
+     * IMPORTANT: the loop body consists of one statement only.*/
     int upper_bound;
     int return_code;
-    int idx = AC;
-
-    IP = jump_loc;
 
     switch(indicator) {                                             /* Determine what operand 1 is: a value or an address. */
         case 1: upper_bound = data_memory[opd1]; break;
         case 6: upper_bound = opd1; break;
     }
-
-    while (idx < upper_bound) {                                     /* idx keeps the value of the AC intact */
-        if (IP == loop_instr_loc) {                                 /* and though that's not realistic, it's the only feasible solution */
-            IP = jump_loc;
-            idx++;                                                  /* One iteration is done now that we're back at the loop instruction. */
-            continue;
-        }
-        return_code = decode_execute(instruction_memory[IP]);
-        IP++;
-        if(return_code == 0) return 0;                              /* a HALT was encountered. */
+    while(AC < upper_bound) {                                       /* Loop condition */
+        IP = jump_loc;                                              /* Jump. */
+        return_code = decode_execute(instruction_memory[IP]);       /* Loop body. */
+        AC++;                                                       /* Incrementation of index. */
+        if(return_code == 0) return 0;
     }
     return 1;
 }
@@ -227,7 +221,7 @@ int decode_execute(char* instruction) {
      * determines the operation it represents, and executes it. */
     char sign;
     instruction_struct instr_struct;
-    int lookup, indicator, operation, opd1, opd2, result, input, loop_instr_loc;
+    int lookup, indicator, operation, opd1, opd2, result, input;
 
     instr_struct = destructure_instruction(instruction);    /* Break up the instruction into the 5 members of an instruction struct. */
     sign = instr_struct.sign;                               /* Unpack the members. */
@@ -308,7 +302,7 @@ int decode_execute(char* instruction) {
                                                                          * operand are addresses. The offset is in the accumulator. */
             break;
         case 11:
-            if (verbose) printf("Encountered WARR.\n");
+            if(verbose) printf("Encountered WARR.\n");
             if (indicator == 1)                                         /* Operand 1 is always an address, operand 2 can be an address */
                 data_memory[opd1 + AC] = data_memory[opd2];
             else if (indicator == 8 || indicator == 9)                  /* or a literal value whose sign we don't care about. */
@@ -317,11 +311,9 @@ int decode_execute(char* instruction) {
                 printf("Invalid indicator value for operation WARR.\n");
             break;
         case 12:
-            if (verbose) printf("Encountered LOOP.\n");
-            loop_instr_loc = IP-1;
-            result = perform_loop(indicator, opd1, opd2, loop_instr_loc);
+            if(verbose) printf("Encountered LOOP.\n");
+            result = perform_loop(indicator, opd1, opd2);
             if (result == 0) return 0;                                  /* Loop terminated due to a HALT instruction in the body. */
-            IP = loop_instr_loc+1;
             break;
         case 13:
             /* This opcode corresponds to -6 in our ML, meaning LABEL.
@@ -374,7 +366,7 @@ void read_decode_execute() {
     int return_code;                                            /* return_code determines whether to carry on execution of stop
                                                                  * completely due to a HALT. */
     if (verbose) printf("Started RDE.\n");
-    while (IP < MEMORY_SIZE) {
+    while (IP < MEMORY_SIZE) { //$
         strcpy(current_instruction, instruction_memory[IP]);
         IP++;                                                   /* IP is incremented by default, but may exhibit non linear progression
                                                                  * due to a JUMP instruction. */
@@ -386,7 +378,7 @@ void read_decode_execute() {
 void display_vm_state() {
     /* This function shows what the memory and registers look like at the end of all execution. */
     int to_print;
-    printf("\n--State of the VM.--\n");
+    printf("--State of the VM.--\n");
     if(verbose) {
         printf("ACC: %d\n", AC);
         printf("IP: %d\n", IP);
@@ -407,27 +399,13 @@ void display_vm_state() {
     }
 }
 
-int main (int argc, char* argv[]) {
-    char filepath [1000];
-    strcpy(filepath, "code_samples\\Rectangle.mlg");
-    if (argc < 2) {
-        printf("WARNING. Input Machine Language file path missing.\n");
-        printf("Proceeding with default input file Rectangle.mlg...\n");
-    }
-    else if (argc > 3) {
-        printf("ERROR. Too many arguments.\n");
-        return 1;
-    } else {
-        strcpy(filepath, argv[1]);
-    }
-    if (argc == 3 && strcmp(argv[2], "-v") == 0) verbose = TRUE;
-
+int main () {
     initialize_memory();
-    ml_program = fopen(filepath, "r");      /* The input ML file is assumed to be in the same directory. */
+    ml_program = fopen("code_samples\\Rectangle.mlg", "r"); /* The input ML file is assumed to be in the same directory. */
     populate_memory();                      /* Read data and program from file and populate data & instruction memory. */
     read_decode_execute();
     fclose(ml_program);                     /* Input file should not be closed before,
                                              * because input data is read during execution when necessary. */
     display_vm_state();                     /* Display AC, IP, and memory, for transparency & debugging. */
-	return 0;
+    return 0;
 }
