@@ -40,12 +40,12 @@ We are constructing a basic but comprehensive programming language environment w
 
 ### Documentation & Design
 #### Usage
-To run the interpreter, run the following commands which assume a gcc compiler is installed and functional on your machine:
-`$ gcc  ./interpreter.c`
-then
-`$ ./a.exe <input_file_path> <-v>`
-Where the `-v` refers to `verbose`.
-For the moment, gcc outputs `a.exe`, we'll try to find a way to output `<file_name>.exe` instead.
+To run the interpreter, run the following commands which assume a gcc compiler is installed and functional on your machine:  
+`$ gcc  ./interpreter.c`  
+then  
+`$ ./a.exe <input_file_path> <-v>`  
+Where the `-v` refers to `verbose`.  
+For the moment, gcc outputs `a.exe`, we'll try to find a way to output `<file_name>.exe` instead.  
 If these 2 arguments are not specified, the default is `./code_samples/Rectangle.mlg` as input file path, and `FALSE` for verbose.
 
 *Assembler instructions coming soon...*
@@ -54,14 +54,22 @@ If these 2 arguments are not specified, the default is `./code_samples/Rectangle
 
 #### Languages
 - Assembly:
-   Our Assembly language supports the following operation
+   Our Assembly language supports the following operations:
    
-         Operation   |     Example     |     Explanation
+         Operation   |     Example     |     Description/Explanation
        --------------|-----------------|-------------------
        DEC           |   DEC           |    Declare a variable
+       MOV           |   MOV           |    Move or assign
+       MOVAC         |   MOVAC         |    Move from AC to data memory location
+       ADD           |   ADD           
        
 - Machine Language:
+   Our ML supports the following operations:
+   *table...*
+   An ML instruction is structured as follows:
+   *structure as a schema...*
 - High Level Programming Language:
+   ...
 
 ### Todos
 - Patches: continuous work on any previous material, either to fix bugs, introduce enhancements, optimize performance, clean/beautify, or make necessary tweaks due to new information/requirements. See
