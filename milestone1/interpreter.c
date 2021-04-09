@@ -409,7 +409,7 @@ void display_vm_state() {
 
 int main (int argc, char* argv[]) {
     char filepath [1000];
-    strcpy(filepath, "code_samples\\MLcode1.txt");
+    strcpy(filepath, "code_samples\\Rectangle.ml");
     if (argc < 2) {
         printf("WARNING. Input Machine Language file path missing.\n");
         printf("Proceeding with default input file MLcode1.txt...\n");

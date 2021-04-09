@@ -1,5 +1,5 @@
 ============= Low complexity program ===========
-MLcode1.txt: Calculate the area & perimeter of a rectangle given its length and width.
+Rectangle.mlg: Calculate the area & perimeter of a rectangle given its length and width.
 
 Input:
 18
@@ -33,7 +33,7 @@ Line	Memory	Address	Content		Explanation
 21	---	---	+0 0 0000 0020	Input value of 20, read second
 
 ============ Medium complexity program ============
-MLcode2.txt: Print the first n numbers of the Fibonacci sequence, where n is a positive integer given as input.
+Fibonacci.mlg: Print the first n numbers of the Fibonacci sequence, where n is a positive integer given as input.
 
 Input:
 10
@@ -75,7 +75,7 @@ Line	Memory	Address	Content		Explanation
 20	---	---	+0 0 0000 0010	Input value 10
 
 =========== High complexity program ===========
-MLcode3.txt: Given an integer n as input, print all integers between 1 and n inclusively, each as many times as the number itself. For example:
+PrintMultiple.mlg: Given an integer n as input, print all integers between 1 and n inclusively, each as many times as the number itself. For example:
 
 Input:
 6
