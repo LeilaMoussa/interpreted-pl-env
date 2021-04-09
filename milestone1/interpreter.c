@@ -409,10 +409,10 @@ void display_vm_state() {
 
 int main (int argc, char* argv[]) {
     char filepath [1000];
-    strcpy(filepath, "code_samples\\Rectangle.ml");
+    strcpy(filepath, "code_samples\\Rectangle.mlg");
     if (argc < 2) {
         printf("WARNING. Input Machine Language file path missing.\n");
-        printf("Proceeding with default input file MLcode1.txt...\n");
+        printf("Proceeding with default input file Rectangle.mlg...\n");
     }
     else if (argc > 3) {
         printf("ERROR. Too many arguments.\n");

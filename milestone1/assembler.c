@@ -7,12 +7,15 @@
 #define HTSIZE 200
 #define STRSIZE 50
 
+#define TRUE 1
+#define FALSE 0
+
 /*Struct definition for hash table entries*/
 typedef struct HashTable
 {
     char key[STRSIZE];
     char value[STRSIZE];
-}HashTable;
+} HashTable;
 
 /*Global Variables Declaration*/
 
@@ -29,6 +32,8 @@ HashTable* symbols;
 HashTable* labels;
 /*Variable to count errors if present, used in the error message*/
 int errorCount = 0;
+/* Verbose option */
+int VERBOSE = FALSE;
 
 /*Function prototypes*/
 
@@ -73,16 +78,29 @@ void formatIN (char*, int);
 
 /*Main: Entry Point and Driver Program*/
 
-int main (void) {
+int main (int argc, char* argv[]) {
+	char filepath [1000];
+    strcpy(filepath, "code_samples\\ALcode1.txt");
 
-    ALFile = fopen ("ALcode3.txt", "r");
+    if (argc < 2) {
+        printf("WARNING. Input Assembly Language file path missing.\n");
+        printf("Proceeding with default input file ALcode1.txt...\n");
+    }
+    else if (argc > 3) {
+        printf("ERROR. Too many arguments.\n");
+        return 1;
+    } else {
+        strcpy(filepath, argv[1]);
+    }
+    if (argc == 3 && strcmp(argv[2], "-v") == 0) VERBOSE = TRUE;
 
+    ALFile = fopen (filepath, "r");
     if (ALFile == NULL)
     {
         printf ("Failed to open Assembly Language File.\n");
         return 0;
     }
-    MLFile = fopen ("MLCode.txt", "w");
+    MLFile = fopen ("asbl2ml.mlg", "w");
     initHashTables();
     fillOpcodes();
     initData();
@@ -94,7 +112,7 @@ int main (void) {
         printf ("Unsuccessful Assembly. %d errors detected.\n", errorCount);
         return 0;
     }
-    printf ("Assembly Successful. Open ML File.\n");
+    printf ("Assembly Successful. Open ML File asbl2ml.mlg in this directory.\n");
     fclose(ALFile);
     fclose(MLFile);
     return 0;
@@ -343,7 +361,7 @@ void initProgram() {
                 }
                 if (errFlag)
                 {
-                    printf ("Error. Invalid MOVE operation at line %d.\n", lineNumber);
+                    if (VERBOSE) printf ("Error. Invalid MOVE operation at line %d.\n", lineNumber);
                     errorCount++;
                     return;
                 }
@@ -407,7 +425,7 @@ void initProgram() {
                     errFlag = 1;
                 }
                 if (errFlag) {
-                    printf("Error. Invalid MULT, ADD, SUB, or DIV statement at line %d.\n", lineNumber);
+                    if (VERBOSE) printf("Error. Invalid MULT, ADD, SUB, or DIV statement at line %d.\n", lineNumber);
                     errorCount++;
                     return;
                 }
@@ -459,14 +477,14 @@ void initProgram() {
                     }
                     else
                     {
-                        printf  ("Error. Invalid MOVAC statement at line %d.\n", lineNumber);
+                        if (VERBOSE) printf  ("Error. Invalid MOVAC statement at line %d.\n", lineNumber);
                         errorCount++;
                         return;
                     }
                 }
                 else
                 {
-                    printf  ("Error. Invalid MOVAC statement at line %d.\n", lineNumber);
+                    if (VERBOSE) printf  ("Error. Invalid MOVAC statement at line %d.\n", lineNumber);
                     errorCount++;
                     return;
                 }
@@ -497,7 +515,7 @@ void initProgram() {
                         }
                         else
                         {
-                            printf ("Error. JUMPE or JUMPGE statement invalid at line %d.\n", lineNumber);
+                            if (VERBOSE) printf ("Error. JUMPE or JUMPGE statement invalid at line %d.\n", lineNumber);
                             errorCount++;
                             return;
                         }
@@ -524,14 +542,13 @@ void initProgram() {
                         }
                         else
                         {
-                            printf ("Error. JUMPE or JUMPGE statement invalid at line %d.\n", lineNumber);
+                            if (VERBOSE) printf ("Error. JUMPE or JUMPGE statement invalid at line %d.\n", lineNumber);
                             errorCount++;
                             return;
                         }
                     }
                     else {
-
-                        printf ("Error. JUMPE or JUMPGE statement invalid at line %d.\n", lineNumber);
+                        if (VERBOSE) printf ("Error. JUMPE or JUMPGE statement invalid at line %d.\n", lineNumber);
                         errorCount++;
                         return;
                     }
@@ -556,7 +573,7 @@ void initProgram() {
                        }
                        else
                        {
-                            printf ("Error. RARR statement invalid at line %d.\n", lineNumber);
+                            if (VERBOSE) printf ("Error. RARR statement invalid at line %d.\n", lineNumber);
                             errorCount++;
                             return;
                        }
@@ -576,13 +593,13 @@ void initProgram() {
                        }
                        else
                        {
-                            printf ("Error. RARR statement invalid at line %d.\n", lineNumber);
+                            if (VERBOSE) printf ("Error. RARR statement invalid at line %d.\n", lineNumber);
                             errorCount++;
                             return;
                        }
                    }
                    else {
-                       printf ("Error. RARR statement invalid at line %d.\n", lineNumber);
+                       if (VERBOSE) printf ("Error. RARR statement invalid at line %d.\n", lineNumber);
                        errorCount++;
                        return;
                    }
@@ -614,7 +631,7 @@ void initProgram() {
                         }
                         else
                         {
-                            printf ("Error. WARR statement invalid at line %d.\n", lineNumber);
+                            if (VERBOSE) printf ("Error. WARR statement invalid at line %d.\n", lineNumber);
                             errorCount++;
                             return;
                         }
@@ -641,13 +658,13 @@ void initProgram() {
                         }
                         else
                         {
-                            printf ("Error. WARR statement invalid at line %d.\n", lineNumber);
+                            if (VERBOSE) printf ("Error. WARR statement invalid at line %d.\n", lineNumber);
                             errorCount++;
                             return;
                         }
                     }
                     else {
-                        printf ("Error. WARR statement invalid at line %d.\n", lineNumber);
+                        if (VERBOSE) printf ("Error. WARR statement invalid at line %d.\n", lineNumber);
                         errorCount++;
                         return;
                     }
@@ -678,7 +695,7 @@ void initProgram() {
                         }
                         else
                         {
-                            printf ("Error. LOOP statement invalid at line %d.\n", lineNumber);
+                            if (VERBOSE) printf ("Error. LOOP statement invalid at line %d.\n", lineNumber);
                             errorCount++;
                             return;
                         }
@@ -705,13 +722,13 @@ void initProgram() {
                         }
                         else
                         {
-                            printf ("Error. LOOP statement invalid at line %d.\n", lineNumber);
+                            if (VERBOSE) printf ("Error. LOOP statement invalid at line %d.\n", lineNumber);
                             errorCount++;
                             return;
                         }
                     }
                     else {
-                        printf ("Error. LOOP statement invalid at line %d.\n", lineNumber);
+                        if (VERBOSE) printf ("Error. LOOP statement invalid at line %d.\n", lineNumber);
                         errorCount++;
                         return;
                     }
@@ -727,7 +744,7 @@ void initProgram() {
                        indicator = 0;
                     }
                     else {
-                        printf ("Error. LABEL statement invalid at line %d.\n", lineNumber);
+                        if (VERBOSE) printf ("Error. LABEL statement invalid at line %d.\n", lineNumber);
                         errorCount++;
                         return;
                     }
@@ -750,14 +767,14 @@ void initProgram() {
                         }
                         else
                         {
-                            printf ("Error. IN statement invalid at line %d.\n", lineNumber);
+                            if (VERBOSE) printf ("Error. IN statement invalid at line %d.\n", lineNumber);
                             errorCount++;
                             return;
                         }
                     }
                     else
                     {
-                            printf ("Error. IN statement invalid at line %d.\n", lineNumber);
+                            if (VERBOSE) printf ("Error. IN statement invalid at line %d.\n", lineNumber);
                             errorCount++;
                             return;
                     }
@@ -786,13 +803,13 @@ void initProgram() {
                         }
                         else
                         {
-                            printf ("Error. OUT statement invalid at line %d.\n", lineNumber);
+                            if (VERBOSE) printf ("Error. OUT statement invalid at line %d.\n", lineNumber);
                             errorCount++;
                             return;
                         }
                     }
                     else {
-                        printf ("Error. OUT statement invalid at line %d.\n", lineNumber);
+                        if (VERBOSE) printf ("Error. OUT statement invalid at line %d.\n", lineNumber);
                         errorCount++;
                         return;
                     }
@@ -804,7 +821,7 @@ void initProgram() {
                         indicator = 0;
                     }
                     else {
-                        printf ("Error. HLT statement invalid at line %d.", lineNumber);
+                        if (VERBOSE) printf ("Error. HLT statement invalid at line %d.", lineNumber);
                         errorCount++;
                         return;
                     }
@@ -823,7 +840,7 @@ void initProgram() {
             }
         else {
             /* Case in which the opcode in invalid*/
-            printf ("Error. Invalid Opcode in line %d.\n", lineNumber);
+            if (VERBOSE) printf ("Error. Invalid Opcode in line %d.\n", lineNumber);
             errorCount++;
             return;
         }
@@ -863,7 +880,7 @@ void initData () {
             /*extract opcode and operands of DEC instructions*/
             sscanf(line, "%s %s %s", opcode, op[0], op[1]);
             if (strcmp (opcode, "DEC") != 0) {
-               printf ("Error. Invalid declaration operation at line %d.\n", lineNumber);
+               if (VERBOSE) printf ("Error. Invalid declaration operation at line %d.\n", lineNumber);
                errorCount++;
                return;
             }
@@ -897,7 +914,7 @@ void initData () {
         fprintf (MLFile, "%s\n", "+8 8 8888 8888");
     }
     else {
-        printf ("Error. DATA.SECTION unspecified at line %d.\n", lineNumber);
+        if (VERBOSE) printf ("Error. DATA.SECTION unspecified at line %d.\n", lineNumber);
         errorCount++;
         return;
     }
