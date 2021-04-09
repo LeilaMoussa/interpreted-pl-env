@@ -41,8 +41,9 @@ We are constructing a basic but comprehensive programming language environment w
 To run the interpreter, run the following commands which assume a gcc compiler is installed and functional on your machine:
 `$ gcc  ./interpreter.c`
 then
-`$ ./interpreter.exe <input_file_path> <-v>`
+`$ ./a.exe <input_file_path> <-v>`
 Where the `-v` refers to `verbose`.
+For the moment, gcc outputs `a.exe`, we'll try to find a way to output `<file_name>.exe` instead.
 If these 2 arguments are not specified, the default is `./code_samples/Rectangle.ml` as input file path, and `FALSE` for verbose.
 
 *Assembler instructions coming soon...*
@@ -51,6 +52,12 @@ If these 2 arguments are not specified, the default is `./code_samples/Rectangle
 
 #### Languages
 - Assembly:
+   Our Assembly language supports the following operation
+   
+         Operation   |     Example     |     Explanation
+       --------------|-----------------|-------------------
+       DEC           |   DEC           |    Declare a variable
+       
 - Machine Language:
 - High Level Programming Language:
 
