@@ -1,71 +1,71 @@
-~ This is the high complexity sample program. ~
+~ This is the higher complexity sample program. ~
 
-fix num size.  ~ Global constant ~
-size := 10.
-
-fix num zero.
-fix num one.
-zero := 0.
-one := 1.
-
+fix num size := 10.  ~ Global constant ~
 
 (num@ array) => func mergeSort => () [
 	~ Iterative merge sort, we're not brave enough for recursion yet ~
 
 	~ Define func merge nested ~
 	(num@ array, num start, num mid, num end) => func merge => () [
-		var num left_size := mid - start + 1.
-		var num right_size := end - mid.
+		~ Only one ID declaration per line. ~
+		var num left_size.
+		var num right_size.
 		var num#left_size left.
 		var num#right_size right.
 		var num i.
 		var num j.
 		var num k.
-		~ Avoiding defining more than one variable on the same line. ~
+		var num temp.
+
+		~ Initialize values. ~
+		left_size := add(sub(mid, start), 1).  ~ mid - start + 1 ~
+		right_size := sub(end, mid).  ~ end - mid ~
 
 		i := 0.
-		iterif (left_size > i) [
-			left#i := array#(start+i). 
-			~ Parentheses for indices that are expressions, but we can just assign to a variable and use that variable, whatever is easier ~
-			i := i+1.
+		iterif (isGreater(left_size, i)) [
+			temp := add(start, i).
+			left#i := array#temp.
+			i := add(i, 1).
 		]
+
 		j := 0.
-		iterif (right_size > j) [
-			right#j := array#(mid + 1 + j)
-			j := j+1.
+		iterif (isGreater(right_size, j)) [
+			temp := add(add(mid, 1), j).
+			right#j := array#temp.
+			j := add(j, 1).
 		]
 
 		i := 0.
 		j := 0.
 		k := start.
 
-		iterif (left_size > i & right_size > j) [
-			check (right#j > left#i) [
+		iterif (isGreater(left_size, i) & isGreater(right_size, i)) [
+			check (isGreater(right#j, left#i)) [
 				array#k := left#i.
-				i := i+1.
+				i := add(i, 1).
 			]
 			other [
 				array#k := right#j.
-				j := j+1.
+				j := add(j ,1).
 			]
-			k := k+1.
+			k := add(k, 1).
 		]
 
-		iterif (left_size > i) [
+		iterif (isGreater(left_size, i)) [
 			array#k := left#i.
-			i := i+1.
-			k := k+1.
+			i := add(i ,1).
+			k := add(k, 1).
 		]
-		iterif (right_size > j) [
+		iterif (isGreater(right_size, j)) [
 			array#k := right#j.
-			j := j+1.
-			k := k+1.
+			j := add(j ,1).
+			k := add(k, 1).
 		]
-	]
+	]  ~ End of func merge ~
 
 	~ Define utility function min nested as well ~
-	(num a, num b) => func min => num [
-		check (a > b) [
+	(num a, num b) => func min => (num) [
+		check (isGreater(a, b)) [
 			give a.
 		]
 		other [
@@ -73,16 +73,27 @@ one := 1.
 		]
 	]
 
-	~ mergeSort starts here ~
-	var num current_size := 1.
+	~ iterative mergeSort starts here ~
+	var num current_size.
 	var num start_point.
+
+	current_size := 1.
 	
-	iterif (size > current_size) [
+	iterif (isGreater(size, current_size)) [
 		start_point := 0.
-		iterif (size-1 > start_point) [
-			~ Block-scoped variable declarations ~
-			var num mid := (start_point + current_size -1, size-1) => min.
-			var num end_point := (start_point + 2*current_size -1, size-1) => min.
+		iterif (isGreater(sub(size, 1), start_point)) [
+			~ Block-scoped variable declarations here ~
+			var num a.
+			var num b.
+			var num mid.
+			var num end_point.
+
+			a := add(start_point, sub(current_size, 1)).
+			b := sub(size, 1).
+			mid := (a, b) => min.
+			a := add(start_point, sub(mult(2, current_size), 1)).  ~ The actual expression is start_point+2*current_size-1 ~
+			~ b is still size-1 ~
+			end_point := (a, b) => min.
 			(array, start_point, mid, end_point) => merge.
 		]
 	]
@@ -96,7 +107,7 @@ one := 1.
 
 	iterif (isGreater(size, i)) [
 		array#i := read.
-		i := i+1.
+		i := add(i, 1).
 	]
 
 	(array) => mergeSort.  ~ Base address of array is given, implicitly ~

@@ -6,31 +6,27 @@
 	var num b.
 	var num next.
 	var num cnt.
-	fix num zero.
-	fix num one.
 
 	~ The language does not allow for assignments with declarations. ~
 	a := 0.
 	b := 1.
 	cnt := 2.
-	zero := 0.
-	one := 1.
 
 	check ( isGreater(n, 2) ) [
 		iterif ( isGreater(n, cnt) ) [
 			next := add(a, b).
 			a := b.
 			b := next.
-			cnt := add(cnt, one).
+			cnt := add(cnt, 1).
 		]
 		give next.
 	]
 	other [
 		check ( isEqual(n, 1) ) [
-			give zero.
+			give 0.
 		]
 		other [
-			give one.
+			give 1.
 		]
 	]
 
@@ -38,6 +34,8 @@
 
 () => entry => () [
 	var num n.
+	var num ans.
+
 	n := () => read.
 	ans := (n) => fib.
 	(ans) => write.

@@ -1,6 +1,9 @@
 ~ This is the low complexity HLPL code ~
 
-(nil) => entry => (nil) [
+() => entry => () [
+	~ Entry function is not prefixed with 'func' ~
+	~ No parameters or results ~
+
 	var num length.
 	var num width.
 	var num area.
