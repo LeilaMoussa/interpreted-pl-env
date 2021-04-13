@@ -24,7 +24,7 @@ FILE* ml_program;                       /* Input ML program file to be executed.
 int AC = 0;                             /* Accumulator */
 int IP = 0;                             /* Instruction pointer */
 
-int verbose = FALSE;                    /* If verbose is TRUE, many messages will be printed.
+int VERBOSE = FALSE;                    /* If VERBOSE is TRUE, many messages will be printed.
                                          * FALSE by default. */
 
 typedef struct {
@@ -40,7 +40,7 @@ void initialize_memory() {
     int i;
     /* All data memory locations are initialized to 0.
      * All instruction memory locations are initialized to the HALT instruction. */
-    if (verbose) printf("Now initializing memory.\n");
+    if (VERBOSE) printf("Now initializing memory.\n");
     for(i = 0; i < MEMORY_SIZE; i++) {
         data_memory[i] = 0;
         strcpy(instruction_memory[i], "+8 0 0000 0000");
@@ -81,14 +81,14 @@ void populate_memory() {
     fgets(ml_line, WORD_SIZE, ml_program);              /* Read the very first line. Can't use fscanf because we have spaces. */
     while(!feof(ml_program)) {
         if (strcmp(ml_line, "+8 8 8888 8888") == 0) {
-            if (verbose) printf("Encountered separator.\n");
+            if (VERBOSE) printf("Encountered separator.\n");
             sep_count ++;
         }
         else if (sep_count == 0) {                      /* Still in initialization section. */
             strip_spaces(ml_line);
             value = atoi(ml_line);                      /* Parse line as signed integer. */
             data_memory[data_idx++] = value;            /* Write it in memory. */
-            if(verbose)
+            if(VERBOSE)
                 printf("Data location %d has value %d.\n", data_idx-1, value);
         }
         else if (sep_count == 1) {                              /* In code section. */
@@ -99,7 +99,7 @@ void populate_memory() {
             /* Input data section, stop reading.
              * Input data will be read when necessary, i.e. with each IN instruction. */
         else {
-            if (verbose)
+            if (VERBOSE)
                 printf("Bad input: too many separators.\n");   /* This should never happen with a correct file. */
         }
 
@@ -153,7 +153,7 @@ float perform_arithmetic(int operation, int indicator, int opd1, int opd2) {
         case 8: a = data_memory[opd1]; b = opd2; break;
         case 9: a = data_memory[opd1]; b = -opd2; break;
         default:
-                if (verbose)
+                if (VERBOSE)
                     printf("Problem with indicator for arithmetic operation.\n");
                 return ERROR_CODE;
     }
@@ -166,12 +166,12 @@ float perform_arithmetic(int operation, int indicator, int opd1, int opd2) {
         case 3: return (a-b)*1.0;
         case 4: return a*b*1.0;
         case 5: if (b == 0) {
-                    if (verbose) printf("DIV ZERO!\n");
+                    if (VERBOSE) printf("DIV ZERO!\n");
                     return ERROR_CODE;
                 }
                 else return a*1.0/b;
         default:
-            if (verbose)
+            if (VERBOSE)
                 printf("Invalid arithmetic operation.\n");
             return ERROR_CODE;
     }
@@ -184,13 +184,13 @@ float get_next_input_val() {
      * otherwise, if there is no input, this is an error, and the fractional part is nonzero. */
     char input_line[WORD_SIZE];
     if(feof(ml_program)) {
-        if (verbose) printf("No input found!\n");
+        if (VERBOSE) printf("No input found!\n");
         return ERROR_CODE;
     }
     fgets(input_line, WORD_SIZE, ml_program);
     while (input_line[0] == '\n')                   /* Again, implementation-specific issue with fgets() */
         fgets(input_line, WORD_SIZE, ml_program);
-    if(verbose) printf("Input data %s.\n", input_line);
+    if(VERBOSE) printf("Input data %s.\n", input_line);
     strip_spaces(input_line);                       /* Remove spaces and parse an integer. */
     return atoi(input_line)*1.0;
 }
@@ -241,42 +241,42 @@ int decode_execute(char* instruction) {
                                                              * where the sign is the row and the opcode digit is the column. */
     switch (lookup) {                                       /* 20 possible cases. */
         case 0:
-            if (verbose) printf("Encountered MOV.\n");
+            if (VERBOSE) printf("Encountered MOV.\n");
             if (indicator == 1) data_memory[opd1] = data_memory[opd2];  /* The second operand is an address */
             else if (indicator == 8) data_memory[opd1] = opd2;          /* The second operand is a positive literal value. */
             else if (indicator == 9) data_memory[opd1] = -opd2;         /* The second operand is a negative literal value. */
             break;
         case 1:
-            if (verbose) printf("Encountered MOVAC.\n");
+            if (VERBOSE) printf("Encountered MOVAC.\n");
             data_memory[opd1] = AC;                                     /* The indicator does not matter: operand 1 is an address
                                                                          * and operand 2 is unused. */
             break;
         case 2:
-            if (verbose) printf("Encountered ADD.\n");
+            if (VERBOSE) printf("Encountered ADD.\n");
             result = perform_arithmetic(2, indicator, opd1, opd2);      /* Cases 2 through 5 call perform_arithmetic() */
             if ((int)result - result == 0) AC = (int)result;            /* If the result has a zero fractional part, that's good. */
             else printf("Bad instruction.\n");                          /* Otherwise, there is an error. */
             break;
         case 3:
-            if(verbose) printf("Encountered SUB.\n");
+            if(VERBOSE) printf("Encountered SUB.\n");
             result = perform_arithmetic(3, indicator, opd1, opd2);
             if ((int)result - result == 0) AC = (int)result;
             else printf("Bad instruction.\n");
             break;
         case 4:
-            if (verbose) printf("Encountered MULT.\n");
+            if (VERBOSE) printf("Encountered MULT.\n");
             result = perform_arithmetic(4, indicator, opd1, opd2);
             if ((int)result - result == 0) AC = (int)result;
             else printf("Bad instruction.\n");
             break;
         case 5:
-            if(verbose) printf("Encountered DIV.\n");
+            if(VERBOSE) printf("Encountered DIV.\n");
             result = perform_arithmetic(5, indicator, opd1, opd2);
             if ((int)result - result == 0) AC = (int)result;
             else printf("You tried to divide by zero or the instruction is incorrect.\n");
             break;
         case 6:
-            if(verbose) printf("Encountered JMPE.\n");
+            if(VERBOSE) printf("Encountered JMPE.\n");
             if (indicator == 1) {                                       /* Operand 1 is always an address. */
                 if (data_memory[opd2] == AC)                            /* Operand 2 can be an address or a literal value */
                     IP = opd1;                                          /*  whose sign we don't care about. */
@@ -290,7 +290,7 @@ int decode_execute(char* instruction) {
         case 7:                                                         /* Vacant opcode for now, corresponds to '-3' in our ML. */
             break;
         case 8:
-            if (verbose) printf("Encountered JMPGE.\n");
+            if (VERBOSE) printf("Encountered JMPGE.\n");
             if (indicator == 1) {                                       /* Same idea as JMPE. */
                 if (data_memory[opd2] >= AC)
                     IP = opd1;
@@ -304,12 +304,12 @@ int decode_execute(char* instruction) {
         case 9:                                                         /* Vacant opcode for now, corresponds to '-4' in our ML. */
             break;
         case 10:
-            if (verbose) printf("Encountered RARR.\n");
+            if (VERBOSE) printf("Encountered RARR.\n");
             data_memory[opd1] = data_memory[opd2 + AC];                 /* Indicator does not matter, because we know that both
                                                                          * operand are addresses. The offset is in the accumulator. */
             break;
         case 11:
-            if (verbose) printf("Encountered WARR.\n");
+            if (VERBOSE) printf("Encountered WARR.\n");
             if (indicator == 1)                                         /* Operand 1 is always an address, operand 2 can be an address */
                 data_memory[opd1 + AC] = data_memory[opd2];
             else if (indicator == 8 || indicator == 9)                  /* or a literal value whose sign we don't care about. */
@@ -318,7 +318,7 @@ int decode_execute(char* instruction) {
                 printf("Invalid indicator value for operation WARR.\n");
             break;
         case 12:
-            if (verbose) printf("Encountered LOOP.\n");
+            if (VERBOSE) printf("Encountered LOOP.\n");
             loop_instr_loc = IP-1;
             result = perform_loop(indicator, opd1, opd2, loop_instr_loc);
             if (result == 0) return 0;                                  /* Loop terminated due to a HALT instruction in the body. */
@@ -334,7 +334,7 @@ int decode_execute(char* instruction) {
              * If necessary, we might implement this instruction in a future deliverable. */
             break;
         case 14:
-            if(verbose) printf("Encountered IN.\n");
+            if(VERBOSE) printf("Encountered IN.\n");
             input = get_next_input_val();                               /* Get the next input data value as an integer from the file. */
             if ((int)input - input == 0)                                /* Fractional part of 0 if properly read */
                 data_memory[opd1] = (int)input;                         /* Store integer in destination location. */
@@ -342,7 +342,7 @@ int decode_execute(char* instruction) {
                 printf("Encountered EOF while trying to read input.\n");/* Non zero fractional part if no input could be read. */
             break;
         case 15:
-            if(verbose) printf("Encountered OUT.\n");                   /* Operand 1 is unused. */
+            if(VERBOSE) printf("Encountered OUT.\n");                   /* Operand 1 is unused. */
             if (indicator == 1) printf(">>> %d\n", data_memory[opd2]);  /* Operand 2 could be an address... */
             else if (indicator == 2) printf(">>> %d\n", opd2);          /* ... or a positive value... */
             else if (indicator == 3) printf(">>> %d\n", -opd2);         /* ... or a negative value. */
@@ -352,7 +352,7 @@ int decode_execute(char* instruction) {
             else printf("Indicator in operation OUTPUT %d was not allowed.\n", indicator);
             break;
         case 16:
-            if(verbose) printf("Encountered HALT.\n");
+            if(VERBOSE) printf("Encountered HALT.\n");
             return 0;                                                   /* This function returns 0 if we stopped due to a HALT... */
         case 17: break;                         /* More vacant opcodes for the moment. */
         case 18: break;
@@ -374,7 +374,7 @@ void read_decode_execute() {
     char current_instruction [WORD_SIZE];                       /* The instruction in the current memory location. */
     int return_code;                                            /* return_code determines whether to carry on execution of stop
                                                                  * completely due to a HALT. */
-    if (verbose) printf("Started RDE.\n");
+    if (VERBOSE) printf("Started RDE.\n");
     while (IP < MEMORY_SIZE) {
         strcpy(current_instruction, instruction_memory[IP]);
         IP++;                                                   /* IP is incremented by default, but may exhibit non linear progression
@@ -388,12 +388,12 @@ void display_vm_state() {
     /* This function shows what the memory and registers look like at the end of all execution. */
     int to_print, i;
     printf("\n--State of the VM.--\n");
-    if(verbose) {
+    if(VERBOSE) {
         printf("ACC: %d\n", AC);
         printf("IP: %d\n", IP);
     }
     printf("\nData memory, ");
-    if(verbose) {
+    if(VERBOSE) {
         printf("all slots:\n");
         to_print = MEMORY_SIZE;
     }
@@ -402,7 +402,7 @@ void display_vm_state() {
         to_print = 200;
     }
     for(i=0; i < to_print; i++) printf("%d ", data_memory[i]);
-    if(verbose) {
+    if(VERBOSE) {
         printf("\nInstruction memory, all slots:\n");
         for(i=0; i < MEMORY_SIZE; i++)
             printf("%s ", instruction_memory[i]);
@@ -422,7 +422,7 @@ int main (int argc, char* argv[]) {
     } else {
         strcpy(filepath, argv[1]);
     }
-    if (argc == 3 && strcmp(argv[2], "-v") == 0) verbose = TRUE;
+    if (argc == 3 && strcmp(argv[2], "-v") == 0) VERBOSE = TRUE;
 
     initialize_memory();
     ml_program = fopen(filepath, "r");      /* The input ML file is assumed to be in the same directory. */

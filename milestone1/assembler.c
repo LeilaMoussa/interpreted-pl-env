@@ -117,6 +117,7 @@ int main (int argc, char* argv[]) {
     fclose(MLFile);
     return 0;
 }
+
 void formatML(char* str, int flag)
 {
     /*Take the unformatted string, add a sign at the beginning,
@@ -154,8 +155,7 @@ void formatML(char* str, int flag)
 
 void formatIN (char* str, int flag)
 {
-    int i;
-    int k;
+    int i, k;
     char help[STRSIZE];
     if (flag == 1)
     {
@@ -166,13 +166,12 @@ void formatIN (char* str, int flag)
         help[0] = '-';
     }
     k = 0;
-    for (i = 1; i<strlen(str); i++)
+    for (i = 1; i < strlen(str); i++)
     {
         help[i] = str[k++];
     }
     help[i] = '\0';
     strcpy(str, help);
-
 }
 
 void removeBrackets (char* str) {
@@ -253,23 +252,20 @@ void initInput () {
     char line[STRSIZE];
     while (!feof (ALFile)) {
         fgets(line, STRSIZE, ALFile);
-        if (line[0] == '\n')
-        {
-
-        }
+        printf("got input line %s.\n", line);
+        if (line[0] == '\n' || strcmp(line, "") == 0) { }
         else {
-        input = atoi (line);
-        /*format this string by adding sign and relevant spaces*/
-        if (input >= 0)
-        {
-            formatIN(line, 1);
-        }
-        else if (input < 0)
-        {
-            formatIN(line, 2);
-        }
-
-        fprintf (MLFile, "%s\n", line);
+	        input = atoi (line);
+	        /*format this string by adding sign and relevant spaces*/
+	        if (input >= 0)
+	        {
+	            formatIN(line, 1);
+	        }
+	        else
+	        {
+	            formatIN(line, 2);
+	        }
+	        fprintf (MLFile, "%s\n", line);
         }
     }
 }
