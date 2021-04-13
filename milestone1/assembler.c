@@ -244,6 +244,7 @@ int isLiteral (char* str) {
     }
     return 0;
 }
+
 void initInput () {
     /*Read the input data section line by line
     and write to ML file*/
@@ -285,7 +286,7 @@ void initProgram() {
     int temp;
     /*Useful helper string in formatting*/
     char help [5];
-    /*Used to keep track of the line number*/
+    /*Used to keep track of the line number within the code section, one-indexed*/
     int lineNumber = 1;
     /*Flags used to build the indicator digit (D2) in the instruction*/
     int flag1, flag2;
@@ -392,11 +393,11 @@ void initProgram() {
                     removeBrackets(op[0]);
                     flag1 = 0;
                 }
-                else if (isLiteral(op[0])== 1) {
+                else if (isLiteral(op[0]) == 1) {
                     removeSign(op[0]);
                     flag1 = 1;
                 }
-                else if (isLiteral (op[0])== 2) {
+                else if (isLiteral (op[0]) == 2) {
                     removeSign(op[0]);
                     flag1 = 2;
                 }
@@ -825,7 +826,7 @@ void initProgram() {
                         errorCount++;
                         return;
                     }
-                }//END HLT
+                } //END HLT
                 /*now format the instruction we obtained*/
                 sprintf (instruction, "%s %d %s %s", opcode, indicator, op[0], op[1]);
                 /*write instruction to output file*/
@@ -857,7 +858,7 @@ void initData () {
     int lineNumber = 1;
     int literal_value;
     /*write the very first line of the ML*/
-    fprintf (MLFile, "%s\n", "+0 0 0000 0000");
+    //fprintf (MLFile, "%s\n", "+0 0 0000 0000"); // we don't need this
     fgets(line, STRSIZE, ALFile);
     /*Read data section from AL file line by line, make sure that the right
     opcode is being used i.e. DEC, extract the operands, insert symbols
@@ -885,7 +886,7 @@ void initData () {
                return;
             }
             /*convert line number to string with leading zeros*/
-            sprintf(help, "%04d", lineNumber);
+            sprintf(help, "%04d", lineNumber-1); // because lineNumber is one-indexed, but addresses are 0-idxed
             /*use line number as address*/
             insert(symbols, op[0], help);
             /*convert op[1], the literal value, to integer*/
@@ -966,7 +967,7 @@ void insert (HashTable* HT, char* key, char* value) {
     int idx = hash(key);
     int collisions = 0;
     int j;
-    
+
     if (HT[idx].key[0] == '\0')
     {
         strcpy(HT[idx].key, key);
