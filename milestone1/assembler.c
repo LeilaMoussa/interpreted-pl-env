@@ -965,6 +965,8 @@ void insert (HashTable* HT, char* key, char* value) {
     Collisions are handled using linear probing*/
     int idx = hash(key);
     int collisions = 0;
+    int j;
+    
     if (HT[idx].key[0] == '\0')
     {
         strcpy(HT[idx].key, key);
@@ -973,7 +975,6 @@ void insert (HashTable* HT, char* key, char* value) {
     else
     {
         collisions++;
-        int j;
         for (j = idx; HT[j].key[0] != '\0' && j < HTSIZE; j++)
             {
                 /*do nothing*/
@@ -1002,12 +1003,13 @@ void insert (HashTable* HT, char* key, char* value) {
 }
 
 void initHashTables() {
+	int i;
     /*allocate memory for all our hashtables*/
     opcodes = (HashTable*)malloc (HTSIZE*sizeof(HashTable));
     symbols = (HashTable*)malloc (HTSIZE*sizeof(HashTable));
     labels = (HashTable*)malloc (HTSIZE*sizeof(HashTable));
     /*initialize the values to blank strings*/
-    for (int i = 0; i < HTSIZE; i++) {
+    for (i = 0; i < HTSIZE; i++) {
         symbols[i].key[0] = '\0';
         symbols[i].value[0] = '\0';
         labels[i].key[0] = '\0';
@@ -1018,6 +1020,7 @@ void initHashTables() {
 }
 
 void fillOpcodes () {
+	int i;
     /*these are the opcode entries*/
     char* entries[15][2] = {{"MOVE", "+0"}, {"MOVAC", "-0"},
                             {"ADD", "+1"}, {"SUB", "-1"},
@@ -1031,7 +1034,7 @@ void fillOpcodes () {
                             };
                             /* Opcodes -3, -4, -8, +9, -9 free for now*/
 
-    for (int i = 0; i < 15; i++) {
+    for (i = 0; i < 15; i++) {
         insert(opcodes, entries[i][0], entries[i][1]);
     }
 }

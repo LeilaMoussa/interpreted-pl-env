@@ -37,10 +37,11 @@ typedef struct {
 } instruction_struct;   /* A sort of container for the instruction being decoded. */
 
 void initialize_memory() {
+    int i;
     /* All data memory locations are initialized to 0.
      * All instruction memory locations are initialized to the HALT instruction. */
     if (verbose) printf("Now initializing memory.\n");
-    for(int i=0; i < MEMORY_SIZE; i++) {
+    for(i = 0; i < MEMORY_SIZE; i++) {
         data_memory[i] = 0;
         strcpy(instruction_memory[i], "+8 0 0000 0000");
     }
@@ -52,8 +53,8 @@ void strip_spaces(char* integer) {
      * because they need to be parsed as integers. */
 
     char output[WORD_SIZE]; /* Temporary copy of the string. */
-    int j = 0;
-    for(int i=0; i <= strlen(integer); i++) {
+    int j = 0, i;
+    for(i = 0; i <= strlen(integer); i++) {
         if (integer[i] != ' ') output[j++] = integer[i];
     }
     strcpy(integer, output);
@@ -385,7 +386,7 @@ void read_decode_execute() {
 
 void display_vm_state() {
     /* This function shows what the memory and registers look like at the end of all execution. */
-    int to_print;
+    int to_print, i;
     printf("\n--State of the VM.--\n");
     if(verbose) {
         printf("ACC: %d\n", AC);
@@ -400,10 +401,11 @@ void display_vm_state() {
         printf("first 200 slots only:\n");
         to_print = 200;
     }
-    for(int i=0; i < to_print; i++) printf("%d ", data_memory[i]);
+    for(i=0; i < to_print; i++) printf("%d ", data_memory[i]);
     if(verbose) {
         printf("\nInstruction memory, all slots:\n");
-        for(int i=0; i < MEMORY_SIZE; i++) printf("%s ", instruction_memory[i]);
+        for(i=0; i < MEMORY_SIZE; i++)
+            printf("%s ", instruction_memory[i]);
     }
 }
 
