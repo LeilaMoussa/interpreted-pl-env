@@ -1,1 +1,53 @@
-(need to describe them all here, after testing)
+All expected outputs of the assembler for each sample program are provided in
+this directory.
+
+(*) The AL code lines are written here with spaces only -- not respecting
+fixed column width.
+
+========================== Low complexity program ==============
+Pyramid.asbl: Calculate the surface area of a pyramid, given base & height.
+
+Input:
+10
+12
+Output at the level of the interpreter, i.e. when Assembler_Output.mlg is run:
+340
+
+Line	Section		Content*	Explanation
+
+1	---		DATA.SECTION	Data section header
+2	Data		DEC BASE 0	Declare a variable BASE with initial value 0, stored in data loc 0000
+1	Data		DEC B 0		Var B, val 0, loc 0001
+4	Data		DEC H 0		...
+5	Data		DEC S 0		...
+6	---		CODE.SECTION	Code section header (serves as separator)
+7	Code		IN B 0000	Read input to variable B (value 10 here)
+8	Code		IN H 0000	...
+9	Code		MULT B B	Square variable B (result in AC)
+10	Code		MOVAC S 0000	Move AC out into variable S's loc (DL 0003)
+11	Code		MULT B H	Multiply B by H (base*height), res in AC
+12	Code		MOVAC B 0000	Move AC into var B's loc (DL 0001)
+13	Code		MULT +0002 B	Double B
+14	Code		MOVAC B 0000	Now DL 0001 contains 2*B
+15	Code		ADD B S		AC := B + S
+16	Code		MOVAC S 0000	DL 0003 now contains S+B (the new value in B's location, that is)
+17	Code		OUT 0000 S	Print S
+18	Code		HLT 0000 0000	Stop
+19	---		INPUT.SECTION	Input data header / separator
+20	---		10		Input value, first read
+21	---		12		Second input value
+
+======================= Medium complexity program =====================
+Max.asbl: find the maximum value given an array of integers.
+
+Input:
+
+Output:
+
+
+Line	Section		Content		Explanation
+
+
+
+====================== Higher complexity program =========================
+...
