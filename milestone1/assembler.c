@@ -80,7 +80,7 @@ void formatIN (char*, int);
 
 int main (int argc, char* argv[]) {
     char filepath [1000];
-    strcpy(filepath, "code_samples\\ALcode1.txt");
+    strcpy(filepath, "code_samples\\Pyramid.asbl");
 
     if (argc < 2) {
         printf("WARNING. Input Assembly Language file path missing.\n");
@@ -100,7 +100,7 @@ int main (int argc, char* argv[]) {
         printf ("Failed to open Assembly Language File.\n");
         return 0;
     }
-    MLFile = fopen ("asbl2ml.mlg", "w");
+    MLFile = fopen ("Assembler_Output.mlg", "w");
     initHashTables();
     fillOpcodes();
     initData();
@@ -112,7 +112,7 @@ int main (int argc, char* argv[]) {
         printf ("Unsuccessful Assembly. %d errors detected.\n", errorCount);
         return 0;
     }
-    printf ("Assembly Successful. Open ML File asbl2ml.mlg in this directory.\n");
+    printf ("Assembly Successful. Open newly generated ML File in this directory.\n");
     fclose(ALFile);
     fclose(MLFile);
     return 0;
@@ -252,7 +252,7 @@ void initInput () {
     char line[STRSIZE];
     while (!feof (ALFile)) {
         fgets(line, STRSIZE, ALFile);
-        printf("got input line %s.\n", line);
+        // printf("got input line %s.\n", line); // this line shows the funky behavior
         if (line[0] == '\n' || strcmp(line, "") == 0) { }
         else {
 	        input = atoi (line);
