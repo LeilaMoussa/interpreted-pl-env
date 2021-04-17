@@ -1,4 +1,4 @@
 ~ This sample HLPL program doesn't have to make sense, ~
 ~ but it has to contain all the language elements. ~
 
-(nil) => entry => (nil) []
+() => entry => () []
