@@ -1,78 +1,46 @@
 import sys
 import io
 import re
+import constants
 
-tokens = {
-    'IDENT': 1,
-    'KEYWORDS': 2,
-    'NUM_LIT': 3,
-    'CHAR_LIT': 4,
-    'STR_LIT': 5,
-    'OPERATOR': 6, # Wondering whether to separate the opeators: ASSIGN, ARITHMETIC, CMP...
-    'PUNC': 7,
-    'COMM': 8,
-    'WHTSPC': 9,
-    # need parentheses and brackets
-    }
+tokens = constants.get_tokens()
+symbol_table = constants.get_symbol_table()
+rules = constants.get_rules()
+default_code = constants.get_default_code()
 
-##symbol_table = {
-##    'func': ,
-##    'entry': ,
-##    'var': ,
-##    'fix': ,
-##    'num': ,
-##    'ascii': ,
-##    'num@': ,
-##    'ascii@': ,
-##    'num#': ,
-##    'ascii#': ,
-##    'give': ,
-##    'check': ,
-##    'other': ,
-##    'iterif': ,
-##    'read': ,
-##    'write': ,
-##    }  # each value is probably a dict as well
+literal_table = {}
 
+def formulate_output(line: int, token_type: str, token_val: str) -> str:
+    ''' Returns a line of the format "Line 1 Token #1: a" '''
+    try:
+        token_id = tokens[token_type]
+    except:
+        raise KeyError('Match group not a valid token type.')
+    # cuter alternative: default_dict
+    return f'Line {line} Token #{token_id}: {token_val}\n'
 
-literal_table = {}  # doesn't have to be dict(), can use other classes
-
-
-rules = {
-    '([a-z]|_)+': 'IDENT',
-    # So no RE for KWs?
-    '(-?)[0-9]+': 'NUM_LIT',
-    '".?"': 'CHAR_LIT',
-    '".*"': 'STR_LIT',
-    'add|sub|mult|div|\:=|\&|\||\^': 'OPERATOR',
-    '[.,]': 'PUNC',
-    '~[^~]*~': 'COMM',
-    '\s': 'WHTSPC'  # Matches all types of whitespace: [ \t\n\r\f\v]
-    }
-
-next_token = ''
-
-def create_token():
-    pass
-
-def lex(data: str):
+def lex(code_line: str, line_number: int):
+    '''Generator function'''
     master_regex = '|'.join(f'(?P<{group}>{regex})' for (regex, group) in rules.items())
     # print(master_regex)
-    for res in re.finditer(master_regex, data):
-        print(res.group(), res.lastgroup)
-
+    for res in re.finditer(master_regex, code_line):
+        token_type = res.lastgroup
+        token_val = res.group()
+        print(token_type, token_val)
+        yield formulate_output(line_number, token_type, token_val)
+        
 def main(filepath: str):
     token_stream = io.StringIO()
     try:
         input_file = open(filepath, 'r')
-        data = input_file.read()
-        # print(data)
-        lex(data)
+        code = input_file.read().strip().split('\n')
     except:
-        sys.exit('File does not exist.')
-
-    # Handy methods:
-    # token_stream.write('first token ')
+        sys.exit('Given HLPL file does not exist. Aborting.')
+        
+    for number, line in enumerate(code):
+        for result in lex(line, number+1):
+            token_stream.write(result)
+    
     # contents = token_stream.getvalue()
 
     token_stream.close()
