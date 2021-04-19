@@ -2,7 +2,7 @@
 
 <program> → {<declaration>} {<function>} <mainFunction>
 
-<declaration> →  <varDeclaration> | <fixDeclaration> ‘.’
+<declaration> →  (<varDeclaration> | <fixDeclaration>) ‘.’
 
 <varDeclaration> → ‘var’<typeSpecifier> <userDefinedIdentifier>
 
@@ -30,7 +30,7 @@
 
 <loop> →  ‘iterif’ ‘(‘ <conditionStatement> ‘)’ ‘[‘ {<declaration>} {<statement>} ‘]’ 
 
-<comment> → ‘~’ {<commentChar>} ‘~’
+<comment> → ‘~’ {<commentChar>} 
 
 <operation> → (‘add’ | ‘sub’ | ‘mult’ | ‘div’) ‘(’ <operand> ‘,’ <operand>‘)’ ‘.’
 
