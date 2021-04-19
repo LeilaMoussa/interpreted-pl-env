@@ -1,5 +1,5 @@
 Notes about some of the notations below:
--	^ means NOT, so ^'~' means any character except '~'
+-	[^'5'] means any character except '5'
 -	. means anything, so .* means any number of any character
 -	Reserved words are listed, but the process of handling them at the level of the parser is not depicted.
 
@@ -12,7 +12,7 @@ Reserved words			['func' 'entry' 'var'		Class of words that cannot be user-defin
 				'num@' 'ascii@' 'num#'
 				'ascii#' 'give' 'check'
 				'other' 'iterif' 'read'
-				'write' 'nil']
+				'write']
 
 User-defined identifiers	( [a-zA-Z] | '_' ) +		Any combination of alphabet and underscores, no digits
 
@@ -29,7 +29,8 @@ Operators			['add' 'sub' 'mult'		Arithmetic, relational, logical
 
 Punctuation			['.' ',']			End of statement '.' and ',' separator for paramters or structure elements for example
 
-Comments			'~' ^'~' '~'			Any character except '~' between two '~'s
+Comments			'~' [^'~']* '~'			Any character except '~' between two '~'s
 
-Whitespace			[' ' '\n']			Spaces & new lines
+Whitespace			[' ' '\n']			Spaces & new lines (EDIT: we should have included tabs and other types of
+								whitespace as well, now that I think about it)
 ----------------------------|-------------------------------|---------------------------------------------------------

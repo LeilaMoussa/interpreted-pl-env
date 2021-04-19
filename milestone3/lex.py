@@ -1,3 +1,7 @@
+''' Command to run this program
+python ./lex.py ./sample_program.txt > lex_output.txt
+'''
+
 import sys
 import io
 import re
@@ -26,11 +30,27 @@ def lex(code_line: str, line_number: int):
     for res in re.finditer(master_regex, code_line):
         token_type = res.lastgroup
         token_val = res.group()
-        print(token_type, token_val)
+        print(token_type, end=' ')
+        if token_type == 'IDENT':
+            # add to symbol table
+            # reserved words are still confusing to me
+            pass
+        elif token_type == 'NUM_LIT':
+            # add to literal table as number
+            pass
+        elif token_type == 'CHAR_LIT':
+            pass
+        elif token_type == 'STR_LIT':
+            pass
+            
         yield formulate_output(line_number, token_type, token_val)
         
 def main(filepath: str):
-    token_stream = io.StringIO()
+    token_stream = io.StringIO()  # debating whether to continue using this
+    # when print works just fine
+    # maybe piping the result into the parse later on would require this
+    # unless we decide the parser should read into a file
+    
     try:
         input_file = open(filepath, 'r')
         code = input_file.read().strip().split('\n')
