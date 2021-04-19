@@ -54,8 +54,21 @@ def get_rules() -> dict:
     '(-?)[0-9]+': 'NUM_LIT',
     '`.?`': 'CHAR_LIT',  # example: `g`
     '".*"': 'STR_LIT',  # example: "name"
-    'add|sub|mult|div|\:=|\&|\||\^': 'OPERATOR',  # to be separated?
-    '[.,()\[\]]|=>': 'PUNC',  # dot, comma, brackets, parentheses, arrow will need to separate these as well
+    'add': 'ADD',
+    'sub': 'SUB',
+    'mult': 'MULT',
+    'div': 'DIV',
+    ':=': 'ASGN',
+    '&': 'AND',
+    '\|': 'OR',
+    '\^': 'NOT',
+    '\.': 'ENDSTAT',
+    ',': 'COMMA',
+    '\(': 'LPAREN',
+    '\)': 'RPAREN',
+    '\[': 'LBRACK',
+    '\]': 'RBRACK',
+    '=>': 'ARROW',
     '~[^~]*~': 'CMNT',
     '\s': 'WHTSPC'  # Matches all types of whitespace: [ \t\n\r\f\v]
     }
