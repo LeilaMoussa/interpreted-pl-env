@@ -74,4 +74,4 @@ def get_rules() -> dict:
     }
 
 def get_default_code() -> str:
-    return ''
+    return 'fix num a := 2.'
