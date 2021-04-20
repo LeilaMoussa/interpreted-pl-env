@@ -32,7 +32,7 @@
 
 <comment> → ‘~’ {<commentChar>} 
 
-<operation> → (‘add’ | ‘sub’ | ‘mult’ | ‘div’) ‘(’ <operand> ‘,’ <operand>‘)’ ‘.’
+<operation> → (‘+’ | ‘-’ | ‘*’ | ‘/’) ‘(’ <operand> ‘,’ <operand>‘)’ ‘.’
 
 <operand> → <numericLiteral> | <userDefinedIdentifier> | <operation> | <functionCall>
 
@@ -40,7 +40,7 @@
 
 <conditionStatement> → [‘^’] <comparaison>  { (‘&’ | ‘|’ ) [‘^’] <comparaison>}
 
-<comparaison> → (‘isEqual’ | ‘isGreater’) ‘(’ <compared> ‘,’ <compared> ‘)’
+<comparaison> → (‘=’ | ‘>’) ‘(’ <compared> ‘,’ <compared> ‘)’
 
 <compared> → <numericLiteral> | <userDefinedIdentifier> | <functionCall>
 
