@@ -48,7 +48,7 @@
 
 <identifier> → <userDefinedIdentifier> | <reservedWord>
 
-<userDefinedIdentifier> → (‘_’ | <alpha> ) {(‘_’ | <alpha>) } 
+<userDefinedIdentifier> → (‘_’ | <alpha> ) {(‘_’ | <alpha>) } [#]
 
 <reservedWord> → ‘read’ | ‘write’
 
