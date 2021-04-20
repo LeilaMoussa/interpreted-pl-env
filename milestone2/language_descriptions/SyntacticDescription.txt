@@ -32,7 +32,7 @@
 
 <comment> → ‘~’ {<commentChar>} 
 
-<operation> → (‘+’ | ‘-’ | ‘*’ | ‘/’) ‘(’ <operand> ‘,’ <operand>‘)’ ‘.’
+<operation> → ‘(’ (‘+’ | ‘-’ | ‘*’ | ‘/’)  <operand>  <operand>‘)’ ‘.’
 
 <operand> → <numericLiteral> | <userDefinedIdentifier> | <operation> | <functionCall>
 
@@ -40,7 +40,7 @@
 
 <conditionStatement> → [‘^’] <comparaison>  { (‘&’ | ‘|’ ) [‘^’] <comparaison>}
 
-<comparaison> → (‘=’ | ‘>’) ‘(’ <compared> ‘,’ <compared> ‘)’
+<comparaison> → ‘(’ (‘=’ | ‘>’)  <compared>  <compared> ‘)’
 
 <compared> → <numericLiteral> | <userDefinedIdentifier> | <functionCall>
 
@@ -54,7 +54,7 @@
 
 <char> → every keyboard character 
 
-<commentChar> → every keyboard character except ~
+<commentChar> → every keyboard character
 
 <numericLiteral> → [‘-’]{ <digit>}
 
