@@ -2,6 +2,11 @@
 # makes it hard to fix stuff
 # considering one big DS, maybe list of tuples
 
+def get_groups() -> list:
+    return [
+        ()
+        ]
+
 def get_tokens() -> dict:
     return {
     'IDENT': 1,
@@ -48,7 +53,7 @@ def get_tokens() -> dict:
 
 def get_symbol_table() -> dict:
     return {}
-    ## something = {
+    ## s = {
     ##    'func': ,
     ##    'entry': ,
     ##    'var': ,
@@ -65,7 +70,7 @@ def get_symbol_table() -> dict:
     ##    'iterif': ,
     ##    'read': ,
     ##    'write': ,
-    ##    }
+    ##    }      # probably won't need this thingy
 
 def get_rules() -> dict:
     return {
@@ -88,7 +93,7 @@ def get_rules() -> dict:
     '\[': 'LBRACK',
     '\]': 'RBRACK',
     '=>': 'ARROW',
-    '~[^~]*~': 'CMNT',
+    '~[^~]*~': 'CMNT',  # empty comments are fine
     '\s': 'WHTSPC',  # Matches all types of whitespace: [ \t\n\r\f\v]
     'func': 'FUNC',
     'entry': 'MAIN',
