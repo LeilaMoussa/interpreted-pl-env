@@ -8,27 +8,22 @@ import io
 import re
 import constants
 
-tokens = constants.get_tokens()
-rules = constants.get_rules()
-symbol_table = constants.get_symbol_table()
+groups = constants.get_groups()  # regex, tokens, and IDs
 
+symbol_table = {}
 literal_table = {}
 
-master_regex = '|'.join(f'(?P<{group}>{regex})' for (regex, group) in rules.items())
+master_regex = '|'.join(f'(?P<{group}__{_id}>{regex})' for (regex, group, _id) in groups)
 
-def formulate_output(line: int, token_type: str, token_val: str) -> str:
+def formulate_output(line: int, token_type: str, token_val: str, token_id: str) -> str:
     ''' Returns a line of the format "Line 1 Token #1: a" '''
-    try:
-        token_id = tokens[token_type]
-    except:
-        raise KeyError('Match group not a valid token type.')
-    # cuter alternative: default_dict
+    # do i even need this function anymore?
     return f'Line {line} Token #{token_id} ({token_type}) : {token_val}\n'
 
 def lex(code_line: str, line_number: int):
     '''Generator function'''
     for res in re.finditer(master_regex, code_line):
-        token_type = res.lastgroup
+        [token_type, token_id] = res.lastgroup.split('__')
         token_val = res.group()
         if token_type == 'IDENT':
             # add to symbol table
@@ -40,15 +35,17 @@ def lex(code_line: str, line_number: int):
         elif token_type == 'CHAR_LIT':
             pass
         elif token_type == 'STR_LIT':
+            # try to treat literals similarly
             pass
         # i need a cute way of bundling up reserved words, otherwise the code would be ugly
         # opportunity to think of a nicer DS for constants
+        # could just look at IDs? if we reserve certain intervals for similar types of tokens?
             
-        yield formulate_output(line_number, token_type, token_val)
+        yield formulate_output(line_number, token_type, token_val, token_id)
         
 def main(filepath: str, default: bool) -> None:
-    # print(master_regex)
-    token_stream = io.StringIO()
+    print(master_regex)
+    token_stream = io.StringIO()    # kinda useless if i'm using it like this?
     if default:
         code = constants.get_default_code()
     else:
