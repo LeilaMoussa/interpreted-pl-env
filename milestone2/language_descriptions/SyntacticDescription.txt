@@ -44,7 +44,7 @@
 
 <compared> → <numericLiteral> | <userDefinedIdentifier> | <functionCall>
 
-<expression> → ‘ “ ’ <char> ‘ ” ’| <numericLiteral> | <userDefinedIdentifier> 
+<expression> → ‘ ' ’ <char> ‘ ' ’| ‘ “ ’ {<char>} ‘ ” ’| <numericLiteral> | <userDefinedIdentifier> 
 
 <identifier> → <userDefinedIdentifier> | <reservedWord>
 
