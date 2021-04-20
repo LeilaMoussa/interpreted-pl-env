@@ -6,14 +6,14 @@ fix num size := 10.
 (num@ n arr) => func lookForMin => (ascii) [
     var num cnt .
     cnt := 0.
-    iterif (isGreater(size,cnt))[
-        check (isGreater(min,arr#cnt) | isEqual(min,arr#cnt))[
+    iterif ((> size cnt))[
+        check ((> min arr#cnt) | (= min arr#cnt))[
             give 'Y'.
         ]
         other [
             ("Nothing!") => write.
         ]
-        cnt := add(cnt,1).
+        cnt := (+ cnt 1).
     ]
     give 'N'.
 ]
@@ -28,20 +28,20 @@ fix num size := 10.
     previous :=0.
     ("Please start filling your array: ") => write.
 
-    iterif (^isGreater(i,size) & isGreater(0,min))[
+    iterif (^(> i size) & (> 0 min))[
         arr#i := () => read.
         previous := sub(arr#i,previous).
-        i := add(i,1).
+        i := (+ i 1).
     ]
 
-    iterif(^isGreater(i,size))[
+    iterif(^(> i size))[
         var ascii answer.
         
-        check (isGreater(min,previous) | isEqual(min,previous))[
+        check ((> min previous) | (= min previous))[
             _avg := div(previous,10).
-            check (isGreater(min,_avg))[
+            check ((> min _avg))[
                 answer := 'y'.
-                _avg := mult (min,_avg).
+                _avg :=  (* min _avg).
             ]
             other [
                 answer := 'n'.
@@ -51,7 +51,7 @@ fix num size := 10.
             answer := (arr) => lookForMin.
         ]
 
-        i := add(i,1).
+        i := (+ i 1).
     ]
 
     
