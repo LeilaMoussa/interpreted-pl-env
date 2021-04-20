@@ -4,7 +4,7 @@ def get_groups() -> list:
         ('(-?)[0-9]+', 'NUM_LIT', 2),
         ('`.?`', 'CHAR_LIT', 3),
         ('".*"', 'STR_LIT', 4),
-        ('add', 'ADD', 5),
+        ('add', 'ADD', 5),   # !!!
         ('sub', 'SUB', 6),
         ('mult', 'MULT', 7),
         ('div', 'DIV', 8),
@@ -21,25 +21,31 @@ def get_groups() -> list:
         ('\[', 'LBRACK', 19),
         ('\]', 'RBRACK', 20),
         ('=>', 'ARROW', 21),
-        ('~[^~]*~', 'CMNT', 22),
-        ('\s', 'WHTSPC', 23),
-        ('func', 'FUNC', 24),
-        ('entry', 'MAIN', 25),
-        ('var', 'VAR', 26),
-        ('fix', 'CONST', 27),
-        ('num', 'NUM', 28),
-        ('ascii', 'CHAR', 29),
-        ('num@', 'NUM_ADDR', 30),
-        ('ascii@', 'CHAR_ADDR', 31),
-        ('num#', 'NUM_ARR', 32),   # worried about how this guy is treated
-        ('ascii#', 'STRING', 33),
-        ('give', 'RETURN', 34),
-        ('check', 'IF', 35),
-        ('other', 'ELSE', 36),
-        ('iterif', 'LOOP', 37),
-        ('read', 'IN', 38),
-        ('write', 'OUT', 39),
+        ('#', 'IDX', 22),
+        ('~[^~]*~', 'CMNT', 23),
+        ('\s', 'WHTSPC', 24),
+        ('func', 'FUNC', 25),
+        ('entry', 'MAIN', 26),
+        ('var', 'VAR', 27),
+        ('fix', 'CONST', 28),
+        ('num', 'NUM', 29),
+        ('ascii', 'CHAR', 30),
+        ('num@', 'NUM_ADDR', 31),
+        ('ascii@', 'CHAR_ADDR', 32),
+        ('num#', 'NUM_ARR', 33),
+        ('ascii#', 'STRING', 34),
+        ('give', 'RETURN', 35),
+        ('check', 'IF', 36),
+        ('other', 'ELSE', 37),
+        ('iterif', 'LOOP', 38),
+        ('read', 'IN', 39),
+        ('write', 'OUT', 40),
         ]
+
+def get_keywords():
+    return ('func', 'entry', 'var', 'fix', 'num', 'ascii',
+            'num@', 'ascii@', 'num#', 'ascii#', 'give', 'check',
+            'other', 'iterif', 'read', 'write')
 
 def get_default_code() -> str:
     return 'fix num a := 2.'
