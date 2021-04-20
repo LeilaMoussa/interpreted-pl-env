@@ -12,7 +12,7 @@
 
 <size> → <userDefinedIdentifier> | <digit> {<digit>}
 
-<mainFunction> →  ‘(’ ‘)’ ‘=>’ ‘entry’  ‘=>’   ‘(’ ‘)’ ‘[‘  {<declaration>} {<statement>} ‘]’ 
+<mainFunction> →  ‘(’ ‘)’ ‘=>’ ‘entry’  ‘=>’   ‘(’ ‘)’ ‘[‘  {<declaration>} {(<statement>|<function>)} ‘]’ 
 
 <function> → ‘(’<parameter> ‘)’ ‘=>’  ‘func’<userDefinedIdentifier>  ‘=>’ ‘(’<typeSpecifier> ‘)’ ‘[‘ {<declaration>} {<statement>} ‘]’
 
@@ -26,7 +26,7 @@
 
 <returnedExpression> →  <expression> | <functionCall>
 
-<selection> → ‘check’ ‘(‘ <conditionStatement> ‘)’ ‘[‘ {<declaration>} {<statement>} ‘]’ ‘other’ ‘[‘ {<declaration>} {<statement>} ‘]’ 
+<selection> → ‘check’ ‘(‘ <conditionStatement> ‘)’ ‘[‘ {<declaration>} {<statement>} ‘]’ ‘other’ ‘[‘ {<declaration>} {(<statement>|<function>)} ‘]’ 
 
 <loop> →  ‘iterif’ ‘(‘ <conditionStatement> ‘)’ ‘[‘ {<declaration>} {<statement>} ‘]’ 
 
