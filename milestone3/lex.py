@@ -27,7 +27,7 @@ def lex(code_line: str, line_number: int):
         token_val = res.group()
         if token_type == 'IDENT':
             # add to symbol table
-            # reserved words are still confusing to me
+            # CAREFUL: some reserved words get caught up here, so need to check if reserved before IDENT check
             pass
         elif token_type == 'NUM_LIT':
             # add to literal table as number
@@ -40,6 +40,7 @@ def lex(code_line: str, line_number: int):
         # i need a cute way of bundling up reserved words, otherwise the code would be ugly
         # opportunity to think of a nicer DS for constants
         # could just look at IDs? if we reserve certain intervals for similar types of tokens?
+        # or we could prefix reserved token names with 'RSRV'
             
         yield formulate_output(line_number, token_type, token_val, token_id)
         
