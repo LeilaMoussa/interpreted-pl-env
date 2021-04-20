@@ -2,7 +2,7 @@ def get_groups() -> list:
     return [
         ('([a-z]|_)+', 'IDENT', 1),
         ('(-?)[0-9]+', 'NUM_LIT', 2),
-        ('`.?`', 'CHAR_LIT', 3),
+        ("'.?'", 'CHAR_LIT', 3),
         ('".*"', 'STR_LIT', 4),
         ('add', 'ADD', 5),   # !!!
         ('sub', 'SUB', 6),
