@@ -14,6 +14,8 @@ symbol_table = constants.get_symbol_table()
 
 literal_table = {}
 
+master_regex = '|'.join(f'(?P<{group}>{regex})' for (regex, group) in rules.items())
+
 def formulate_output(line: int, token_type: str, token_val: str) -> str:
     ''' Returns a line of the format "Line 1 Token #1: a" '''
     try:
@@ -25,8 +27,6 @@ def formulate_output(line: int, token_type: str, token_val: str) -> str:
 
 def lex(code_line: str, line_number: int):
     '''Generator function'''
-    master_regex = '|'.join(f'(?P<{group}>{regex})' for (regex, group) in rules.items())
-    # print(master_regex)
     for res in re.finditer(master_regex, code_line):
         token_type = res.lastgroup
         token_val = res.group()
@@ -41,10 +41,13 @@ def lex(code_line: str, line_number: int):
             pass
         elif token_type == 'STR_LIT':
             pass
+        # i need a cute way of bundling up reserved words, otherwise the code would be ugly
+        # opportunity to think of a nicer DS for constants
             
         yield formulate_output(line_number, token_type, token_val)
         
 def main(filepath: str, default: bool) -> None:
+    # print(master_regex)
     token_stream = io.StringIO()
     if default:
         code = constants.get_default_code()
