@@ -8,8 +8,8 @@ Notes about some of the notations below:
 ----------------------------|------------------------------|---------------------------------------------------------
 
 Reserved words			['func' 'entry' 'var'		Class of words that cannot be user-defined identifier.
-				'fix' 'num' 'ascii'
-				'num@' 'ascii@' 'num#'
+				'fix' 'num' 'ascii'		Handling: each read lexeme is first checked whether it's a KW,
+				'num@' 'ascii@' 'num#'		and only if it's not that we check its token type
 				'ascii#' 'give' 'check'
 				'other' 'iterif' 'read'
 				'write']
@@ -18,19 +18,20 @@ User-defined identifiers	( [a-zA-Z] | '_' ) +		Any combination of alphabet and u
 
 Numeric literals		('-'?) [0-9]+			Signed int
 
-Character literals		' " ' .? ' " '			Single character between double quotes, for example "m" or even ""
+Character literals		' .? '				Single character between single quotes (i'm not putting the single quotes themselves between quotes)
 
 String literals			' " ' .* ' " '			Any number of characters between double quotes, for example "hello" or even ""
 
-Operators			['add' 'sub' 'mult'		Arithmetic, relational, logical
-				 'div' 'isEqual'
-				 'isGreater' ':=',
+Operators			['+' '-' '*'			Arithmetic, relational, logical
+				 '/' '='
+				 '>' ':=',
 				 '&' '|' '^']
 
-Punctuation			['.' ',']			End of statement '.' and ',' separator for paramters or structure elements for example
+Punctuation			['.' ',' '#' '('		Delimiters, parentheses, dots, commas, hashes for indexing and arrows for function calls & definitions
+				')' '[' ']' '=>']
 
-Comments			'~' [^'~']* '~'			Any character except '~' between two '~'s
+Comments			'~' .*				~ followed by anything
 
-Whitespace			[' ' '\n']			Spaces & new lines (EDIT: we should have included tabs and other types of
+Whitespace			[' ' \n \t]			Spaces & new lines (EDIT: we should have included tabs and other types of
 								whitespace as well, now that I think about it)
 ----------------------------|-------------------------------|---------------------------------------------------------

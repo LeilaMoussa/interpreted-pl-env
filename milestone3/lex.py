@@ -31,6 +31,8 @@ def lex(code_line: str, line_number: int):
         token_val = res.group()
         # check if reserved
         if token_val in reserved:  # val or type??
+            print("reserved")
+            # !!!!! even reserved words are being matched as identifiers!
             pass
         elif token_type == 'IDENT':
             # to know what to do, i need to know whether this is a declaration, an assignment...
