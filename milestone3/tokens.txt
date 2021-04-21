@@ -11,7 +11,7 @@ Line 4 Token #9 (ASGN) : :=
 Line 4 Token #2 (NUM_LIT) : 10
 Line 4 Token #15 (ENDSTAT) : .
 Line 6 Token #17 (LPAREN) : (
-Line 6 Token #29 (NUM_KW) : num			// should be num@
+Line 6 Token #31 (NUM_ADDR_KW) : num@
 Line 6 Token #1 (IDENT) : arr
 Line 6 Token #18 (RPAREN) : )
 Line 6 Token #14 (EQ) : =
@@ -98,8 +98,7 @@ Line 21 Token #17 (LPAREN) : (
 Line 21 Token #18 (RPAREN) : )
 Line 21 Token #19 (LBRACK) : [
 Line 22 Token #27 (VAR_KW) : var
-Line 22 Token #29 (NUM_KW) : num
-Line 22 Token #22 (IDX) : #			// should be num#, not num then #
+Line 22 Token #33 (NUM_ARR_KW) : num#
 Line 22 Token #1 (IDENT) : size
 Line 22 Token #1 (IDENT) : arr
 Line 22 Token #15 (ENDSTAT) : .
