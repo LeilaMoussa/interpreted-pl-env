@@ -3,7 +3,7 @@
 fix num min := -1 .
 fix num size := 10.
 
-(num@ n arr) => func lookForMin => (ascii) [
+(num@ arr) => func lookForMin => (ascii) [
     var num cnt .
     cnt := 0.
     iterif ((> size cnt))[
@@ -30,7 +30,7 @@ fix num size := 10.
 
     iterif (^(> i size) & (> 0 min))[
         arr#i := () => read.
-        previous := sub(arr#i,previous).
+        previous := (- arr#i previous).
         i := (+ i 1).
     ]
 
@@ -38,7 +38,7 @@ fix num size := 10.
         var ascii answer.
         
         check ((> min previous) | (= min previous))[
-            _avg := div(previous,10).
+            _avg := (/ previous 10).
             check ((> min _avg))[
                 answer := 'y'.
                 _avg :=  (* min _avg).

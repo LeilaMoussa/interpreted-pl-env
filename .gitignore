@@ -3,5 +3,3 @@
 **/*.o
 
 **/__pycache__/
-
-**/lex_output.txt

@@ -1,14 +1,9 @@
-''' Command to run this program
-python ./lex.py [./sample_program.txt]
-Don't pipe with > ! It picks up on the printed content!
-'''
-
 import sys
 import io
 import re
 import constants
 
-groups = constants.get_groups()  # regex, tokens, and IDs
+groups = constants.get_groups()
 reserved = constants.get_keywords()
 
 symbol_table = {}
@@ -29,10 +24,7 @@ def lex(code_line: str, line_number: int):
         write = True
         [token_type, token_id] = res.lastgroup.split('__')
         token_val = res.group()
-        # check if reserved
-        if token_val in reserved:  # val or type??
-            print("reserved")
-            # !!!!! even reserved words are being matched as identifiers!
+        if token_val in reserved:
             pass
         elif token_type == 'IDENT':
             # to know what to do, i need to know whether this is a declaration, an assignment...
@@ -65,7 +57,7 @@ def main(filepath: str, default: bool) -> None:
     
     contents = token_stream.getvalue()
     # print(contents)
-    with open('lex_output.txt', 'w') as op:
+    with open('tokens.txt', 'w') as op:
         op.write(contents)
 
     # save tables as files
@@ -82,4 +74,4 @@ if __name__ == '__main__':
     else:
         filepath = sys.argv[1]
     main(filepath, default)
-    print("Lexing done. Open lex_output.txt.")
+    print("Lexing done. Open tokens.txt.")
