@@ -17,7 +17,6 @@ def get_groups() -> list:
         ('iterif', 'LOOP_KW', 38),
         ('read', 'IN_KW', 39),
         ('write', 'OUT_KW', 40),
-        # eh, they're just numbers!
         
         ('([a-zA-Z]|_)+', 'IDENT', 1),
         ('(-?)[0-9]+', 'NUM_LIT', 2),
@@ -53,8 +52,17 @@ def get_keywords():
             'num@', 'ascii@', 'num#', 'ascii#', 'give', 'check',
             'other', 'iterif', 'read', 'write')
         # might find a way to not need this function
+        # prof seems to insist this needs to be in symbol table: but what attributes do they have?
+        # this seems not only unnecessary, but hurtful for performance and code quality
 
-def get_symbol_attributes():
+def get_symbol_fields():
+    # var or fix need: data type, value
+    # function needs: parameters (number & types) and return type
+    # both need id_type (var, fix, func) and scope
+    # what about address?
+    # say we have an array, what would be its value: address or actual elements? (i think address)
+    # does that mean that its type is actually NUM_ADDRESS not NUM_ARRAY?
+    # so our DTs are only: NUM, CHAR, NUM_ADDRESS, CHAR_ADDRESS?
     pass
 
 def get_default_code() -> str:
