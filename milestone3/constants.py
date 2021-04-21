@@ -52,6 +52,10 @@ def get_keywords():
     return ('func', 'entry', 'var', 'fix', 'num', 'ascii',
             'num@', 'ascii@', 'num#', 'ascii#', 'give', 'check',
             'other', 'iterif', 'read', 'write')
+        # might find a way to not need this function
+
+def get_symbol_attributes():
+    pass
 
 def get_default_code() -> str:
     return 'fix num a := 2.'

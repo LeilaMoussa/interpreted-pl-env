@@ -11,15 +11,25 @@ literal_table = {}
 
 master_regex = '|'.join(f'(?P<{group}__{_id}>{regex})' for (regex, group, _id) in groups)
 
+address = 1
+
 def handle_literal(token_type: str, token_val: str):
-    pass
+    global address
+    literal_table[token_val] = address  # lol
+    # i can understand why a char or string literal would be saved, but why save an integer?
+    address += 1
 
 def handle_symbol(token_type: str):
+    # need surrounding tokens
+    # if the previous token was FUNC, i also need all the tokens up to the last LPAREN
+    # even tricker: i need the next tokens: return type
+    # if not a func, i need the 2 previous tokens
+    # if they have the pattern of a declaration, add the corresponding information
+    # in any case, i also need the next tokens in the case of an assignment or constant initialization
     pass
 
 def lex(code_line: str, line_number: int):
     '''Generator function'''
-    address = 1
     for res in re.finditer(master_regex, code_line):
         write = True
         [token_type, token_id] = res.lastgroup.split('__')
@@ -27,8 +37,6 @@ def lex(code_line: str, line_number: int):
         if token_val in reserved:
             pass
         elif token_type == 'IDENT':
-            # to know what to do, i need to know whether this is a declaration, an assignment...
-            # a variable, a function...
             handle_symbol(token_val)
         elif token_type[-3:] == 'LIT':
             handle_literal(token_type, token_val)
@@ -39,6 +47,7 @@ def lex(code_line: str, line_number: int):
 def main(filepath: str, default: bool) -> None:
     # print(master_regex)
     token_stream = io.StringIO()    # kinda useless if i'm using it like this?
+    
     if default:
         code = constants.get_default_code()
     else:
@@ -50,10 +59,7 @@ def main(filepath: str, default: bool) -> None:
             
     code = code.split('\n')
     for number, line in enumerate(code):
-        # (token_stream.write(result) for result in lex(line, number+1) if result)
-        for result in lex(line, number+1):
-            if result:
-                token_stream.write(result)
+        [token_stream.write(result) for result in lex(line, number+1) if result]
     
     contents = token_stream.getvalue()
     # print(contents)
@@ -67,7 +73,6 @@ def main(filepath: str, default: bool) -> None:
 if __name__ == '__main__':
     default = False
     filepath = ''
-    
     if len(sys.argv) < 2:
         print('No HLPL input file provided, proceeding with default code.')
         default = True
