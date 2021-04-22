@@ -47,13 +47,14 @@ def get_groups() -> list:
         ('\s', 'WHTSPC', 24),
         ]
 
-def get_keywords():
-    return ('func', 'entry', 'var', 'fix', 'num', 'ascii',
+def init_symbol_table():
+    reserved_keywords = ('func', 'entry', 'var', 'fix', 'num', 'ascii',
             'num@', 'ascii@', 'num#', 'ascii#', 'give', 'check',
             'other', 'iterif', 'read', 'write')
-        # might find a way to not need this function
-        # prof seems to insist this needs to be in symbol table: but what attributes do they have?
-        # this seems not only unnecessary, but hurtful for performance and code quality
+    # a reasonable way to get this list from the above function
+    # would be to get the lexemes whose tokens end with KW
+    default_kw_val = {'symbol_type': 'RESERVED', }
+    return {kw: default_kw_val for kw in reserved_keywords}
 
 def get_symbol_fields():
     # var or fix need: data type, value

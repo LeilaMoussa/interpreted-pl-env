@@ -4,9 +4,8 @@ import re
 import constants
 
 groups = constants.get_groups()
-reserved = constants.get_keywords()
+symbol_table = constants.init_symbol_table()
 
-symbol_table = {}
 literal_table = {}
 
 master_regex = '|'.join(f'(?P<{group}__{_id}>{regex})' for (regex, group, _id) in groups)
@@ -34,7 +33,7 @@ def lex(code_line: str, line_number: int):
         write = True
         [token_type, token_id] = res.lastgroup.split('__')
         token_val = res.group()
-        if token_val in reserved:
+        if token_val in symbol_table and symbol_table[token_val]['symbol_type'] == 'RESERVED':
             pass
         elif token_type == 'IDENT':
             handle_symbol(token_val)
