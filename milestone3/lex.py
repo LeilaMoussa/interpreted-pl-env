@@ -1,6 +1,7 @@
 import sys
 import io
 import re
+import json
 import constants
 
 groups = constants.get_groups()
@@ -18,13 +19,14 @@ def handle_literal(token_type: str, token_val: str):
     # i can understand why a char or string literal would be saved, but why save an integer?
     address += 1
 
-def handle_symbol(token_type: str):
+def handle_symbol(token_val: str):
     # need surrounding tokens
     # if the previous token was FUNC, i also need all the tokens up to the last LPAREN
     # even tricker: i need the next tokens: return type
     # if not a func, i need the 2 previous tokens
     # if they have the pattern of a declaration, add the corresponding information
     # in any case, i also need the next tokens in the case of an assignment or constant initialization
+    symbol_table[token_val] = {'symbol_type': 'IDENT', 'attributes': {}}
     pass
 
 def lex(code_line: str, line_number: int):
@@ -62,10 +64,17 @@ def main(filepath: str, default: bool) -> None:
     
     contents = token_stream.getvalue()
     # print(contents)
-    with open('tokens.txt', 'w') as op:
+    with open('./lex_output/tokens.txt', 'w') as op:
         op.write(contents)
 
     # save tables as files
+    # print("sym table", symbol_table)
+    # print('lit table', literal_table)
+    with open('./lex_output/symbol.json', 'w') as op:
+        op.write(json.dumps(symbol_table, indent=4))
+
+    with open('./lex_output/literal.json', 'w') as op:
+        op.write(json.dumps(literal_table, indent=4))
 
     token_stream.close()
 
