@@ -1,4 +1,7 @@
 def get_groups() -> list:
+    # This is a list of (regex, token, id) tuples
+    # each representing a class of lexemes,
+    # in a specific order.
     return [
         ('func', 'FUNC_KW', 25),
         ('entry', 'MAIN_KW', 26),
@@ -8,7 +11,6 @@ def get_groups() -> list:
         ('ascii@', 'CHAR_ADDR_KW', 32),
         ('num#', 'NUM_ARR_KW', 33),
         ('ascii#', 'STRING_KW', 34),
-        # order is very important here
         ('num', 'NUM_KW', 29),
         ('ascii', 'CHAR_KW', 30),
         ('give', 'RETURN_KW', 35),
@@ -48,23 +50,21 @@ def get_groups() -> list:
         ]
 
 def init_symbol_table():
+    # The symbol table is initialized with the reserved words.
     reserved_keywords = ('func', 'entry', 'var', 'fix', 'num', 'ascii',
             'num@', 'ascii@', 'num#', 'ascii#', 'give', 'check',
             'other', 'iterif', 'read', 'write')
-    # a reasonable way to get this list from the above function
-    # would be to get the lexemes whose tokens end with KW
-    default_kw_val = {'symbol_type': 'RESERVED', }
+    default_kw_val = {'symbol_type': 'RESERVED'}
     return {kw: default_kw_val for kw in reserved_keywords}
 
 def get_symbol_fields():
-    # var or fix need: data type, value
-    # function needs: parameters (number & types) and return type
-    # both need id_type (var, fix, func) and scope
-    # what about address?
-    # say we have an array, what would be its value: address or actual elements? (i think address)
-    # does that mean that its type is actually NUM_ADDRESS not NUM_ARRAY?
-    # so our DTs are only: NUM, CHAR, NUM_ADDRESS, CHAR_ADDRESS?
+    # This function is to be implemented, if needed, at a later stage, when
+    # we have a better idea of an identifier's attributes.
+    # For example, a variable and a constant need a data type, a value,
+    # while a function needs parameter number and types and a return type.
+    # All identifiers need a scope attribute as well.
     pass
 
 def get_default_code() -> str:
+    # If an input HLPL program is not provided, the lexer runs on this snippet.
     return 'fix num a := 2.'
