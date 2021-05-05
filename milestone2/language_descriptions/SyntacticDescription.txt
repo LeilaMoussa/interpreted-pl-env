@@ -6,7 +6,7 @@
 
 <varDeclaration> → ‘var’<typeSpecifier> <userDefinedIdentifier>
 
-<fixDeclaration> →  ‘fix’<typeSpecifier> <userDefinedIdentifier> ‘:=’ (<expression> | <operation> | <functionCall> ) 
+<fixDeclaration> →  ‘fix’<typeSpecifier> <userDefinedIdentifier> ‘:=’ (<expression> '.'| <operation>  | <functionCall> '.') 
 
 <typeSpecifier> →  ‘num’ | ‘ascii’|‘num@’ | ‘ascii@’| ‘num#’ <size> | ‘ascii#’ <size> | ‘ ’
 
