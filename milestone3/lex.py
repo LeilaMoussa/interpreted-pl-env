@@ -24,10 +24,10 @@ def open_output_file():
     # it's empty first.
     # We're appending because we'd like partial results even in case of failure, for some reason,
     # or to see progress in the middle.
-    op = open('./lex_output/tokens.txt', 'w')
+    op = open('../milestone3/lex_output/tokens.txt', 'w')
     op.write('')
     op.close()
-    op = open('./lex_output/tokens.txt', 'a')
+    op = open('../milestone3/lex_output/tokens.txt', 'a')
     return op
 
 def handle_literal(token_type: str, token_val: str):
@@ -76,7 +76,6 @@ def lex(code_line: str, line_number: int):
         
 def main(filepath: str, default: bool, from_parser=False):
     # this is the weirdest error i've ever seen: main isn't executed!
-    print('in main')
     if default:
         # Only retrieve default code if we have to.
         code = constants.get_default_code()
@@ -91,7 +90,6 @@ def main(filepath: str, default: bool, from_parser=False):
     # Open the output file.
     tokens_file = open_output_file()
     tokens_file.write('ok\n')
-    print('output file opened')
     # We'd like to keep track of line numbers, so we're scanning the code line by line.
     code = code.split('\n')
     for number, line in enumerate(code):
@@ -101,18 +99,16 @@ def main(filepath: str, default: bool, from_parser=False):
             if result:
                 (lexeme, token, _id) = result
                 if from_parser:
-                    print('yielding')
-                    yield (lexeme, token)
+                    yield token
                 else:
-                    print('writing to file')
                     tokens_file.write(f'Line {line+1} Token #{_id} ({token}) : {lexeme}\n')
     tokens_file.close()
 
     # At this point, the literal table and symbol table have been filled,
     # now save them as JSON files in the output folder.
-    with open('./lex_output/symbol.json', 'w') as op:
+    with open('../milestone3/lex_output/symbol.json', 'w') as op:
         op.write(json.dumps(symbol_table, indent=4))
-    with open('./lex_output/literal.json', 'w') as op:
+    with open('../milestone3/lex_output/literal.json', 'w') as op:
         op.write(json.dumps(literal_table, indent=4))
 
 if __name__ == '__main__':
