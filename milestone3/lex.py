@@ -35,8 +35,9 @@ def handle_literal(token_type: str, token_val: str):
     # Duplicates could not exist anyway in a dictionary, but this check serves to
     # guarantee that memory (our VM's memory that will be populated at the level of the
     # interpreter) isn't wasted in the case of duplicate literals.
-    if token_val not in literal_table: literal_table[token_val] = address
-    address += 1
+    if token_val not in literal_table:
+        literal_table[token_val] = address
+        address += 1
 
 def handle_symbol(token_val: str):
     # Duplicate symbols are not handled, necessarily, because scoping is still ahead of us.
@@ -54,7 +55,10 @@ def lex(code_line: str, line_number: int):
         # We are handling reserved words by first checking whether they exist in the symbol table as a reserved word
         # as opposed to matching them as identifiers first then checking if they're reserved.
         # This is because our reserved words cannot be described in the same way as our identifiers.
-        if token_val in symbol_table and symbol_table[token_val]['symbol_type'] == 'RESERVED':
+        if not res:
+            # If a lexeme cannot be matched, there must be an error, so terminate the program immediately.
+            raise RuntimeError(f'INVALID LEXEME FOUND ON LINE {line_number}: {token_val}. Aborting.')
+        elif token_val in symbol_table and symbol_table[token_val]['symbol_type'] == 'RESERVED':
             pass
         elif token_type == 'IDENT':
             # If we've encountered an identifier (variable, constant, or function),
@@ -67,13 +71,12 @@ def lex(code_line: str, line_number: int):
             # `write` flag controls says whether a token is to be skipped or written to output file.
             # Comments and whitespaces are skipped.
             write = False
-        elif not res:
-            # If a lexeme cannot be matched, there must be an error, so terminate the program immediately.
-            raise RuntimeError(f'INVALID LEXEME FOUND ON LINE {line_number}: {token_val}! Aborting.')
         # If a match has been found, yield a corresponding message.
-        yield write and f'Line {line_number} Token #{token_id} ({token_type}) : {token_val}\n'
+        yield write and (token_val, token_type, token_id)
         
-def main(filepath: str, default: bool) -> None:
+def main(filepath: str, default: bool, from_parser=False):
+    # this is the weirdest error i've ever seen: main isn't executed!
+    print('in main')
     if default:
         # Only retrieve default code if we have to.
         code = constants.get_default_code()
@@ -87,11 +90,22 @@ def main(filepath: str, default: bool) -> None:
 
     # Open the output file.
     tokens_file = open_output_file()
+    tokens_file.write('ok\n')
+    print('output file opened')
     # We'd like to keep track of line numbers, so we're scanning the code line by line.
     code = code.split('\n')
     for number, line in enumerate(code):
         # Resulting tokens on that line are written to the file immediately
-        [tokens_file.write(result) for result in lex(line, number+1) if result]
+        # [tokens_file.write(result) for result in lex(line, number+1) if result]
+        for result in lex(line, number+1):
+            if result:
+                (lexeme, token, _id) = result
+                if from_parser:
+                    print('yielding')
+                    yield (lexeme, token)
+                else:
+                    print('writing to file')
+                    tokens_file.write(f'Line {line+1} Token #{_id} ({token}) : {lexeme}\n')
     tokens_file.close()
 
     # At this point, the literal table and symbol table have been filled,
@@ -112,4 +126,4 @@ if __name__ == '__main__':
         # Otherwise, we proceed with that file.
         filepath = sys.argv[1]
     main(filepath, default)
-    print("Lexing done. Open tokens.txt.")
+    print("Lexing done. Open ./lex_output/tokens.txt.")
