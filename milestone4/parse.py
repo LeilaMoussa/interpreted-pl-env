@@ -1,4 +1,3 @@
-#from ..milestone3.lex import main as generate   # Can't get this to work
 import sys
 import os
 sys.path.append(os.path.abspath('../milestone3'))
@@ -6,6 +5,12 @@ from lex import main as generate
 
 token_gen = None
 current_token = None
+
+def get_next_token():
+    try:
+        return token_gen.__next__()
+    except:
+        sys.exit("Reached end of token stream!\n")
 
 def program():
     global current_token
@@ -26,14 +31,14 @@ def declaration():
         return False
     else:
         #all's good, consume next token
-        current_token = token_gen.__next__()
+       current_token = get_next_token()
 
 def varDeclaration():
     global current_token
     if current_token != 'VAR_KW':
         return False
     else: 
-        current_token = token_gen.__next__()
+       current_token = get_next_token()
     if not typeSpecifier():
         return False
     if not userDefinedIentifier():
@@ -45,7 +50,7 @@ def fixDeclaration() -> bool:
     if current_token != 'CONST_KW':
         return False
     else:
-        current_token = token_gen.__next__()
+       current_token = get_next_token()
     if not typeSpecifier():
         return False
     if not userDefinedIdentifier():
@@ -53,7 +58,7 @@ def fixDeclaration() -> bool:
     if current_token != 'ASGN':
         return False
     else:
-        current_token = token_gen.__next__()
+       current_token = get_next_token()
     if not expression():
         if not operation():
             if not functionCall():
@@ -69,7 +74,7 @@ def typeSpecifier():
                     return False
     #Still need to add arrays and strings, I guess no need for the moment
     #you consumed a token now, get next one
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     return True
 
 def userDefinedIdentifier():
@@ -77,42 +82,42 @@ def userDefinedIdentifier():
     global current_token
     if current_token != 'IDENT':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     return True
 
 def mainFunction():
     global current_token
     if current_token != 'LPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'RPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'ARROW':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'MAIN_KW':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'ARROW':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'LPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'RPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'LBRACK':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     while (declaration()):
         pass
     while (statement() or function()):
         pass
     if current_token != 'RBRACK':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     return True
 
 def size():
@@ -128,34 +133,34 @@ def function():
     global current_token
     if current_token != 'LPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if not parameter():
         return False
     if current_token != 'RPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'ARROW':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'FUNC_KW':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if not userDefinedIdentifier():
         return False
     if current_token != 'ARROW':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'LPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if not typeSpecifier():
         return False
     if current_token != 'RPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'LBRACK':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     while declaration():
         pass
     while statement():
@@ -184,7 +189,7 @@ def statement():
                             return False
     if current_token != 'ENDSTAT':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     return True
             
 def assignment():
@@ -193,7 +198,7 @@ def assignment():
         return False
     if current_token != 'ASGN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if not expression():
         if not operation():
             if not functionCall():
@@ -204,12 +209,12 @@ def returnStatement():
     global current_token
     if current_token != 'RETURN_KW':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if not returnedExpression():
         return False
     if current_token != 'ENDSTAT':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     return True
 
 def returnedExpression():
@@ -222,63 +227,63 @@ def selection():
     global current_token
     if current_token != 'IF_KW':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'LPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if not conditionStatement():
         return False
     if current_token != 'RPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'LBRACK':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     while declaration():
         pass
     while statement():
         pass
     if current_token != 'RBRACK':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'ELSE_KW':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'LBRACK':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     while declaration():
         pass
     while statement() or function():
         pass
     if current_token != 'RBRACK':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     return True
     
 def loop():
     global current_token
     if current_token != 'LOOP_KW':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'LPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if not conditionStatement():
         return False
     if current_token != 'RPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'LBRACK':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     while declaration():
         pass
     while statement():
         pass
     if current_token != 'RBRACK':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     return True
 
 def operation():
@@ -288,23 +293,23 @@ def operation():
             if current_token != 'MULT':
                 if current_token != 'DIV':
                     return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'LPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if not operand():
         return False
     if current_token != 'COMMA':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if not operand():
         return False
     if current_token != 'RPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'ENDSTAT':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     return True
 
 def operand():
@@ -319,16 +324,16 @@ def functionCall():
     global current_token
     if current_token != 'LPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if not expression():
         return False
     #only handling function calls with 1 parameter for the time being
     if current_token != 'RPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'ARROW':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if not identifier():
         return False
     return True
@@ -345,17 +350,17 @@ def comparison():
     global current_token
     if current_token != 'LPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if current_token != 'EQ' and current_token != 'GT':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     if not compared():
         return False
     if not compared():
         return False
     if current_token != 'RPAREN':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     return True
 
 def compared():
@@ -368,7 +373,7 @@ def compared():
 def expression():
     global current_token
     if current_token == 'CHAR_LIT' or current_token == 'STR_LIT':
-        current_token = token_gen.__next__()
+        current_token = get_next_token()
         return True
     if not numericLiteral():
         if not userDefinedIdentifier():
@@ -385,14 +390,14 @@ def reservedWord():
     global current_token
     if current_token != 'IN_KW' and current_token != 'OUT_KW':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     return true
 
 def numericLiteral():
     global current_token
     if current_token != 'NUM_LIT':
         return False
-    current_token = token_gen.__next__()
+    current_token = get_next_token()
     return True
 
 def main(filepath, default, from_parser):
