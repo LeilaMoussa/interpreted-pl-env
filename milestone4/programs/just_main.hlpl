@@ -1,0 +1,5 @@
+~ Complexity level: 1 (lowest)
+
+() => entry => () [
+	("hello") => write.
+]

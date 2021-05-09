@@ -1,0 +1,8 @@
+~ Complexity level: 2
+() => greet => () [
+	("Greetings") => write.
+]
+
+() => entry => () [
+	greet().
+]

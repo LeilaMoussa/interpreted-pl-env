@@ -1,0 +1,14 @@
+~ Complexity level: 4 (highest)
+
+fix ascii#5 greeting := "Hello".
+
+(ascii@ name) => greet => () [
+	(greeting) => write.
+	(", ") => write.
+	(name) => write.
+]
+
+() => entry => () [
+	fix ascii#3 name := "MMA".
+	(friend) => greet.
+]

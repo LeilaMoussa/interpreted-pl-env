@@ -1,0 +1,19 @@
+~ Complexity level: 3
+
+(num grade) => get_letter => (ascii) [
+	check (grade > 90) [
+		give 'A'.
+	]
+	other [
+		give 'B'.
+	]
+]
+
+() => entry => () [
+	var num grade.
+	var ascii letter.
+
+	grade := 100.
+	letter := (grade) => get_letter.
+	(letter) => write.
+]
