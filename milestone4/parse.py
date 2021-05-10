@@ -10,15 +10,17 @@ current_token = None
 line = -1
 position = -1
 
+# ! at some point here, we need to make sure userDefinedIdentifier is not a reserved word (easy)
+
 def get_next_token():
     global token_gen, line, position
     try:
         token_info = token_gen.__next__()
-        print("getting next token")
         line += 1
         position += 1
-        return token_info[0]
-        # first element of the tuple is the token, but we might also need the lexeme for the tree
+        token = token_info[0]
+        if VERBOSE: print("Current token:", token)
+        return token
     except:
         sys.exit("Reached end of token stream with no errors!")
 
@@ -27,17 +29,11 @@ def program():
     if VERBOSE: print("In program.")
     local_position = position
     while declaration():
-        pass
-    if position > local_position: return False
-    local_position = position
+        local_position = position
+    if position > local_position: return False  # by virtue of LL(1)
     while function():
-        pass
+        local_position = position
     if position > local_position: return False
-    # We need to handle the possibility of bad syntax of functions
-    # i.e. progress being made, so they're definitely functions (or declarations)
-    # but they have wrong syntax => raise error, don't just pass
-    # I think we can achieve this easily with a position counter for the token
-    # same for everything with while
     if not mainFunction():
         return False
     return True
@@ -61,7 +57,7 @@ def varDeclaration():
     current_token = get_next_token()
     if not typeSpecifier():
         return False
-    if not userDefinedIentifier():
+    if not userDefinedIdentifier():
         return False
     return True
 
@@ -137,11 +133,10 @@ def mainFunction():
     current_token = get_next_token()
     local_position = position
     while declaration():
-        pass
+        local_position = position
     if position > local_position: return False
-    local_position = position
     while statement() or function():
-        pass
+        local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
         return False
@@ -162,7 +157,6 @@ def function():
     global current_token
     if VERBOSE: print("In function.")
     if current_token != 'FUNC_KW':
-        print("wtff")
         return False
     current_token = get_next_token()
     if current_token != 'LPAREN':
@@ -195,11 +189,10 @@ def function():
     current_token = get_next_token()
     local_position = position
     while declaration():
-        pass
+        local_position = position
     if position > local_position: return False
-    local_position = position
     while statement():
-        pass
+        local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
         return False
@@ -283,11 +276,10 @@ def selection():
     current_token = get_next_token()
     local_position = position
     while declaration():
-        pass
+        local_position = position
     if position > local_position: return False
-    local_position = position
     while statement():
-        pass
+        local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
         return False
@@ -300,11 +292,10 @@ def selection():
     current_token = get_next_token()
     local_position = position
     while declaration():
-        pass
+        local_position = position
     if position > local_position: return False
-    local_position = position
     while statement() or function():
-        pass
+        local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
         return False
@@ -330,11 +321,10 @@ def loop():
     current_token = get_next_token()
     local_position = position
     while declaration():
-        pass
+        local_position = position
     if position > local_position: return False
-    local_position = position
     while statement():
-        pass
+        local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
         return False
@@ -397,7 +387,6 @@ def functionCall():
     if current_token != 'ENDSTAT':
         return False
     current_token = get_next_token()
-    print("token is now", current_token)
     return True
 
 def conditionStatement():
@@ -447,6 +436,7 @@ def expression():
             
 def identifier():
     if VERBOSE: print("In identifier.")
+    # i'm wondering about this order
     if not userDefinedIdentifier():
         if not reservedWord():
             return False
