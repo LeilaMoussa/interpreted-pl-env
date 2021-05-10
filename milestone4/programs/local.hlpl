@@ -1,7 +1,7 @@
 ~ Complexity level: 3
 
-(num grade) => get_letter => (ascii) [
-	check (grade > 90) [
+func (num grade) => get_letter => (ascii) [
+	check (gt(grade, 90)) [
 		give 'A'.
 	]
 	other [

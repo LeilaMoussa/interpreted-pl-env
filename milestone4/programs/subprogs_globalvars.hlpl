@@ -1,5 +1,6 @@
 ~ Complexity level: 2
-() => greet => () [
+
+func () => greet => () [
 	("Greetings") => write.
 ]
 

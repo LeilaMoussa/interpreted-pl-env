@@ -5,23 +5,34 @@ from lex import main as generate
 
 VERBOSE = True
 
-token_gen = None
+token_gen = None  # token_gen is a generator object of (token, lexeme, line_number)
 current_token = None
+line = -1
+position = -1
 
 def get_next_token():
-    print("getting next token")
+    global token_gen, line, position
     try:
-        return token_gen.__next__()
+        token_info = token_gen.__next__()
+        print("getting next token")
+        line += 1
+        position += 1
+        return token_info[0]
+        # first element of the tuple is the token, but we might also need the lexeme for the tree
     except:
-        sys.exit("Reached end of token stream!\n")
+        sys.exit("Reached end of token stream with no errors!")
 
 def program():
     global current_token
     if VERBOSE: print("In program.")
+    local_position = position
     while declaration():
         pass
+    if position > local_position: return False
+    local_position = position
     while function():
         pass
+    if position > local_position: return False
     # We need to handle the possibility of bad syntax of functions
     # i.e. progress being made, so they're definitely functions (or declarations)
     # but they have wrong syntax => raise error, don't just pass
@@ -39,7 +50,7 @@ def declaration():
             return False
     if current_token != 'ENDSTAT':
         return False
-    current_token = get_next_token()
+    current_token = get_next_token()   # this isn't the function's responsibility, but anyway
     return True
 
 def varDeclaration():
@@ -62,7 +73,6 @@ def fixDeclaration() -> bool:
     current_token = get_next_token()
     if not typeSpecifier():
         return False
-    # i'm skeptical: shouldn't we get the next token here?
     if not userDefinedIdentifier():
         return False
     if current_token != 'ASGN':
@@ -99,7 +109,6 @@ def userDefinedIdentifier():
 def mainFunction():
     global current_token
     if VERBOSE: print("In mainFunction.")
-    print(current_token)
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
@@ -123,11 +132,17 @@ def mainFunction():
     current_token = get_next_token()
     if current_token != 'LBRACK':
         return False
+    # i think beyond here, `mainFunction` and `function` have the same body
+    # so put the following in another function
     current_token = get_next_token()
+    local_position = position
     while declaration():
         pass
+    if position > local_position: return False
+    local_position = position
     while statement() or function():
         pass
+    if position > local_position: return False
     if current_token != 'RBRACK':
         return False
     current_token = get_next_token()
@@ -141,13 +156,17 @@ def size():
         else:
             while digit():
                 pass
+    # !! we don't deal with digits anymore, just numeric literals!
     return True
 
 def function():
+    # rule for function definition, starting with func
     global current_token
     if VERBOSE: print("In function.")
     if current_token != 'FUNC_KW':
+        print("wtff")
         return False
+    current_token = get_next_token()
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
@@ -176,10 +195,14 @@ def function():
     if current_token != 'LBRACK':
         return False
     current_token = get_next_token()
+    local_position = position
     while declaration():
         pass
+    if position > local_position: return False
+    local_position = position
     while statement():
         pass
+    if position > local_position: return False
     if current_token != 'RBRACK':
         return False
     return True
@@ -203,8 +226,6 @@ def statement():
                 if not loop():
                     if not functionCall():
                         return False
-    if current_token != 'ENDSTAT':
-        return False
     current_token = get_next_token()
     return True
             
@@ -220,6 +241,9 @@ def assignment():
         if not operation():
             if not functionCall():
                 return False
+    if current_token != 'ENDSTAT':
+        return False
+    current_token = get_next_token()
     return True
 
 def returnStatement():
@@ -259,10 +283,14 @@ def selection():
     if current_token != 'LBRACK':
         return False
     current_token = get_next_token()
+    local_position = position
     while declaration():
         pass
+    if position > local_position: return False
+    local_position = position
     while statement():
         pass
+    if position > local_position: return False
     if current_token != 'RBRACK':
         return False
     current_token = get_next_token()
@@ -272,10 +300,14 @@ def selection():
     if current_token != 'LBRACK':
         return False
     current_token = get_next_token()
+    local_position = position
     while declaration():
         pass
+    if position > local_position: return False
+    local_position = position
     while statement() or function():
         pass
+    if position > local_position: return False
     if current_token != 'RBRACK':
         return False
     current_token = get_next_token()
@@ -298,10 +330,14 @@ def loop():
     if current_token != 'LBRACK':
         return False
     current_token = get_next_token()
+    local_position = position
     while declaration():
         pass
+    if position > local_position: return False
+    local_position = position
     while statement():
         pass
+    if position > local_position: return False
     if current_token != 'RBRACK':
         return False
     current_token = get_next_token()
@@ -360,7 +396,11 @@ def functionCall():
     current_token = get_next_token()
     if not identifier():
         return False
-    return current_token == 'ENDSTAT'
+    if current_token != 'ENDSTAT':
+        return False
+    current_token = get_next_token()
+    print("token is now", current_token)
+    return True
 
 def conditionStatement():
     #only handling single comparisons without a 'not' for the time being
@@ -379,7 +419,6 @@ def comparison():
     current_token = get_next_token()
     if current_token != 'LPAREN':
         return False
-    # !
     if not compared():
         return False
     if not compared():
@@ -435,12 +474,10 @@ def main(filepath, default, from_parser):
     global token_gen, current_token
     token_gen = generate(filepath, default, from_parser)
     current_token = get_next_token()
-#    for token in token_gen:
-#        print(token)
+    # for elt in token_gen:
+    #     print(elt)
     if not program():
-        print ("Error occured. Read error messages.")
-    else:
-        print ("Program parsed successfully!")
+        print("Error occured. Read error messages.")
 
 if __name__ == '__main__':
     default = False
@@ -451,4 +488,3 @@ if __name__ == '__main__':
     else:
         filepath = sys.argv[1]
     main(filepath, default, from_parser=True)
-    print("Parsing done.")
