@@ -14,7 +14,7 @@
 
 <mainFunction> → LPAREN RPAREN ARROW MAIN_KW ARROW LPAREN RPAREN LBRACK {<declaration>} {(<statement> | <function>)} RBRACK
 
-<function> → FUNC_KW LPAREN <parameter> RPAREN ARROW <userDefinedIdentifier> ARROW LPAREN <typeSpecifier> RPAREN LBRACK {<declaration>} {<statement>} RBRACK
+<function> → FUNC_KW LPAREN <parameter> RPAREN ARROW <userDefinedIdentifier> ARROW LPAREN <typeSpecifier> RPAREN LBRACK {<declaration>} {(<statement> | <function>)} RBRACK
 
 <parameter> → <typeSpecifier> <identifier> {COMMA <typeSpecifier> <identifier>}
 
@@ -44,11 +44,11 @@
 
 <expression> → CHAR_LIT | STR_LIT | <numericLiteral> | <userDefinedIdentifier>
 
-<identifier> → <userDefinedIdentifier> | <reservedWord>  // make sure userDefinedIdentifier is not add, sub, mult, div, func, give, check, iterif !!
+<identifier> → <userDefinedIdentifier> | <reservedWord>
 
 <userDefinedIdentifier> → IDENT [IDX] 
 
-<reservedWord> → IN_KW | OUT_KW  // it would make sense to add all reserved words, but that would mess things up
+<reservedWord> → IN_KW | OUT_KW
 
 <numericLiteral> → NUM_LIT
 

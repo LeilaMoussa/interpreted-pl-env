@@ -67,4 +67,6 @@ def get_symbol_fields():
 
 def get_default_code() -> str:
     # If an input HLPL program is not provided, the lexer runs on this snippet.
+    # But this is not a correct program for the parser. We need to make sure this is rejected
+    # and replace it with a correct program (containing main function).
     return 'fix num a := 2.'

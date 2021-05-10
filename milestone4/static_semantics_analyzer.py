@@ -6,8 +6,7 @@ symbol_table = {}
 literal_table = {}
 current_scope = None
 
-# Input: CST. Format is very crucial. If we can't find a way to save the CST object as a file (pickling...)
-#    we'll be forced to put parser, static semantics analyzer, and generator in same file
+# Input: CST. Format is very crucial. Preferred option: run parser from here, like we did with lexer
 
 # 1) Define before use
 # 2) Type checking

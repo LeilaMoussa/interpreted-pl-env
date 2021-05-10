@@ -10,8 +10,6 @@ current_token = None
 line = -1
 position = -1
 
-# ! at some point here, we need to make sure userDefinedIdentifier is not a reserved word (easy)
-
 def get_next_token():
     global token_gen, line, position
     try:
@@ -436,7 +434,6 @@ def expression():
             
 def identifier():
     if VERBOSE: print("In identifier.")
-    # i'm wondering about this order
     if not userDefinedIdentifier():
         if not reservedWord():
             return False
