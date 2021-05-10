@@ -6,19 +6,19 @@
 
 <varDeclaration> → VAR_KW <typeSpecifier> <userDefinedIdentifier>
 
-<fixDeclaration> → CONST_KW <typeSpecifier> <userDefinedIdentifier> ASGN (<expression>| <operation>  | <functionCall>)
+<fixDeclaration> → CONST_KW <typeSpecifier> <userDefinedIdentifier> ASGN (<expression> | <operation> | <functionCall>)
 
-<typeSpecifier> → NUM_KW | CHAR_KW | NUM_ADDR_KW | CHAR_ADDR_KW | NUM_ARR_KW <size> | STRING_KW <size> | ' '  // what's ' ' for?
+<typeSpecifier> → NUM_KW | CHAR_KW | NUM_ADDR_KW | CHAR_ADDR_KW | NUM_ARR_KW <size> | STRING_KW <size> | ' ' // what's ' ' for?
 
 <size> → <userDefinedIdentifier> | <digit> {<digit>}
 
-<mainFunction> → LPAREN RPAREN ARROW MAIN_KW ARROW LPAREN RPAREN LBRACK {<declaration>} {(<statement>|<function>)} RBRACK
+<mainFunction> → LPAREN RPAREN ARROW MAIN_KW ARROW LPAREN RPAREN LBRACK {<declaration>} {(<statement> | <function>)} RBRACK
 
-<function> → LPAREN <parameter> RPAREN ARROW FUNC_KW <userDefinedIdentifier> ARROW LPAREN <typeSpecifier> RPAREN LBRACK {<declaration>} {<statement>} RBRACK
+<function> → FUNC_KW LPAREN <parameter> RPAREN ARROW <userDefinedIdentifier> ARROW LPAREN <typeSpecifier> RPAREN LBRACK {<declaration>} {<statement>} RBRACK
 
-<parameter> → <typeSpecifier> <identifier> {COMMA <typeSpecifier>  <identifier>}
+<parameter> → <typeSpecifier> <identifier> {COMMA <typeSpecifier> <identifier>}
 
-<statement> → (<assignment> | <return> | <selection> | <loop> | <comment> | <functionCall>) ENDSTAT
+<statement> → (<assignment> | <return> | <selection> | <loop> | <comment> | <functionCall>) ENDSTAT  // we don't use comment anymore
 
 <assignment> → <userDefinedIdentifier> ASGN (<expression> | <operation> | <functionCall>)
 
@@ -26,11 +26,9 @@
 
 <returnedExpression> → <expression> | <functionCall>
 
-<selection> → IF_KW LPAREN <conditionStatement> RPAREN LBRACK {<declaration>} {<statement>} RBRACK ELSE_KW LBRACK {<declaration>} {(<statement>|<function>)} RBRACK
+<selection> → IF_KW LPAREN <conditionStatement> RPAREN LBRACK {<declaration>} {<statement>} RBRACK ELSE_KW LBRACK {<declaration>} {(<statement> | <function>)} RBRACK
 
 <loop> → LOOP_KW LPAREN <conditionStatement> RPAREN LBRACK {<declaration>} {<statement>} RBRACK
-
-<comment> → CMNT
 
 <operation> → (ADD | SUB | MULT | DIV) LPAREN <operand> COMMA <operand> RPAREN ENDSTAT
 
@@ -38,27 +36,29 @@
 
 <functionCall> → LPAREN <expression> {COMMA <expression>} RPAREN ARROW <identifier>
 
-<conditionStatement> → [NOT] <comparaison>  { (AND | OR ) [NOT] <comparaison>}
+<conditionStatement> → [NOT] <comparaison> { (AND | OR ) [NOT] <comparaison>}
 
-<comparaison> → LPAREN (EQ | GT)  <compared>  <compared> RPAREN
+<comparison> → (EQ | GT) LPAREN <compared> <compared> RPAREN
 
 <compared> → <numericLiteral> | <userDefinedIdentifier> | <functionCall>
 
 <expression> → CHAR_LIT | STR_LIT | <numericLiteral> | <userDefinedIdentifier>
 
-<identifier> → <userDefinedIdentifier> | <reservedWord>
+<identifier> → <userDefinedIdentifier> | <reservedWord>  // make sure userDefinedIdentifier is not add, sub, mult, div, func, give, check, iterif !!
 
-<userDefinedIdentifier> → IDENT [IDX]
+<userDefinedIdentifier> → IDENT [IDX] 
 
-<reservedWord> → IN_KW | OUT_KW
+<reservedWord> → IN_KW | OUT_KW  // it would make sense to add all reserved words, but that would mess things up
 
 <numericLiteral> → NUM_LIT
 
--------------------------------------- Rules we don't need anymore
+-------------------------------------- Rules we don't need anymore ----------------------------
+<comment> → CMNT
+
 <char> → every keyboard character 
 
 <commentChar> → every keyboard character
 
-<digit> → ‘0’| ‘1’ | ‘2’| ’3’ | ’4’ | ‘5’ | ‘6’ | ‘7’ |  ‘8’ | ‘9’
+<digit> → ‘0’| ‘1’ | ‘2’| ’3’ | ’4’ | ‘5’ | ‘6’ | ‘7’ | ‘8’ | ‘9’
 
 <alpha> → all alphabets

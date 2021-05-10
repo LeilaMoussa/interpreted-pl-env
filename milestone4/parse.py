@@ -151,12 +151,10 @@ def mainFunction():
 def size():
     if VERBOSE: print("In size.")
     if not userDefinedIdentifier():
-        if not digit():
+        if current_token != 'NUM_LIT':
             return False
-        else:
-            while digit():
-                pass
-    # !! we don't deal with digits anymore, just numeric literals!
+        # they need to be positive, so look at lexeme[0] => clunky, but necessary
+        # because the token is a NUM_LIT
     return True
 
 def function():

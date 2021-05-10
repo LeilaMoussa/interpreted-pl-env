@@ -86,7 +86,6 @@ def main(filepath: str, default: bool, from_parser=False):
             code = input_file.read().strip()
         except:
             sys.exit('Given HLPL file does not exist. Aborting.')
-
     # Open the output file.
     tokens_file = open_output_file()
     tokens_file.write('ok\n')
@@ -99,9 +98,9 @@ def main(filepath: str, default: bool, from_parser=False):
             if result:
                 (lexeme, token, _id) = result
                 if from_parser:
-                    yield token
+                    yield (token, lexeme, number+1)
                 else:
-                    tokens_file.write(f'Line {line+1} Token #{_id} ({token}) : {lexeme}\n')
+                    tokens_file.write(f'Line {number+1} Token #{_id} ({token}) : {lexeme}\n')
     tokens_file.close()
 
     # At this point, the literal table and symbol table have been filled,
