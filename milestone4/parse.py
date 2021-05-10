@@ -22,8 +22,14 @@ def program():
         pass
     while function():
         pass
+    # We need to handle the possibility of bad syntax of functions
+    # i.e. progress being made, so they're definitely functions (or declarations)
+    # but they have wrong syntax => raise error, don't just pass
+    # I think we can achieve this easily with a position counter for the token
+    # same for everything with while
     if not mainFunction():
-        return False 
+        return False
+    return True
         
 def declaration():
     global current_token
@@ -31,19 +37,17 @@ def declaration():
     if not varDeclaration():
         if not fixDeclaration():
             return False
-    if (current_token != 'ENDSTAT'):
+    if current_token != 'ENDSTAT':
         return False
-    else:
-        #all's good, consume next token
-       current_token = get_next_token()
+    current_token = get_next_token()
+    return True
 
 def varDeclaration():
     global current_token
     if VERBOSE: print("In varDeclaration.")
     if current_token != 'VAR_KW':
         return False
-    else: 
-       current_token = get_next_token()
+    current_token = get_next_token()
     if not typeSpecifier():
         return False
     if not userDefinedIentifier():
@@ -55,16 +59,15 @@ def fixDeclaration() -> bool:
     if VERBOSE: print("In fixDeclaration.")
     if current_token != 'CONST_KW':
         return False
-    else:
-       current_token = get_next_token()
+    current_token = get_next_token()
     if not typeSpecifier():
         return False
+    # i'm skeptical: shouldn't we get the next token here?
     if not userDefinedIdentifier():
         return False
     if current_token != 'ASGN':
         return False
-    else:
-       current_token = get_next_token()
+    current_token = get_next_token()
     if not expression():
         if not operation():
             if not functionCall():
@@ -121,9 +124,9 @@ def mainFunction():
     if current_token != 'LBRACK':
         return False
     current_token = get_next_token()
-    while (declaration()):
+    while declaration():
         pass
-    while (statement() or function()):
+    while statement() or function():
         pass
     if current_token != 'RBRACK':
         return False
@@ -143,18 +146,18 @@ def size():
 def function():
     global current_token
     if VERBOSE: print("In function.")
+    if current_token != 'FUNC_KW':
+        return False
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
     if not parameter():
+        # !! we need to support 0 params
         return False
     if current_token != 'RPAREN':
         return False
     current_token = get_next_token()
     if current_token != 'ARROW':
-        return False
-    current_token = get_next_token()
-    if current_token != 'FUNC_KW':
         return False
     current_token = get_next_token()
     if not userDefinedIdentifier():
@@ -198,9 +201,8 @@ def statement():
         if not returnStatement():
             if not selection():
                 if not loop():
-                    if not comment():
-                        if not functionCall():
-                            return False
+                    if not functionCall():
+                        return False
     if current_token != 'ENDSTAT':
         return False
     current_token = get_next_token()
@@ -358,7 +360,7 @@ def functionCall():
     current_token = get_next_token()
     if not identifier():
         return False
-    return True
+    return current_token == 'ENDSTAT'
 
 def conditionStatement():
     #only handling single comparisons without a 'not' for the time being
@@ -372,12 +374,12 @@ def conditionStatement():
 def comparison():
     global current_token
     if VERBOSE: print("In comparison.")
-    if current_token != 'LPAREN':
-        return False
-    current_token = get_next_token()
     if current_token != 'EQ' and current_token != 'GT':
         return False
     current_token = get_next_token()
+    if current_token != 'LPAREN':
+        return False
+    # !
     if not compared():
         return False
     if not compared():
@@ -419,7 +421,7 @@ def reservedWord():
     if current_token != 'IN_KW' and current_token != 'OUT_KW':
         return False
     current_token = get_next_token()
-    return true
+    return True
 
 def numericLiteral():
     global current_token
