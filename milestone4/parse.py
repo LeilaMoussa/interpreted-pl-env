@@ -3,10 +3,13 @@ import os
 sys.path.append(os.path.abspath('../milestone3'))
 from lex import main as generate
 
+VERBOSE = True
+
 token_gen = None
 current_token = None
 
 def get_next_token():
+    print("getting next token")
     try:
         return token_gen.__next__()
     except:
@@ -14,16 +17,17 @@ def get_next_token():
 
 def program():
     global current_token
-    while (declaration()):
+    if VERBOSE: print("In program.")
+    while declaration():
         pass
-    while (function()):
+    while function():
         pass
     if not mainFunction():
         return False 
-    #raise ValueError('')
         
 def declaration():
     global current_token
+    if VERBOSE: print("In declaration.")
     if not varDeclaration():
         if not fixDeclaration():
             return False
@@ -35,6 +39,7 @@ def declaration():
 
 def varDeclaration():
     global current_token
+    if VERBOSE: print("In varDeclaration.")
     if current_token != 'VAR_KW':
         return False
     else: 
@@ -47,6 +52,7 @@ def varDeclaration():
 
 def fixDeclaration() -> bool:
     global current_token
+    if VERBOSE: print("In fixDeclaration.")
     if current_token != 'CONST_KW':
         return False
     else:
@@ -67,6 +73,7 @@ def fixDeclaration() -> bool:
 
 def typeSpecifier():
     global current_token
+    if VERBOSE: print("In typeSpecifier.")
     if current_token != 'NUM_KW':
         if current_token != 'CHAR_KW':
             if current_token != 'NUM_ADDR_KW':
@@ -80,6 +87,7 @@ def typeSpecifier():
 def userDefinedIdentifier():
     #doesn't handle indexing yet
     global current_token
+    if VERBOSE: print("In userDefinedIdentifier.")
     if current_token != 'IDENT':
         return False
     current_token = get_next_token()
@@ -87,6 +95,8 @@ def userDefinedIdentifier():
 
 def mainFunction():
     global current_token
+    if VERBOSE: print("In mainFunction.")
+    print(current_token)
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
@@ -121,6 +131,7 @@ def mainFunction():
     return True
 
 def size():
+    if VERBOSE: print("In size.")
     if not userDefinedIdentifier():
         if not digit():
             return False
@@ -131,6 +142,7 @@ def size():
 
 def function():
     global current_token
+    if VERBOSE: print("In function.")
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
@@ -171,6 +183,7 @@ def function():
     
 def parameter():
     global current_token
+    if VERBOSE: print("In parameter.")
     if not typeSpecifier():
         return False
     if not identifier():
@@ -180,6 +193,7 @@ def parameter():
 
 def statement():
     global current_token
+    if VERBOSE: print("In statement.")
     if not assignment():
         if not returnStatement():
             if not selection():
@@ -194,6 +208,7 @@ def statement():
             
 def assignment():
     global current_token
+    if VERBOSE: print("In assignment.")
     if not userDefinedIdentifier():
         return False
     if current_token != 'ASGN':
@@ -207,6 +222,7 @@ def assignment():
 
 def returnStatement():
     global current_token
+    if VERBOSE: print("In returnStatement.")
     if current_token != 'RETURN_KW':
         return False
     current_token = get_next_token()
@@ -218,6 +234,7 @@ def returnStatement():
     return True
 
 def returnedExpression():
+    if VERBOSE: print("In returnedExpression.")
     if not expression():
         if not functionCall():
             return False
@@ -225,6 +242,7 @@ def returnedExpression():
 
 def selection():
     global current_token
+    if VERBOSE: print("In selection.")
     if current_token != 'IF_KW':
         return False
     current_token = get_next_token()
@@ -263,6 +281,7 @@ def selection():
     
 def loop():
     global current_token
+    if VERBOSE: print("In loop.")
     if current_token != 'LOOP_KW':
         return False
     current_token = get_next_token()
@@ -288,6 +307,7 @@ def loop():
 
 def operation():
     global current_token
+    if VERBOSE: print("In operation.")
     if current_token != 'ADD':
         if current_token != 'SUB':
             if current_token != 'MULT':
@@ -313,6 +333,7 @@ def operation():
     return True
 
 def operand():
+    if VERBOSE: print("In operand.")
     if not numericLiteral():
         if not userDefinedIdentifier():
             if not operation():
@@ -322,6 +343,7 @@ def operand():
 
 def functionCall():
     global current_token
+    if VERBOSE: print("In functionCall.")
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
@@ -341,6 +363,7 @@ def functionCall():
 def conditionStatement():
     #only handling single comparisons without a 'not' for the time being
     global current_token
+    if VERBOSE: print("In conditionStatement.")
     if not comparison():
         return False
     #more work needs to be done here
@@ -348,6 +371,7 @@ def conditionStatement():
 
 def comparison():
     global current_token
+    if VERBOSE: print("In comparison.")
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
@@ -364,6 +388,7 @@ def comparison():
     return True
 
 def compared():
+    if VERBOSE: print("In compared.")
     if not numericLiteral():
         if not userDefinedIdentifier():
             if not functionCall():
@@ -372,6 +397,7 @@ def compared():
 
 def expression():
     global current_token
+    if VERBOSE: print("In expression.")
     if current_token == 'CHAR_LIT' or current_token == 'STR_LIT':
         current_token = get_next_token()
         return True
@@ -381,6 +407,7 @@ def expression():
     return True
             
 def identifier():
+    if VERBOSE: print("In identifier.")
     if not userDefinedIdentifier():
         if not reservedWord():
             return False
@@ -388,6 +415,7 @@ def identifier():
 
 def reservedWord():
     global current_token
+    if VERBOSE: print("In reservedWord.")
     if current_token != 'IN_KW' and current_token != 'OUT_KW':
         return False
     current_token = get_next_token()
@@ -395,6 +423,7 @@ def reservedWord():
 
 def numericLiteral():
     global current_token
+    if VERBOSE: print("In numericLiteral.")
     if current_token != 'NUM_LIT':
         return False
     current_token = get_next_token()
@@ -403,13 +432,13 @@ def numericLiteral():
 def main(filepath, default, from_parser):
     global token_gen, current_token
     token_gen = generate(filepath, default, from_parser)
-    current_token = 'LPAREN'
-    for token in token_gen:
-        print(token)
+    current_token = get_next_token()
+#    for token in token_gen:
+#        print(token)
     if not program():
-        print ("Error occured. Read error messages")
+        print ("Error occured. Read error messages.")
     else:
-        print ("Program parsed successfully")
+        print ("Program parsed successfully!")
 
 if __name__ == '__main__':
     default = False
