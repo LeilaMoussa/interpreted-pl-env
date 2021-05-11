@@ -2,149 +2,60 @@ import sys
 import os
 sys.path.append(os.path.abspath('../milestone3'))
 from lex import main as generate
-
-# good idea: put classes in a file called AST.py
+from cst import *
 
 VERBOSE = True
 
 token_gen = None  # token_gen is a generator object of (token, lexeme, line_number)
 current_token = None
-line = -1
+lexeme = ''
+line = -1   # would like to use this for error messages, but not necessary
 position = -1
 
-class ParseTreeNode():
-    # If any functions are general to all tree nodes,
-    # they should be put here
-    pass
-
-class ProgramNode(ParseTreeNode):
-    def __init__(self, declarations: list, functions: list, mainFunction: MainNode):
-        self.declarations = declarations
-        self.functions = functions
-        self.mainFunction = mainFunction
-
-    def append_declaration(self, dec: DeclarationNode):
-        self.declarations.append(dec)
-
-    def append_function(self, func: FunctionNode):
-        self.functions.append(func)
-
-class MainNode(ParseTreeNode):  # this means inheritance
-    def __init__(self, declarations: list, statements: list):
-        # we won't implement nested functions
-        self.declarations = declarations  # of type DeclarationNode
-        self.statements = statements  # of type StatementNode
-
-    def append_declaration(self, dec: DeclarationNode):
-        self.declarations.append(dec)
-
-    def append_statement(self, stat: StatementNode):
-        self.statements.append(stat)
-
-class VarDeclarationNode(ParseTreeNode):
-    def __init__(self, typespec: TypeNode, identifier: str):
-        self.typespec = typespec
-        self.identifier = identifier
-
-class FixDeclarationNode(ParseTreeNode):
-    def __init__(self, typespec: TypeNode, identifier: str, value):
-        self.typespec = typespec
-        self.identifier = identifier
-        self.value = value  # could be a number or a character at this point
-        # since we don't have strings or arrays implemented yet
-
-class DeclarationNode(ParseTreeNode):
-    def __init__(self, var: VarDeclarationNode, fix: FixDeclarationNode):
-        if var:
-            self.type = 'variable'
-            self.info = var
-        elif fix:
-            self.type = 'constant'
-            self.info = var
-        else:
-            raise Exception("nothing matches in declaration node")  # shouldn't happen ofc
-
-class FunctionNode(ParseTreeNode):
-    def __init__(self, name: IdentifierNode, arguments: list, return_type: TypeNode, \
-         declarations: list, statements: list):
-        pass
-
-class TypeNode(ParseTreeNode):
-    def __init__(self, value: str):
-        self.value = value  # num, ascii
-
-class StatementNode(ParseTreeNode):
-    def __init__(self):
-        # indicate the type of the statement and its associated info
-        pass
-
-class CallNode(ParseTreeNode):  # function call
-    def __init__(self, name, )
-
-class AssignmentNode(ParseTreeNode):
-    def __init__(self, identifier: IdentifierNode, rhs):
-        self.identifier = identifier
-        # rhs could be ExpressionNode, OperationNode, or CallNode
-        # based on its type, set self.type
-        # or should be do this the same way as DeclarationNode? i.e. supply all
-        # possible types and one of them is not null
-
-class IdentifierNode(ParseTreeNode):
-    pass
-
-class ReservedNode(ParseTreeNode):
-    def __init__(self, value: str):
-        self.value = value  # write or read
-
-# i think these will be needed for static semantics
-class StringLiteralNode(ParseTreeNode):
-    def __init__(self, value: str):
-        self.value = value
-
-class NumLiteralNode(ParseTreeNode):
-    def __init__(self, value: int):
-        self.value = value
-        # i wonder if we'll need a sign property (positive, negative) for the AL
-
-# etc.
-
 def get_next_token():
-    global token_gen, line, position
+    global token_gen, line, position, lexeme
     try:
         token_info = token_gen.__next__()
-        line += 1
         position += 1
-        token = token_info[0]
+        (token, lexeme, line) = token_info
         if VERBOSE: print("Current token:", token)
         return token
     except:
-        sys.exit("Reached end of token stream with no errors!")
+        sys.exit("All tokens consumed!")  # i haven't handled the case of a program with no mainFunction yet... idk how right now
 
 def program():
     global current_token
     if VERBOSE: print("In program.")
     local_position = position
-    while declaration():
+    dec_nodes = []
+    while node := declaration():
         local_position = position
+        dec_nodes.append(node)
     if position > local_position: return False  # by virtue of LL(1)
-    while function():
+    func_nodes = []
+    while node := function():
         local_position = position
+        func_nodes.append(node)
     if position > local_position: return False
-    if not mainFunction():
+    main_node = mainFunction()
+    if not main_node:   # either MainNode() or None, so i guess everyone's return values should change to either ASTNode() instance or None
+        # keeping False would be fine because None and False are both treated the same!
         return False
-    return True
+    return ProgramNode(dec_nodes, func_nodes, main_node)  # instead of True
         
 def declaration():
     global current_token
-    # local_node = DeclarationNode()
     if VERBOSE: print("In declaration.")
-    if not varDeclaration():
-        if not fixDeclaration():
+    var_node = varDeclaration()
+    fix_node = None
+    if not var_node:
+        fix_node = fixDeclaration()
+        if not fix_node:
             return False
     if current_token != 'ENDSTAT':
         return False
-    current_token = get_next_token()   # this isn't the function's responsibility, but anyway
-    return True
+    current_token = get_next_token()
+    return DeclarationNode(var_node, fix_node)
 
 def varDeclaration():
     global current_token
@@ -544,7 +455,7 @@ def reservedWord():
     if current_token != 'IN_KW' and current_token != 'OUT_KW':
         return False
     current_token = get_next_token()
-    return True
+    return ReservedNode(current_token)   # actually should be current_lexeme, will probably add a global variable for lexeme
 
 def numericLiteral():
     global current_token
@@ -552,7 +463,9 @@ def numericLiteral():
     if current_token != 'NUM_LIT':
         return False
     current_token = get_next_token()
-    return True
+    return True  # NumLiteralNode(current_lexeme)
+
+######################################################################
 
 def main(filepath, default, from_parser):
     global token_gen, current_token
@@ -560,8 +473,13 @@ def main(filepath, default, from_parser):
     current_token = get_next_token()
     # for elt in token_gen:
     #     print(elt)
-    if not program():
+    if not program():  # eventually, program() returns the whole CST
         print("Error occured. Read error messages.")
+    # since we'll run the parser from the static semantics analyzer, we'll obtain the CST directly at that level
+    # AST will not necessarily have the same representation
+    # we can go for something else like nested list/ dict, whatever is easier to construct
+    # again, static semantics analyzer will be run from the generator
+    # so end2end running will have 3 steps: 1. run generator 2. run assembler 3. run interpreter
 
 if __name__ == '__main__':
     default = False
