@@ -1,5 +1,7 @@
 import parse
 import sys, os
+import json
+from ast import *
 sys.path.append(os.path.abspath('../milestone3'))
 
 symbol_table = {}
@@ -11,6 +13,14 @@ current_scope = None
 # 1) Define before use
 # 2) Type checking
 # 3) CST --> AST: should be done simultaneously with other tasks?
+
+# most likely gonna do multiple passes over the tree to simplify
+
+def check_declare(tree: CSTNode):
+    pass
+
+def check_types(tree):
+    pass
 
 def main():
     # get symbol and literal tables from ../milestone3/lex_output/
