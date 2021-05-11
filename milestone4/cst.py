@@ -1,6 +1,8 @@
 class ParseTreeNode():
     # If any functions are general to all tree nodes,
     # they should be put here
+    # maybe a display() function will come in handy
+    # but we'll need one for each subclass as well
     pass
 
 class ProgramNode(ParseTreeNode):
@@ -29,27 +31,41 @@ class VarDeclarationNode(ParseTreeNode):
         self.identifier = identifier
         
 class FixDeclarationNode(ParseTreeNode):
-    def __init__(self, typespec: TypeNode, identifier: str, value):
+    def __init__(self, typespec: TypeNode, identifier: UserDefinedNode, exp: ExpressionNode, \
+        op: OperationNode, call: CallNode):
         self.typespec = typespec
         self.identifier = identifier
-        self.value = value  # could be a number or a character at this point
-        # since we don't have strings or arrays implemented yet
+        if exp:
+            self.type = 'expression'  # debating whether this is okay
+            self.value = exp
+        elif op:
+            self.type = 'operation'
+            self.value = op
+        elif call:
+            self.type = 'call'
+            self.value = call
+        else:
+            raise Exception("nothing matches in fix dec node")
 
 class DeclarationNode(ParseTreeNode):
     def __init__(self, var: VarDeclarationNode, fix: FixDeclarationNode):
         # one of them will be Falsy (False or None, haven't decided yet, but doesn't matter)
         if var:
             self.type = 'variable'
-            self.info = var
+            self.value = var
         elif fix:
             self.type = 'constant'
-            self.info = var
+            self.value = var
         else:
             raise Exception("nothing matches in declaration node")  # shouldn't happen ofc
 
 class FunctionNode(ParseTreeNode):
-    def __init__(self, name: IdentifierNode, arguments: list, return_type: TypeNode, \
+    def __init__(self, name: UserDefinedNode, arg: list, return_type: TypeNode, \
          declarations: list, statements: list):
+        # args is most likely a list of parameter objects
+        # args may be empty
+        # return_type may be None
+        # decs & statements are lists of their respective nodes, potentially empty
         pass
 
 class TypeNode(ParseTreeNode):
@@ -62,18 +78,28 @@ class StatementNode(ParseTreeNode):
         pass
 
 class CallNode(ParseTreeNode):  # function call
-    def __init__(self, name, )
+    def __init__(self, name: IdentifierNode, args: list):
+        self.name = name
+        self.args = args  # list[ExpressionNode]
 
 class AssignmentNode(ParseTreeNode):
-    def __init__(self, identifier: IdentifierNode, rhs):
+    def __init__(self, identifier: IdentifierNode): # and a bunch of possibilities
         self.identifier = identifier
-        # rhs could be ExpressionNode, OperationNode, or CallNode
-        # based on its type, set self.type
-        # or should be do this the same way as DeclarationNode? i.e. supply all
-        # possible types and one of them is not null
 
 class IdentifierNode(ParseTreeNode):
-    pass
+    def __init__(self, udi: UserDefinedNode, res: ReservedNode):
+        if udi:
+            self.type = 'userdefined'
+            self.value = udi
+        elif res:
+            self.type = 'reserved'
+            self.value = res
+        else:
+            raise Exception("nothing matches in id node")
+
+class UserDefinedNode(ParseTreeNode):
+    def __init__(self, name: str):
+        self.name = name
 
 class ReservedNode(ParseTreeNode):
     def __init__(self, value: str):
@@ -88,5 +114,18 @@ class NumLiteralNode(ParseTreeNode):
     def __init__(self, value: int):
         self.value = value
         # i wonder if we'll need a sign property (positive, negative) for the AL
+
+class CharLiteralNode(ParseTreeNode):
+    def __init__(self, value: str):
+        self.value = value
+
+class ExpressionNode(ParseTreeNode):
+    def __init__(self, type, value):  # uhmm
+        pass
+
+class ParamNode(ParseTreeNode):
+    def __init__(self, type: TypeNode, name: UserDefinedNode):
+        self.type = type
+        self.name = name
 
 # etc.

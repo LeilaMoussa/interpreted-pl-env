@@ -63,11 +63,13 @@ def varDeclaration():
     if current_token != 'VAR_KW':
         return False
     current_token = get_next_token()
-    if not typeSpecifier():
+    type_node = typeSpecifier()
+    if not type_node:
         return False
-    if not userDefinedIdentifier():
+    udi_node = userDefinedIdentifier()
+    if not udi_node:
         return False
-    return True
+    return VarDeclarationNode(type_node, udi_node)
 
 def fixDeclaration() -> bool:
     global current_token
@@ -75,18 +77,24 @@ def fixDeclaration() -> bool:
     if current_token != 'CONST_KW':
         return False
     current_token = get_next_token()
-    if not typeSpecifier():
+    type_node = typeSpecifier()
+    if not type_node:
         return False
-    if not userDefinedIdentifier():
+    udi_node = userDefinedIdentifier()
+    if not udi_node:
         return False
     if current_token != 'ASGN':
         return False
     current_token = get_next_token()
-    if not expression():
-        if not operation():
-            if not functionCall():
+    exp_node = expression()
+    op_node = call_node = None
+    if not exp_node:
+        op_node = operation()
+        if not op_node:
+            call_node = functionCall()
+            if not call_node:
                 return False
-    return True
+    return FixDeclarationNode(type_node, udi_node, exp_node, op_node, call_node)
 
 def typeSpecifier():
     global current_token
@@ -96,19 +104,17 @@ def typeSpecifier():
             if current_token != 'NUM_ADDR_KW':
                 if current_token != 'CHAR_ADDR_KW':
                     return False
-    #Still need to add arrays and strings, I guess no need for the moment
-    #you consumed a token now, get next one
     current_token = get_next_token()
-    return True
+    return TypeNode(lexeme)
 
 def userDefinedIdentifier():
-    #doesn't handle indexing yet
+    # let's not handle indexing! what a pain!
     global current_token
     if VERBOSE: print("In userDefinedIdentifier.")
     if current_token != 'IDENT':
         return False
     current_token = get_next_token()
-    return True
+    return UserDefinedNode(lexeme)
 
 def mainFunction():
     global current_token
@@ -137,7 +143,7 @@ def mainFunction():
     if current_token != 'LBRACK':
         return False
     # i think beyond here, `mainFunction` and `function` have the same body
-    # so put the following in another function
+    # so put the following in another function (not sure about this suggestion yet)
     current_token = get_next_token()
     local_position = position
     while declaration():
@@ -152,6 +158,7 @@ def mainFunction():
     return True
 
 def size():
+    # we probably won't use strings/arrays, so forget about this guy
     if VERBOSE: print("In size.")
     if not userDefinedIdentifier():
         if current_token != 'NUM_LIT':
@@ -161,7 +168,7 @@ def size():
     return True
 
 def function():
-    # rule for function definition, starting with func
+    # rule for function definition
     global current_token
     if VERBOSE: print("In function.")
     if current_token != 'FUNC_KW':
@@ -170,16 +177,17 @@ def function():
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
-    if not parameter():
-        # !! we need to support 0 params
-        return False
+    args = []
+    if node := parameter():
+        args.append(node)
     if current_token != 'RPAREN':
         return False
     current_token = get_next_token()
     if current_token != 'ARROW':
         return False
     current_token = get_next_token()
-    if not userDefinedIdentifier():
+    udi_node = userDefinedIdentifier()
+    if not udi_node:
         return False
     if current_token != 'ARROW':
         return False
@@ -187,8 +195,8 @@ def function():
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
-    if not typeSpecifier():
-        return False
+    type_node = typeSpecifier()  # return type
+    # could be None or False if function doesn't return anything
     if current_token != 'RPAREN':
         return False
     current_token = get_next_token()
@@ -196,24 +204,27 @@ def function():
         return False
     current_token = get_next_token()
     local_position = position
-    while declaration():
+    decs = []
+    while node := declaration():
+        decs.append(node)
         local_position = position
     if position > local_position: return False
-    while statement():
+    stats = []
+    while node := statement():
+        stats.append(node)
         local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
         return False
-    return True
+    return FunctionNode(udi_node, args, type_node, decs, stats)
     
 def parameter():
     global current_token
     if VERBOSE: print("In parameter.")
     if not typeSpecifier():
         return False
-    if not identifier():
+    if not identifier():   # just user defined though right?
         return False
-    #Still need to handle multiple parameters, will do later
     return True
 
 def statement():
@@ -376,26 +387,28 @@ def operand():
     return True
 
 def functionCall():
+    # let's try to handle 0 params, but not more than one
     global current_token
     if VERBOSE: print("In functionCall.")
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
-    if not expression():
-        return False
-    #only handling function calls with 1 parameter for the time being
+    args = []
+    if node := expression():  # if we wanted to handle multiple params, this would be a while
+        args.append(node)
     if current_token != 'RPAREN':
         return False
     current_token = get_next_token()
     if current_token != 'ARROW':
         return False
     current_token = get_next_token()
-    if not identifier():
+    name = identifier()
+    if not name:
         return False
     if current_token != 'ENDSTAT':
         return False
     current_token = get_next_token()
-    return True
+    return CallNode(name, args)
 
 def conditionStatement():
     #only handling single comparisons without a 'not' for the time being
@@ -434,20 +447,30 @@ def compared():
 def expression():
     global current_token
     if VERBOSE: print("In expression.")
-    if current_token == 'CHAR_LIT' or current_token == 'STR_LIT':
+    char_node = str_node = num_node = udi_node = None
+    if current_token == 'CHAR_LIT':
+        char_node = CharLiteralNode(lexeme)
         current_token = get_next_token()
-        return True
-    if not numericLiteral():
-        if not userDefinedIdentifier():
-            return False
-    return True
+    elif current_node == 'STR_LIT':
+        str_node = StringLiteralNode(lexeme)
+        current_token = get_next_token()
+    else:
+        num_node = numericLiteral()
+        if not num_node:
+            udi_node = userDefinedIdentifier()
+            if not udi_node:
+                return False
+    return ExpressionNode(char_node, str_node, num_node, udi_node)
             
 def identifier():
     if VERBOSE: print("In identifier.")
-    if not userDefinedIdentifier():
-        if not reservedWord():
+    udi_node = userDefinedIdentifier()
+    res_node = None
+    if not udi_node:
+        res_node = reservedWord()
+        if not res_node:
             return False
-    return True
+    return IdentifierNode(udi_node, res_node)
 
 def reservedWord():
     global current_token
@@ -455,7 +478,7 @@ def reservedWord():
     if current_token != 'IN_KW' and current_token != 'OUT_KW':
         return False
     current_token = get_next_token()
-    return ReservedNode(current_token)   # actually should be current_lexeme, will probably add a global variable for lexeme
+    return ReservedNode(lexeme)
 
 def numericLiteral():
     global current_token
@@ -463,7 +486,7 @@ def numericLiteral():
     if current_token != 'NUM_LIT':
         return False
     current_token = get_next_token()
-    return True  # NumLiteralNode(current_lexeme)
+    return NumLiteralNode(lexeme)
 
 ######################################################################
 
