@@ -15,14 +15,13 @@ current_scope = None
 def main():
     # get symbol and literal tables from ../milestone3/lex_output/
 
-    # traverse AST
+    # traverse AST: postfix traversal
     # for each var/const declaration and function definition, add info to ST
     # for each subsequent reference, check to see if under the current scope,
     #   the declaration/definition exists
 
     # think of operations involving type checking, and whenever one is encountered, retrieve
     # operands
-
     # also: function params & args need to match in number and type
     pass
 
