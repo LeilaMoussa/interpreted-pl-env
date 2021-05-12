@@ -73,9 +73,26 @@ class TypeNode(ParseTreeNode):
         self.value = value  # num, ascii
 
 class StatementNode(ParseTreeNode):
-    def __init__(self):
+    def __init__(self, a_node: AssignmentNode, r_node: ReturnNode, s_node: SelectionNode,\
+         l_node: LoopNode, f_node: CallNode):
         # indicate the type of the statement and its associated info
-        pass
+        if a_node:
+            self.type = 'assign'
+            self.value = a_node
+        elif r_node:
+            self.type = 'return'
+            self.value = r_node
+        elif s_node:
+            self.type = 'selection'
+            self.value = s_node
+        elif l_node:
+            self.type = 'loop'
+            self.value = l_node
+        elif f_node:
+            self.type = 'funcall'
+            self.value = f_node
+        else:
+            raise Exception("nothing matches on statement node")
 
 class CallNode(ParseTreeNode):  # function call
     def __init__(self, name: IdentifierNode, args: list):
@@ -83,8 +100,20 @@ class CallNode(ParseTreeNode):  # function call
         self.args = args  # list[ExpressionNode]
 
 class AssignmentNode(ParseTreeNode):
-    def __init__(self, identifier: IdentifierNode): # and a bunch of possibilities
+    def __init__(self, identifier: UserDefinedNode, exp: ExpressionNode, \
+        op: OperationNode, call: CallNode):
         self.identifier = identifier
+        if exp:
+            self.type = 'expression'
+            self.value = exp
+        elif op:
+            self.type = 'operation'
+            self.value = op
+        elif call:
+            self.type = 'funcall'
+            self.value = call
+        else:
+            raise Exception("no match on assign node")
 
 class IdentifierNode(ParseTreeNode):
     def __init__(self, udi: UserDefinedNode, res: ReservedNode):
@@ -128,4 +157,13 @@ class ParamNode(ParseTreeNode):
         self.type = type
         self.name = name
 
-# etc.
+class ReturnNode(ParseTreeNode):
+    def __init__(self, exp: ExpressionNode, call: CallNode):
+        if exp:
+            self.type = 'expression'
+            self.value = exp
+        elif call:
+            self.type = 'funcall'
+            self.value = call
+        else:
+            raise Exception('nothing matches on return node')

@@ -14,9 +14,11 @@ current_scope = None
 # 2) Type checking
 # 3) CST --> AST: should be done simultaneously with other tasks?
 
-# most likely gonna do multiple passes over the tree to simplify
+# FIRST PRIORITY is to get the AST. Think of the most convenient format for the generator.
 
-def check_declare(tree: CSTNode):
+# most likely gonna do multiple passes over the tree, but idk about order
+
+def check_declare(tree):
     pass
 
 def check_types(tree):

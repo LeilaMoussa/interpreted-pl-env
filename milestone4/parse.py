@@ -146,16 +146,25 @@ def mainFunction():
     # so put the following in another function (not sure about this suggestion yet)
     current_token = get_next_token()
     local_position = position
-    while declaration():
+    decs = []
+    while node := declaration():
+        decs.append(node)
         local_position = position
     if position > local_position: return False
-    while statement() or function():
+    stats = []
+    while True:
+        if node := statement():
+            stats.append(node)
+        elif node := function():  # we can forget about nested functions for now
+            pass
+        else:
+            break
         local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
         return False
     current_token = get_next_token()
-    return True
+    return MainNode(decs, stats)
 
 def size():
     # we probably won't use strings/arrays, so forget about this guy
@@ -221,40 +230,53 @@ def function():
 def parameter():
     global current_token
     if VERBOSE: print("In parameter.")
-    if not typeSpecifier():
+    type_node = typeSpecifier()
+    if not type_node:
         return False
-    if not identifier():   # just user defined though right?
+    udi_node = userDefinedIdentifier()
+    if not udi_node:   # just user defined though right?
         return False
-    return True
+    return ParamNode(type_node, udi_node)
 
 def statement():
     global current_token
     if VERBOSE: print("In statement.")
-    if not assignment():
-        if not returnStatement():
-            if not selection():
-                if not loop():
-                    if not functionCall():
+    a_node = assignment()
+    r_node = s_node = l_node = f_node = None
+    if not a_node:
+        r_node = returnStatement()
+        if not r_node:
+            s_node = selection()
+            if not s_node:
+                l_node = loop()
+                if not l_node:
+                    f_node = functionCall()
+                    if not f_node:
                         return False
     current_token = get_next_token()
-    return True
+    return StatementNode(a_node, r_node, s_node, l_node, f_node)
             
 def assignment():
     global current_token
     if VERBOSE: print("In assignment.")
-    if not userDefinedIdentifier():
+    udi_node = userDefinedIdentifier()
+    if not udi_node:
         return False
     if current_token != 'ASGN':
         return False
     current_token = get_next_token()
-    if not expression():
-        if not operation():
-            if not functionCall():
+    exp_node = expression()
+    op_node = call_node = None
+    if not exp_node:
+        op_node = operation()
+        if not op_node:
+            call_node = functionCall()
+            if not call_node:
                 return False
     if current_token != 'ENDSTAT':
         return False
     current_token = get_next_token()
-    return True
+    return AssignmentNode(udi_node, exp_node, op_node, call_node)
 
 def returnStatement():
     global current_token
@@ -262,19 +284,23 @@ def returnStatement():
     if current_token != 'RETURN_KW':
         return False
     current_token = get_next_token()
-    if not returnedExpression():
-        return False
+    exp_node = expression()
+    call_node = None
+    if not exp_node:
+        call_node = functionCall()
+        if not call_node:
+            return False
     if current_token != 'ENDSTAT':
         return False
     current_token = get_next_token()
-    return True
+    return ReturnNode(exp_node, call_node)
 
-def returnedExpression():
-    if VERBOSE: print("In returnedExpression.")
-    if not expression():
-        if not functionCall():
-            return False
-    return True
+# def returnedExpression():
+#     if VERBOSE: print("In returnedExpression.")
+#     if not expression():
+#         if not functionCall():
+#             return False
+#     return True
 
 def selection():
     global current_token
@@ -451,7 +477,7 @@ def expression():
     if current_token == 'CHAR_LIT':
         char_node = CharLiteralNode(lexeme)
         current_token = get_next_token()
-    elif current_node == 'STR_LIT':
+    elif current_token == 'STR_LIT':
         str_node = StringLiteralNode(lexeme)
         current_token = get_next_token()
     else:
