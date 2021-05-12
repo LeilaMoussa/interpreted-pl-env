@@ -163,13 +163,16 @@ def mainFunction():
     while True:
         if node := statement():
             stats.append(node)
+            print('appended node to stats in main')
         elif node := function():  # we can forget about nested functions for now
             pass
         else:
             break
         local_position = position
     if position > local_position: return False
+    print('current', current_token)
     if current_token != 'RBRACK':
+        print("hi")
         return False
     current_token = get_next_token()
     return MainNode(decs, stats)
@@ -246,14 +249,16 @@ def parameter():
         return False
     if not current_token: return False
     udi_node = userDefinedIdentifier()
-    if not udi_node:   # just user defined though right?
+    if not udi_node:
         return False
     return ParamNode(type_node, udi_node)
 
 def statement():
     global current_token
     if VERBOSE: print("In statement.")
-    if not current_token: return False
+    if not current_token:
+        print('mmmmmmmm')
+        return False
     a_node = assignment()
     r_node = s_node = l_node = f_node = None
     if not a_node:
@@ -264,9 +269,10 @@ def statement():
                 l_node = loop()
                 if not l_node:
                     f_node = functionCall()
+                    print('made a call node')
                     if not f_node:
                         return False
-    current_token = get_next_token()
+    # current_token = get_next_token()
     return StatementNode(a_node, r_node, s_node, l_node, f_node)
             
 def assignment():

@@ -152,7 +152,7 @@ class DeclarationNode(ParseTreeNode):
             self.value = var
         elif fix:
             self.type = 'constant'
-            self.value = var
+            self.value = fix
         else:
             raise Exception("nothing matches in declaration node")
     def display(self):
