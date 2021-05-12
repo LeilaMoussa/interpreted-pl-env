@@ -21,7 +21,8 @@ def get_next_token():
         if VERBOSE: print("Current token:", token)
         return token
     except:
-        sys.exit("All tokens consumed!")  # i haven't handled the case of a program with no mainFunction yet... idk how right now
+        print('exhausted')
+        return None
 
 def program():
     global current_token
@@ -37,9 +38,9 @@ def program():
         local_position = position
         func_nodes.append(node)
     if position > local_position: return False
+    if not current_token: return False
     main_node = mainFunction()
-    if not main_node:   # either MainNode() or None, so i guess everyone's return values should change to either ASTNode() instance or None
-        # keeping False would be fine because None and False are both treated the same!
+    if not main_node:
         return False
     return ProgramNode(dec_nodes, func_nodes, main_node)  # instead of True
         
@@ -63,9 +64,11 @@ def varDeclaration():
     if current_token != 'VAR_KW':
         return False
     current_token = get_next_token()
+    if not current_token: return False
     type_node = typeSpecifier()
     if not type_node:
         return False
+    if not current_token: return False
     udi_node = userDefinedIdentifier()
     if not udi_node:
         return False
@@ -77,15 +80,18 @@ def fixDeclaration() -> bool:
     if current_token != 'CONST_KW':
         return False
     current_token = get_next_token()
+    if not current_token: return False
     type_node = typeSpecifier()
     if not type_node:
         return False
+    if not current_token: return False
     udi_node = userDefinedIdentifier()
     if not udi_node:
         return False
     if current_token != 'ASGN':
         return False
     current_token = get_next_token()
+    if not current_token: return False
     exp_node = expression()
     op_node = call_node = None
     if not exp_node:
@@ -94,6 +100,7 @@ def fixDeclaration() -> bool:
             call_node = functionCall()
             if not call_node:
                 return False
+    current_token = get_next_token()
     return FixDeclarationNode(type_node, udi_node, exp_node, op_node, call_node)
 
 def typeSpecifier():
@@ -145,6 +152,7 @@ def mainFunction():
     # i think beyond here, `mainFunction` and `function` have the same body
     # so put the following in another function (not sure about this suggestion yet)
     current_token = get_next_token()
+    if not current_token: return False
     local_position = position
     decs = []
     while node := declaration():
@@ -195,6 +203,7 @@ def function():
     if current_token != 'ARROW':
         return False
     current_token = get_next_token()
+    if not current_token: return False
     udi_node = userDefinedIdentifier()
     if not udi_node:
         return False
@@ -204,6 +213,7 @@ def function():
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
+    if not current_token: return False
     type_node = typeSpecifier()  # return type
     # could be None or False if function doesn't return anything
     if current_token != 'RPAREN':
@@ -230,9 +240,11 @@ def function():
 def parameter():
     global current_token
     if VERBOSE: print("In parameter.")
+    if not current_token: return False
     type_node = typeSpecifier()
     if not type_node:
         return False
+    if not current_token: return False
     udi_node = userDefinedIdentifier()
     if not udi_node:   # just user defined though right?
         return False
@@ -241,6 +253,7 @@ def parameter():
 def statement():
     global current_token
     if VERBOSE: print("In statement.")
+    if not current_token: return False
     a_node = assignment()
     r_node = s_node = l_node = f_node = None
     if not a_node:
@@ -259,12 +272,14 @@ def statement():
 def assignment():
     global current_token
     if VERBOSE: print("In assignment.")
+    if not current_token: return False
     udi_node = userDefinedIdentifier()
     if not udi_node:
         return False
     if current_token != 'ASGN':
         return False
     current_token = get_next_token()
+    if not current_token: return False
     exp_node = expression()
     op_node = call_node = None
     if not exp_node:
@@ -284,6 +299,7 @@ def returnStatement():
     if current_token != 'RETURN_KW':
         return False
     current_token = get_next_token()
+    if not current_token: return False
     exp_node = expression()
     call_node = None
     if not exp_node:
@@ -295,14 +311,8 @@ def returnStatement():
     current_token = get_next_token()
     return ReturnNode(exp_node, call_node)
 
-# def returnedExpression():
-#     if VERBOSE: print("In returnedExpression.")
-#     if not expression():
-#         if not functionCall():
-#             return False
-#     return True
-
 def selection():
+    # still not handled for the CST!
     global current_token
     if VERBOSE: print("In selection.")
     if current_token != 'IF_KW':
@@ -428,6 +438,7 @@ def functionCall():
     if current_token != 'ARROW':
         return False
     current_token = get_next_token()
+    if not current_token: return False
     name = identifier()
     if not name:
         return False
@@ -480,16 +491,17 @@ def expression():
     elif current_token == 'STR_LIT':
         str_node = StringLiteralNode(lexeme)
         current_token = get_next_token()
-    else:
-        num_node = numericLiteral()
-        if not num_node:
-            udi_node = userDefinedIdentifier()
-            if not udi_node:
-                return False
+    elif current_token == 'NUM_LIT':
+        num_node = NumLiteralNode(int(lexeme))
+    elif udi_node := userDefinedIdentifier():
+        pass
+    else:  # none of these 4, or None
+        return False
     return ExpressionNode(char_node, str_node, num_node, udi_node)
             
 def identifier():
     if VERBOSE: print("In identifier.")
+    if not current_token: return False
     udi_node = userDefinedIdentifier()
     res_node = None
     if not udi_node:
@@ -522,8 +534,12 @@ def main(filepath, default, from_parser):
     current_token = get_next_token()
     # for elt in token_gen:
     #     print(elt)
-    if not program():  # eventually, program() returns the whole CST
-        print("Error occured. Read error messages.")
+    parse_tree = program()
+    if parse_tree:
+        print('displaying parse tree...')
+        parse_tree.display()
+    else:
+        print('Error.')
     # since we'll run the parser from the static semantics analyzer, we'll obtain the CST directly at that level
     # AST will not necessarily have the same representation
     # we can go for something else like nested list/ dict, whatever is easier to construct
