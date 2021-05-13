@@ -99,7 +99,7 @@ class CharLiteralNode(ParseTreeNode):
 
 class ExpressionNode(ParseTreeNode):
     def __init__(self, char: CharLiteralNode, string: StringLiteralNode, \
-        udi: UserDefinedNode, num: NumLiteralNode):
+        num: NumLiteralNode, udi: UserDefinedNode):
         print('init expr')
         if char:
             self.type = 'char'
@@ -128,7 +128,7 @@ class FixDeclarationNode(ParseTreeNode):
         self.typespec = typespec
         self.identifier = identifier
         if exp:
-            self.type = 'expression'  # debating whether this is okay
+            self.type = 'expression'
             self.value = exp
         elif op:
             self.type = 'operation'
@@ -141,6 +141,8 @@ class FixDeclarationNode(ParseTreeNode):
     def display(self):
         print('--fix.type--')
         print(self.type)
+        print('--fix.ident--')
+        self.identifier.display()
         print(f'--fix.{self.type}--')
         self.value.display()
 

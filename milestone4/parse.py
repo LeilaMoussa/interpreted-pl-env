@@ -111,17 +111,19 @@ def typeSpecifier():
             if current_token != 'NUM_ADDR_KW':
                 if current_token != 'CHAR_ADDR_KW':
                     return False
+    local_lexeme = lexeme
     current_token = get_next_token()
-    return TypeNode(lexeme)
+    return TypeNode(local_lexeme)
 
 def userDefinedIdentifier():
-    # let's not handle indexing! what a pain!
+    # won't do indexing
     global current_token
     if VERBOSE: print("In userDefinedIdentifier.")
     if current_token != 'IDENT':
         return False
+    local_lexeme = lexeme
     current_token = get_next_token()
-    return UserDefinedNode(lexeme)
+    return UserDefinedNode(local_lexeme)
 
 def mainFunction():
     global current_token
@@ -521,8 +523,9 @@ def reservedWord():
     if VERBOSE: print("In reservedWord.")
     if current_token != 'IN_KW' and current_token != 'OUT_KW':
         return False
+    local_lexeme = lexeme
     current_token = get_next_token()
-    return ReservedNode(lexeme)
+    return ReservedNode(local_lexeme)
 
 def numericLiteral():
     global current_token
