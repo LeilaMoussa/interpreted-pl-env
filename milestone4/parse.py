@@ -537,23 +537,17 @@ def numericLiteral():
 
 ######################################################################
 
-def main(filepath, default, from_parser):
+def main(filepath, default, from_parser, from_analyzer=False):
     global token_gen, current_token
     token_gen = generate(filepath, default, from_parser)
     current_token = get_next_token()
-    # for elt in token_gen:
-    #     print(elt)
     parse_tree = program()
     if parse_tree:
+        if from_analyzer: return parse_tree
         print('displaying parse tree...')
         parse_tree.display()
     else:
         print('Error.')
-    # since we'll run the parser from the static semantics analyzer, we'll obtain the CST directly at that level
-    # AST will not necessarily have the same representation
-    # we can go for something else like nested list/ dict, whatever is easier to construct
-    # again, static semantics analyzer will be run from the generator
-    # so end2end running will have 3 steps: 1. run generator 2. run assembler 3. run interpreter
 
 if __name__ == '__main__':
     default = False

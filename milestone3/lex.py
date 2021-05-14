@@ -76,6 +76,7 @@ def lex(code_line: str, line_number: int):
         
 def main(filepath: str, default: bool, from_parser=False):
     # this is the weirdest error i've ever seen: main isn't executed!
+    print('in main')
     if default:
         # Only retrieve default code if we have to.
         code = constants.get_default_code()
@@ -88,7 +89,6 @@ def main(filepath: str, default: bool, from_parser=False):
             sys.exit('Given HLPL file does not exist. Aborting.')
     # Open the output file.
     tokens_file = open_output_file()
-    tokens_file.write('ok\n')
     # We'd like to keep track of line numbers, so we're scanning the code line by line.
     code = code.split('\n')
     for number, line in enumerate(code):
@@ -102,7 +102,6 @@ def main(filepath: str, default: bool, from_parser=False):
                 else:
                     tokens_file.write(f'Line {number+1} Token #{_id} ({token}) : {lexeme}\n')
     tokens_file.close()
-
     # At this point, the literal table and symbol table have been filled,
     # now save them as JSON files in the output folder.
     with open('../milestone3/lex_output/symbol.json', 'w') as op:
@@ -120,5 +119,8 @@ if __name__ == '__main__':
     else:
         # Otherwise, we proceed with that file.
         filepath = sys.argv[1]
-    main(filepath, default)
+    for _ in main(filepath, default, False):
+        # Don't mind this, it's a way to get around the fact that main() can be a generator
+        # If I don't do this, main doesn't get executed
+        pass
     print("Lexing done. Open ./lex_output/tokens.txt.")
