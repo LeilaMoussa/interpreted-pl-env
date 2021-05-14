@@ -553,7 +553,8 @@ if __name__ == '__main__':
     default = False
     filepath = ''
     if len(sys.argv) < 2:
-        print('No HLPL input file provided for parsing, proceeding with default code.')
+        print('No HLPL input file provided for parsing, proceeding with default code \
+            from milestone3/constants.py.')
         default = True
     else:
         filepath = sys.argv[1]

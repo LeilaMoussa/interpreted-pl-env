@@ -104,9 +104,9 @@ def main(filepath: str, default: bool, from_parser=False):
     tokens_file.close()
     # At this point, the literal table and symbol table have been filled,
     # now save them as JSON files in the output folder.
-    with open('../milestone3/lex_output/symbol.json', 'w') as op:
+    with open('../milestone3/lex_output/symbol_table.json', 'w') as op:
         op.write(json.dumps(symbol_table, indent=4))
-    with open('../milestone3/lex_output/literal.json', 'w') as op:
+    with open('../milestone3/lex_output/literal_table.json', 'w') as op:
         op.write(json.dumps(literal_table, indent=4))
 
 if __name__ == '__main__':

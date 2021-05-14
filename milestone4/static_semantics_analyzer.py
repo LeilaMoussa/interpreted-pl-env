@@ -28,18 +28,22 @@ def check_types(tree):
 def get_ast(cst: ProgramNode):
     pass
 
-def main():
+def main(filepath: str, default: bool, from_parser, from_analyzer):
     global symbol_table, literal_table
+
+    cst = get_cst(filepath, default, from_parser, from_analyzer)
     # get symbol and literal tables from ../milestone3/lex_output/
     with open('../milestone3/lex_output/symbol_table.json') as f:
         symbol_table = json.load(f)
     with open('../milestone3/lex_output/literal_table.json') as f:
         literal_table = json.load(f)
-
-    cst = get_cst()
     if cst:
-        ast = get_ast()
-        ast.display()
+        print('Parse tree ready:')
+        cst.display()
+        # ast = get_ast()
+        # ast.display()
+    else:
+        print("Error parsing the program -> parse tree couldn't be built.")
 
     # traverse AST: postfix traversal
     # for each var/const declaration and function definition, add info to ST
@@ -51,4 +55,12 @@ def main():
     # also: function params & args need to match in number and type
 
 if __name__ == '__main__':
-    main()
+    default = False
+    filepath = ''
+    if len(sys.argv) < 2:
+        print('No HLPL input file provided for static semantics \
+            analysis, proceeding with default code from milestone3/constants.py.')
+        default = True
+    else:
+        filepath = sys.argv[1]
+    main(filepath, default, from_parser=True, from_analyzer=True)
