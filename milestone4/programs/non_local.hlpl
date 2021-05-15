@@ -1,14 +1,12 @@
 ~ Complexity level: 4 (highest)
 
-fix ascii#5 greeting := "Hello".
+fix ascii initial := 'L'.
 
-func (ascii@ name) => greet => () [
-	(greeting) => write.
-	(", ") => write.
-	(name) => write.
+func () => greet => () [
+	("Hello ") => write.
+	(initial) => write.
 ]
 
 () => entry => () [
-	fix ascii#3 name := "MMA".
-	(friend) => greet.
+	() => greet.
 ]

@@ -16,8 +16,10 @@ current_scope = None
 # 3) CST --> AST: should be done simultaneously with other tasks?
 
 # FIRST PRIORITY is to get the AST. Think of the most convenient format for the generator.
-
 # most likely gonna do multiple passes over the tree, but idk about order
+
+# i think string and character literals should be replaced by their addresses at this level
+# but maybe the professor wouldn't like the idea of including addresses at this level
 
 def check_declare(tree):
     pass

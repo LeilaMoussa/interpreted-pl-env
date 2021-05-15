@@ -88,7 +88,8 @@ def main(filepath: str, default: bool, from_parser=False):
         except:
             sys.exit('Given HLPL file does not exist. Aborting.')
     # Open the output file.
-    tokens_file = open_output_file()
+    if not from_parser:
+        tokens_file = open_output_file()
     # We'd like to keep track of line numbers, so we're scanning the code line by line.
     code = code.split('\n')
     for number, line in enumerate(code):
