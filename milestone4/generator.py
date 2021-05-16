@@ -6,55 +6,24 @@ In[1]: Program(Fix(num, a, 1), Entry(Var(num, b), Call(write, "hello")))
 // [Program, [Fix, [num, a, 1]], [Entry, [Var, [num, b]], [Call, [write, hello]]]]
 Out[1]:
 DATA.SECTION
-DEC a 0001  // we need to show that it's (1) global, and (2) constant
-DEC b 0000  // var is 0 by default, but we need to show that (1) it's var and (2) it's inside entry
-// suggestion: DEC is redundant under DATA.SECTION, so maybe replace it by the name of the scope
+GLOB a 0001
+ENTR b 0000
 CODE.SECTION
-// instruction to delimit entry
-// would be great if "hello" was replaced by its address from the literal table at the level of the SSA
+// i think literal table contents need to be loaded into memory before program execution
 OUT 0000 <address>
-// instruction for end of entry?
 HLT 0000 0000
-
-//another suggestion
-GLOBAL
-// global vars, consts, and function definition base addresses
-FUNC.START
-// identify some function with its name or address
-DATA.SECTION
-// the function's local variables
-CODE.SECTION
-// its code
-FUNC.START
-// some other function, same thing
-...
-ENTRY
-// same organization as func: data and code
-// code for entry, this is what gets loaded into code memory at first
-INPUT
-// input data as usual
-!!! THIS IS A BAD SUGGESTION because it changes our AL design too much !!!
-
-// a third suggestion
-DATA.SECTION
-GLOB A 0001   // global var/const (we can ignore the var-const distinction for now)
-DEF FUNC 0080  // function definition base address in CODE MEMORY
-// BIG QUESTION: distinguish between declarations of different functions: do we have to?
-CODE.SECTION
-// code in entry
-CALL FUNC   // call function, i.e. jump to base address, here 0080 in CODE MEMORY
-// BUT BIGGEST QUESTION: where to write the AL for function body?
-// One suggestion would be to write the definition inline, 
-// so we need to delimit the start and end of the function somehow.
-// limitation => it would be stupid to keep writing it inline for multiple calls to the same function
-
 
 In[2]: [Program, [Func, [greet, None, None, Body, [Call, [write, "greetings"]]]], 
         [Entry, [Call, [greet, None]]]]
 // the None's help, but are they suitable for an AST?
 Out[2]:
-idk honestly
-helpful fact: we're only implementing functions with 0 or 1 params
+DATA.SECTION
+CODE.SECTION
+CALL GREET 0000
+HLT 0000 0000
+FUNC.GREET
+OUT 0000 <address>
+HLT 0000 0000
 
 In[3]: [Program, 
             [Func, 
@@ -78,26 +47,96 @@ In[3]: [Program,
             ]  // end entry
         ]  // end prog
 Out[3]:
+DATA.SECTION
+ENTR A 0000
+ENTR B 0000
+FUNC RESULT 0000
+CODE.SECTION
+MOV A 0010
+MOV B 0011
+CALL ADDER 0000
+OUT <????>  // idk??
+HLT 0000 0000
+FUNC.ADDER
+// how to treat local variables
+// add
+// move
+// return: put result in memory location agreed upon by entry
 
 '''
+data_section = ['DATA.SECTION', ]
+code_section = ['CODE.SECTION', ]
+literal_table = {'hello': 3, }  # to be loaded here from literal_table.json
+scope = None
+
+def create_dec(dec: list, scope: str):
+    global data_section
+
+    val = 0
+    if len(dec) == 2:
+        [_, name] = dec
+    elif len(dec) == 3:
+        [_, name, val] = dec
+    data_section.append(f'{scope} {name} {val}')  ## formatting and stuff, whatever
+
+def create_call(call: list):
+    global code_section
+
+    # function call: name, args (None or a single value for now)
+    [name, arg] = call
+    if name == 'write':
+        # arg is a list
+        if arg:
+            # not an empty list
+            [_type, val] = arg
+            if _type == 'literal':
+                address = literal_table[val]  # we'll see about string representation
+                code_section.append(f'OUT 0000 {address}')  # again, formattig
+            else:
+                code_section.append(f'OUT 0000 {val}')  # the name of the identifier exists in the assembly
+    elif name == 'read':
+        code_section.append('IN ???? 0000')  # just a random destination? or remember address of the assignee?
+                              # there might not even be an assignee
+    else:
+        # appropriate action with parameters needs to be taken here
+        code_section.append(f'CALL {name}')
 
 def traverse(ast: list):
-    for elt in ast:
-        # 2 cases: elt contains only terminals
-        # -> leaves of the subtree whose root is the first element of elt in the previous iteration
-        # OR elt contains at least one list
-        # -> elt[0] is the root of at least one subtree
-        # distinguish between roots with a deterministic number of leaves
-        # and roots with a variable number of subtrees
+    global scope
 
-        # all declarations are at the top of the AL code => need to keep track, 
-        # i.e. don't write AL during traversal
-
-        pass
-
+    for i, elt in enumerate(ast):  # loop, really?
+        if elt == 'program':
+            scope = 'GLOB'
+            [traverse(item) for item in ast[i:]]
+        elif elt == 'entry':
+            scope = 'ENTR'
+            [traverse(item) for item in ast[i:]]
+        elif elt == 'func':
+            scope = 'FUNC'
+        elif elt == 'fix' or elt == 'var':
+            create_dec(ast[i+1], scope)
+        elif elt == 'call':
+            create_call(ast[i+1])
+    asm = ''
+    for line in data_section:
+        asm += line+'\n'
+    for line in code_section:
+        asm += line+'\n'
+    asm += 'HLT 0000 0000\nINPUT.SECTION\n'
+    return asm
 
 if __name__ == '__main__':
-    sample_ast = ['Program', ['Fix', ['num', 'a', 1]], ['Entry', ['Var', ['num', 'b']], 
-                ['Call', ['write', 3]]]]  # assuming "hello" resides in data loc 0003
+    # tbh, we don't even need types or fix/var anymore
+    sample_ast = ['program', ['fix', ['num', 'a', 1]], ['entry', ['var', ['num', 'b']], 
+                ['call', ['write', ['literal', 'hello']]]]]
+    '''
+    DATA.SECTION
+    GLOB a 0001
+    ENTR b 0000
+    CODE.SECTION
+    OUT 0000 0003  // assuming address of 'hello' is 0003
+    HLT 0000 0000
+    '''
 
-    traverse(sample_ast)
+    asm = traverse(sample_ast)
+    print(asm)

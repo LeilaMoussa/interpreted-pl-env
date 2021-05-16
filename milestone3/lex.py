@@ -93,8 +93,6 @@ def main(filepath: str, default: bool, from_parser=False):
     # We'd like to keep track of line numbers, so we're scanning the code line by line.
     code = code.split('\n')
     for number, line in enumerate(code):
-        # Resulting tokens on that line are written to the file immediately
-        # [tokens_file.write(result) for result in lex(line, number+1) if result]
         for result in lex(line, number+1):
             if result:
                 (lexeme, token, _id) = result
