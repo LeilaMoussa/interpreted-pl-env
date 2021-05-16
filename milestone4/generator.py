@@ -62,11 +62,11 @@ FUNC.ADDER
 // add
 // move
 // return: put result in memory location agreed upon by entry
-
 '''
+import json
+
 data_section = ['DATA.SECTION', ]
 code_section = ['CODE.SECTION', ]
-literal_table = {'hello': 3, }  # to be loaded here from literal_table.json
 scope = None
 
 def create_dec(dec: list, scope: str):
@@ -90,8 +90,8 @@ def create_call(call: list):
             # not an empty list
             [_type, val] = arg
             if _type == 'literal':
-                address = literal_table[val]  # we'll see about string representation
-                code_section.append(f'OUT 0000 {address}')  # again, formattig
+                address = literal_table[val]
+                code_section.append(f'OUT 0000 {address}')  # again, formatting
             else:
                 code_section.append(f'OUT 0000 {val}')  # the name of the identifier exists in the assembly
     elif name == 'read':
@@ -126,9 +126,12 @@ def traverse(ast: list):
     return asm
 
 if __name__ == '__main__':
+    global literal_table
+
     # tbh, we don't even need types or fix/var anymore
     sample_ast = ['program', ['fix', ['num', 'a', 1]], ['entry', ['var', ['num', 'b']], 
-                ['call', ['write', ['literal', 'hello']]]]]
+                ['call', ['write', ['literal', '"hello"']]]]]
+    # super important to get strings written this way
     '''
     DATA.SECTION
     GLOB a 0001
@@ -137,6 +140,8 @@ if __name__ == '__main__':
     OUT 0000 0003  // assuming address of 'hello' is 0003
     HLT 0000 0000
     '''
+    with open('../milestone3/lex_output/literal_table.json') as f:
+        literal_table = json.load(f)
 
     asm = traverse(sample_ast)
     print(asm)
