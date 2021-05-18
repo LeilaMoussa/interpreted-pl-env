@@ -1,3 +1,4 @@
+from milestone4.cst import OperationNode
 import sys
 import os
 sys.path.append(os.path.abspath('../milestone3'))
@@ -397,21 +398,29 @@ def loop():
 def operation():
     global current_token
     if VERBOSE: print("In operation.")
-    if current_token != 'ADD':
-        if current_token != 'SUB':
-            if current_token != 'MULT':
-                if current_token != 'DIV':
-                    return False
+    op = None
+    if current_token == 'ADD':
+        op = 1
+    elif current_token == 'SUB':
+        op = 2
+    elif current_token == 'MULT':
+        op = 3
+    elif current_token == 'DIV':
+        op = 4
+    else:
+        return False
     current_token = get_next_token()
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
-    if not operand():
+    opd1_node = operand()
+    if not opd1_node:
         return False
     if current_token != 'COMMA':
         return False
     current_token = get_next_token()
-    if not operand():
+    opd2_node = operand()
+    if not opd2_node:
         return False
     if current_token != 'RPAREN':
         return False
@@ -419,16 +428,21 @@ def operation():
     if current_token != 'ENDSTAT':
         return False
     current_token = get_next_token()
-    return True
+    return OperationNode(op, opd1_node, opd2_node)
 
 def operand():
     if VERBOSE: print("In operand.")
-    if not numericLiteral():
-        if not userDefinedIdentifier():
-            if not operation():
-                if not functionCall():
+    n_node = numericLiteral()
+    uid_node = op_node = call_node = None
+    if not n_node:
+        uid_node = userDefinedIdentifier()
+        if not uid_node:
+            op_node = operation()
+            if not op_node:
+                call_node = functionCall()
+                if not call_node:
                     return False
-    return True
+    return OperandNode(n_node, uid_node, op_node, call_node)
 
 def functionCall():
     # let's try to handle 0 params, but not more than one

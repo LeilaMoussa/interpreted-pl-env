@@ -1,3 +1,4 @@
+
 class TypeNode:
     def __init__(self, value: str):
         print('init type')
@@ -25,10 +26,98 @@ class VarDeclarationNode:
         print('--var.ident--')
         self.identifier.display()
 
-class OperationNode:
-    def __init__(self):
-        print('init op')
+class OperandNode:
+    def __init(self, num: NumLiteralNode, uid: UserDefinedNode, \
+        op: OperationNode, call: CallNode):
+        if num:
+            self.type = 'numlit'
+            self.value = num
+        elif uid:
+            self.type = 'userdefined'
+            self.value = uid
+        elif op:
+            self.type = 'operation'
+            self.value = op
+        elif call:
+            self.type = 'funcall'
+            self.value = call
+        else:
+            raise Exception('no match on operand node')
+    def display(self):
+        print('--operand.type--')
+        print(self.type)
+        print(f'--operand.{self.type}--')
+        self.value.display()
 
+# the repetition here is quite ugly and stupid, but using inheritance doesn't seem worth it
+# i tried a superclass, but it looked too bloated for nothing
+class AddNode():
+    def __init__(self, opd1: OperandNode, opd2: OperandNode):
+        # golden opportunity for type checking but it doesn't fit here :(
+        self.opd1 = opd1
+        self.opd2 = opd2
+    def display(self):
+        print('--add node--')
+        print('--opd1--')
+        self.opd1.display()
+        print('--opd2--')
+        self.opd2.display()
+
+class SubNode:
+    def __init__(self, opd1: OperandNode, opd2: OperandNode):
+        self.opd1 = opd1
+        self.opd2 = opd2
+    def display(self):
+        print('--sub node--')
+        print('--opd1--')
+        self.opd1.display()
+        print('--opd2--')
+        self.opd2.display()
+
+class MultNode:
+    def __init__(self, opd1: OperandNode, opd2: OperandNode):
+        self.opd1 = opd1
+        self.opd2 = opd2
+    def display(self):
+        print('--mult node--')
+        print('--opd1--')
+        self.opd1.display()
+        print('--opd2--')
+        self.opd2.display()
+
+class DivNode:
+    def __init__(self, opd1: OperandNode, opd2: OperandNode):
+        self.opd1 = opd1
+        self.opd2 = opd2
+    def display(self):
+        print('--div node--')
+        print('--opd1--')
+        self.opd1.display()
+        print('--opd2--')
+        self.opd2.display()
+
+class OperationNode:
+    def __init__(self, op: int, opd1: OperandNode, opd2: OperandNode):
+        if op == 1:
+            self.type = 'add'
+            self.value = AddNode(opd1, opd2)
+        elif op == 2:
+            self.type = 'sub'
+            self.value = SubNode(opd1, opd2)
+        elif op == 3:
+            self.type = 'mult'
+            self.value = MultNode(opd1, opd2)
+        elif op == 4:
+            self.type = 'div'
+            self.value = DivNode(opd1, opd2)
+        else:
+            raise Exception('no match in operation node')
+    def display(self):
+        print('--operation.type--')
+        print(self.type)
+        print(f'--operation.{self.type}--')
+        self.value.display()
+        
 class ReservedNode:
     def __init__(self, value: str):
         print('init reserved')
@@ -142,10 +231,10 @@ class DeclarationNode:
     def __init__(self, var: VarDeclarationNode, fix: FixDeclarationNode):
         print('init dec')
         if var:
-            self.type = 'variable'
+            self.type = 'var'
             self.value = var
         elif fix:
-            self.type = 'constant'
+            self.type = 'fix'
             self.value = fix
         else:
             raise Exception("nothing matches in declaration node")
@@ -204,9 +293,13 @@ class AssignmentNode:
 class ParamNode:
     def __init__(self, type: TypeNode, name: UserDefinedNode):
         print('init param')
-        self.type = type
+        self.typespec = type
         self.name = name
-    ##
+    def display(self):
+        print('--param.datatype--')
+        self.typespec.display()
+        print('--param.name--')
+        self.name.display()
 
 class ReturnNode:
     def __init__(self, exp: ExpressionNode, call: CallNode):
@@ -219,7 +312,11 @@ class ReturnNode:
             self.value = call
         else:
             raise Exception('nothing matches on return node')
-    ##
+    def display(self):
+        print('--return.type--')
+        print(self.type)
+        print(f'return.{self.type}--')
+        self.type.display()
 
 class SelectionNode:
     def __init__(self):
@@ -275,10 +372,10 @@ class ProgramNode:
         self.functions = functions
         self.main_node = main_node
     def display(self):
-        print('--prog.main--')
-        self.main_node.display()
         print('--prog.decs--')
         [dec.display() for dec in self.declarations]
         print('--prog.funcs--')
         [func.display() for func in self.functions]
+        print('--prog.main--')
+        self.main_node.display()
         

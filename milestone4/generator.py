@@ -1,72 +1,8 @@
-'''
-Sample IO:
-
-In[1]: Program(Fix(num, a, 1), Entry(Var(num, b), Call(write, "hello")))
-// Alternative representation with benefit of simple iteration:
-// [Program, [Fix, [num, a, 1]], [Entry, [Var, [num, b]], [Call, [write, hello]]]]
-Out[1]:
-DATA.SECTION
-GLOB a 0001
-ENTR b 0000
-CODE.SECTION
-// i think literal table contents need to be loaded into memory before program execution
-OUT 0000 <address>
-HLT 0000 0000
-
-In[2]: [Program, [Func, [greet, None, None, Body, [Call, [write, "greetings"]]]], 
-        [Entry, [Call, [greet, None]]]]
-// the None's help, but are they suitable for an AST?
-Out[2]:
-DATA.SECTION
-CODE.SECTION
-CALL GREET 0000
-HLT 0000 0000
-FUNC.GREET
-OUT 0000 <address>
-HLT 0000 0000
-
-In[3]: [Program, 
-            [Func, 
-                [adder, 
-                    [[num, a], [num, b]], // args
-                    num,                  // return type
-                    Body, [              // body, doesn't necessarily need Body tag IF WE USE None
-                            [Var, [num, result]],
-                            [Assign, [result, plus, [a, b]]],
-                            [Give, result]
-                          ]
-                ]
-            ], // end func
-            [Entry, [Var, [num, a]],
-                    [Var, [num, b]],
-                    [Call, 
-                        [write, [Call, 
-                                    [adder,   // func name
-                                    [a, b]]]] // given arguments
-                    ]
-            ]  // end entry
-        ]  // end prog
-Out[3]:
-DATA.SECTION
-ENTR A 0000
-ENTR B 0000
-FUNC RESULT 0000
-CODE.SECTION
-MOV A 0010
-MOV B 0011
-CALL ADDER 0000
-OUT <????>  // idk??
-HLT 0000 0000
-FUNC.ADDER
-// how to treat local variables
-// add
-// move
-// return: put result in memory location agreed upon by entry
-'''
 import json
 
 data_section = ['DATA.SECTION', ]
 code_section = ['CODE.SECTION', ]
+function_section = []
 scope = None
 
 def create_dec(dec: list, scope: str):
@@ -81,6 +17,9 @@ def create_dec(dec: list, scope: str):
 
 def create_call(call: list):
     global code_section
+
+    # if we ever back out of the one-function decision, we need to specify code_section
+    # or func_section here based on scope!
 
     # function call: name, args (None or a single value for now)
     [name, arg] = call
@@ -101,37 +40,61 @@ def create_call(call: list):
         # appropriate action with parameters needs to be taken here
         code_section.append(f'CALL {name}')
 
+def create_function_def(func: list):
+    global function_section
+
+    # handle args if necessary here
+    [name, args, return_type, body] = func
+    function_section.append(f'FUNC.{name}')
+    [traverse(elt) for elt in body]
+    # handle return
+
 def traverse(ast: list):
     global scope
 
-    for i, elt in enumerate(ast):  # loop, really?
-        if elt == 'program':
-            scope = 'GLOB'
-            [traverse(item) for item in ast[i:]]
-        elif elt == 'entry':
-            scope = 'ENTR'
-            [traverse(item) for item in ast[i:]]
-        elif elt == 'func':
-            scope = 'FUNC'
-        elif elt == 'fix' or elt == 'var':
-            create_dec(ast[i+1], scope)
-        elif elt == 'call':
-            create_call(ast[i+1])
+    root = ast[0]
+    if root == 'program':
+        scope = 'GLOB'
+        [traverse(item) for item in ast[1:]]
+    elif root == 'entry':
+        scope = 'ENTR'
+        [traverse(item) for item in ast[1:]]
+    elif root == 'func':
+        scope = 'FUNC'
+        create_function_def(ast[1])
+    elif root == 'fix' or root == 'var':
+        create_dec(ast[1], scope)
+    elif root == 'call':
+        create_call(ast[1])
+    # assign, return, arithmetic
+
     asm = ''
     for line in data_section:
         asm += line+'\n'
     for line in code_section:
         asm += line+'\n'
-    asm += 'HLT 0000 0000\nINPUT.SECTION\n'
+    asm += 'HLT 0000 0000\n'
+    ##
+    asm += '\nINPUT.SECTION\n'
     return asm
 
 if __name__ == '__main__':
     global literal_table
 
-    # tbh, we don't even need types or fix/var anymore
-    sample_ast = ['program', ['fix', ['num', 'a', 1]], ['entry', ['var', ['num', 'b']], 
-                ['call', ['write', ['literal', '"hello"']]]]]
-    # super important to get strings written this way
+    sample_ast = ['program', ['func', ['greet', None, None, ['call', ['write', '"hello"']]]], 
+        ['entry', ['call', ['greet', None]]]]
+    '''
+    DATA.SECTION
+    CODE.SECTION
+    CALL GREET 0000
+    HLT 0000 0000
+    FUNC.GREET
+    OUT 0000 0002
+    HLT 0000 0000
+    '''
+
+    ## sample_ast = ['program', ['fix', ['num', 'a', 1]], ['entry', ['var', ['num', 'b']], 
+    ##            ['call', ['write', ['literal', '"hello"']]]]]
     '''
     DATA.SECTION
     GLOB a 0001
