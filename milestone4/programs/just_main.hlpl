@@ -1,0 +1,8 @@
+~ Complexity level: 1 (lowest)
+
+fix num a := 1.
+var num b.
+
+() => entry => () [
+	("hello") => write.
+]

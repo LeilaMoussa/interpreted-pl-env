@@ -29,7 +29,7 @@ def get_ast(cst) -> list:
         root.append(cst.type)
         root.append(get_ast(cst.value))
     elif _type ==  VarDeclarationNode:
-        typespec, ident = cst.type, cst.identifer
+        typespec, ident = cst.typespec, cst.identifier
         ## add type and scope to symbol table, tricky because of 'attributes' field in symbol_table
         return [get_ast(typespec), get_ast(ident)]
     elif type == FixDeclarationNode:
@@ -81,7 +81,7 @@ def get_ast(cst) -> list:
             call_stuff.append(None)
         else:
             # we'll see about this representation of parameters
-            [call_stuff.append(get_cst(arg)) for arg in args]  # arg is ExpressionNode, i.e. literal or udi
+            [call_stuff.append(get_ast(arg)) for arg in args]  # arg is ExpressionNode, i.e. literal or udi
             ## type checking needs to be done here => need to look at symbol table for function called cst.name
             ## if the definition is not there, raise an exception
         root.append(call_stuff)
