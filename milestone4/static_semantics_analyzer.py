@@ -32,14 +32,14 @@ def get_ast(cst) -> list:
         typespec, ident = cst.typespec, cst.identifier
         ## add type and scope to symbol table, tricky because of 'attributes' field in symbol_table
         return [get_ast(typespec), get_ast(ident)]
-    elif type == FixDeclarationNode:
-        typespec, ident, value = cst.type, cst.identifer, cst.value  ## value is Exp, Op, or Call
+    elif _type == FixDeclarationNode:
+        typespec, ident, value = cst.typespec, cst.identifier, cst.value  ## value is Exp, Op, or Call
         ## again, add info AND do type checking
         return [get_ast(typespec), get_ast(ident), get_ast(value)]
     elif _type == TypeNode:
         return cst.value  # just a string
     elif _type == IdentifierNode:
-        root.append(get_ast(cst.value))
+        return get_ast(cst.value)
     elif _type == UserDefinedNode:
         return cst.name  # just name, as string
     elif _type == ReservedNode:
@@ -74,17 +74,15 @@ def get_ast(cst) -> list:
     elif _type == OperandNode:
         root.append(get_ast(cst.value))
     elif _type == CallNode:
-        root.append('call')
-        call_stuff = [get_ast(cst.name)]
+        root.append(get_ast(cst.name))
         args = cst.args
         if len(args) == 0:
-            call_stuff.append(None)
+            root.append(None)
         else:
             # we'll see about this representation of parameters
-            [call_stuff.append(get_ast(arg)) for arg in args]  # arg is ExpressionNode, i.e. literal or udi
+            [root.append(get_ast(arg)) for arg in args]  # arg is ExpressionNode, i.e. literal or udi
             ## type checking needs to be done here => need to look at symbol table for function called cst.name
             ## if the definition is not there, raise an exception
-        root.append(call_stuff)
     elif _type == NumLiteralNode or _type == StringLiteralNode or _type == CharLiteralNode:
         return cst.value ## we'll see
     elif _type == ReturnNode:

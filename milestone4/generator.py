@@ -64,7 +64,7 @@ def traverse(ast: list):
         create_function_def(ast[1])
     elif root == 'fix' or root == 'var':
         create_dec(ast[1], scope)
-    elif root == 'call':
+    elif root == 'funcall':
         create_call(ast[1])
     # assign, return, arithmetic
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     global literal_table
 
     sample_ast = ['program', ['func', ['greet', None, None, ['call', ['write', '"hello"']]]], 
-        ['entry', ['call', ['greet', None]]]]
+        ['entry', ['funcall', ['greet', None]]]]
     '''
     DATA.SECTION
     CODE.SECTION
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     '''
 
     ## sample_ast = ['program', ['fix', ['num', 'a', 1]], ['entry', ['var', ['num', 'b']], 
-    ##            ['call', ['write', ['literal', '"hello"']]]]]
+    ##            ['funcall', ['write', ['literal', '"hello"']]]]]
     '''
     DATA.SECTION
     GLOB a 0001
