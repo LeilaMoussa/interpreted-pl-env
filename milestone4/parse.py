@@ -1,4 +1,3 @@
-from milestone4.cst import OperationNode
 import sys
 import os
 sys.path.append(os.path.abspath('../milestone3'))

@@ -26,9 +26,17 @@ class VarDeclarationNode:
         print('--var.ident--')
         self.identifier.display()
 
+class NumLiteralNode:
+    def __init__(self, value: int):
+        print('init numlit')
+        self.value = value
+    def display(self):
+        print('--numlit.value--')
+        print(self.value)
+
 class OperandNode:
     def __init(self, num: NumLiteralNode, uid: UserDefinedNode, \
-        op: OperationNode, call: CallNode):
+        op, call):  # sadly, I have to remove type hints here because i can't keep shifting interdependent class definitions
         if num:
             self.type = 'numlit'
             self.value = num
@@ -160,14 +168,6 @@ class StringLiteralNode:
         self.value = value
     def display(self):
         print('--strlit.value--')
-        print(self.value)
-
-class NumLiteralNode:
-    def __init__(self, value: int):
-        print('init numlit')
-        self.value = value
-    def display(self):
-        print('--numlit.value--')
         print(self.value)
 
 class CharLiteralNode:
@@ -370,12 +370,12 @@ class ProgramNode:
         print('init prog')
         self.declarations = declarations
         self.functions = functions
-        self.main_node = main_node
+        self.main = main_node
     def display(self):
         print('--prog.decs--')
         [dec.display() for dec in self.declarations]
         print('--prog.funcs--')
         [func.display() for func in self.functions]
         print('--prog.main--')
-        self.main_node.display()
+        self.main.display()
         

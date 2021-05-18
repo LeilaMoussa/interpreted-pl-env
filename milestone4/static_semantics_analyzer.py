@@ -1,9 +1,8 @@
-from milestone4.cst import AddNode, AssignmentNode, CharLiteralNode, DeclarationNode, ExpressionNode, FixDeclarationNode, IdentifierNode, NumLiteralNode, OperandNode, OperationNode, ReservedNode, StatementNode, StringLiteralNode, TypeNode, UserDefinedNode, VarDeclarationNode
 from parse import main as get_cst
 import sys, os
 import json
 from cst import *
-sys.path.append(os.path.abspath('../milestone3'))
+# sys.path.append(os.path.abspath('../milestone3'))
 
 symbol_table = {}
 literal_table = {}   # do we even need this guy?
@@ -124,8 +123,8 @@ def main(filepath: str, default: bool, from_parser, from_analyzer):
     if cst:
         print('Parse tree ready:')
         cst.display()
-        # ast = get_ast()
-        # print(ast)
+        ast = get_ast(cst)
+        print(ast)
     else:
         print("Error parsing the program -> parse tree couldn't be built.")
 
