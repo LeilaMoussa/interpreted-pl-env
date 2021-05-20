@@ -1,4 +1,5 @@
 ~ Complexity level: 3
+~ Function with no parameters or return values, but access to global vars.
 
 fix ascii initial := 'L'.
 

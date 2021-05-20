@@ -1,4 +1,5 @@
 ~ Complexity level: 1 (lowest)
+~ Global variables and main function only.
 
 fix num a := 2.
 var num b.

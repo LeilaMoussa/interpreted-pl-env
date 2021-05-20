@@ -1,4 +1,5 @@
 ~ Complexity level: 2
+~ Function with no params or return values, and no global vars.
 
 func () => greet => () [
 	("Greetings") => write.
