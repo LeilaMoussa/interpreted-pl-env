@@ -42,7 +42,7 @@ def program():
     main_node = mainFunction()
     if not main_node:
         return False
-    return ProgramNode(dec_nodes, func_nodes, main_node)  # instead of True
+    return ProgramNode(dec_nodes, func_nodes, main_node)
         
 def declaration():
     global current_token
@@ -240,6 +240,7 @@ def function():
     if position > local_position: return False
     if current_token != 'RBRACK':
         return False
+    current_token = get_next_token()
     return FunctionNode(udi_node, args, type_node, decs, stats)
     
 def parameter():
@@ -259,7 +260,6 @@ def statement():
     global current_token
     if VERBOSE: print("In statement.")
     if not current_token:
-        print('mmmmmmmm')
         return False
     a_node = assignment()
     r_node = s_node = l_node = f_node = None
@@ -444,7 +444,6 @@ def operand():
     return OperandNode(n_node, uid_node, op_node, call_node)
 
 def functionCall():
-    # let's try to handle 0 params, but not more than one
     global current_token
     if VERBOSE: print("In functionCall.")
     if current_token != 'LPAREN':
@@ -548,7 +547,6 @@ def numericLiteral():
     current_token = get_next_token()
     return NumLiteralNode(lexeme)
 
-######################################################################
 
 def main(filepath, default, from_parser, from_analyzer=False):
     global token_gen, current_token
@@ -561,6 +559,7 @@ def main(filepath, default, from_parser, from_analyzer=False):
         parse_tree.display()
     else:
         print('Error.')
+        print(current_token)
 
 if __name__ == '__main__':
     default = False
