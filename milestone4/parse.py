@@ -74,7 +74,7 @@ def varDeclaration():
         return False
     return VarDeclarationNode(type_node, udi_node)
 
-def fixDeclaration() -> bool:
+def fixDeclaration():
     global current_token
     if VERBOSE: print("In fixDeclaration.")
     if current_token != 'CONST_KW':
@@ -424,9 +424,6 @@ def operation():
     if current_token != 'RPAREN':
         return False
     current_token = get_next_token()
-    if current_token != 'ENDSTAT':
-        return False
-    current_token = get_next_token()
     return OperationNode(op, opd1_node, opd2_node)
 
 def operand():
@@ -504,20 +501,21 @@ def compared():
 def expression():
     global current_token
     if VERBOSE: print("In expression.")
-    char_node = str_node = num_node = udi_node = None
+    char_node = str_node = num_node = udi_node = op_node = None
     if current_token == 'CHAR_LIT':
         char_node = CharLiteralNode(lexeme)
-        current_token = get_next_token()
     elif current_token == 'STR_LIT':
         str_node = StringLiteralNode(lexeme)
         current_token = get_next_token()
     elif current_token == 'NUM_LIT':
         num_node = NumLiteralNode(int(lexeme))
+    elif op_node := operation():
+        pass
     elif udi_node := userDefinedIdentifier():
         pass
     else:  # none of these 4, or None
         return False
-    return ExpressionNode(char_node, str_node, num_node, udi_node)
+    return ExpressionNode(char_node, str_node, num_node, udi_node, op_node)
             
 def identifier():
     if VERBOSE: print("In identifier.")

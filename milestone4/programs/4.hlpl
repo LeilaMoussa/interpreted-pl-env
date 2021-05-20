@@ -3,12 +3,14 @@
 
 fix num a := 10.
 
-func (num b) => multiply_by_a => () [
+func (num b) => product => () [
 	give *(a, b).
 ]
 
 () => entry => () [
 	var num b.
 	b := () => read.
-	(b) => multiply_by_a.
+	(b) => product.
 ]
+
+ 

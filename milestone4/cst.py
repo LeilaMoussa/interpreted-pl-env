@@ -35,7 +35,7 @@ class NumLiteralNode:
         print(self.value)
 
 class OperandNode:
-    def __init(self, num: NumLiteralNode, uid: UserDefinedNode, \
+    def __init__(self, num: NumLiteralNode, uid: UserDefinedNode, \
         op, call):  # sadly, I have to remove type hints here because i can't keep shifting interdependent class definitions
         if num:
             self.type = 'numlit'
@@ -180,7 +180,7 @@ class CharLiteralNode:
 
 class ExpressionNode:
     def __init__(self, char: CharLiteralNode, string: StringLiteralNode, \
-        num: NumLiteralNode, udi: UserDefinedNode):
+        num: NumLiteralNode, udi: UserDefinedNode, op: OperationNode):
         print('init expr')
         if char:
             self.type = 'char'
@@ -194,6 +194,9 @@ class ExpressionNode:
         elif udi:
             self.type = 'userdefined'
             self.value = udi
+        elif op:
+            self.type = 'op'
+            self.value = op
         else:
             raise Exception('nothing matches on expr node')
     def display(self):
@@ -316,7 +319,7 @@ class ReturnNode:
         print('--return.type--')
         print(self.type)
         print(f'return.{self.type}--')
-        self.type.display()
+        self.value.display()
 
 class SelectionNode:
     def __init__(self):
