@@ -5,7 +5,6 @@ from cst import *
 # sys.path.append(os.path.abspath('../milestone3'))
 
 symbol_table = {}
-literal_table = {}   # do we even need this guy?
 current_scope = None  # 'glob', 'entry', or 'func'; OR 1, 2, 3
 
 def get_ast(cst) -> list:
@@ -22,6 +21,7 @@ def get_ast(cst) -> list:
         # Program.main is of type MainNode
         root.append(get_ast(cst.main))
     elif _type == MainNode:
+        current_scope = 2
         root.append('entry')
         [root.append(get_ast(subtree)) for subtree in cst.declarations]
         [root.append(get_ast(subtree)) for subtree in cst.statements]
@@ -74,6 +74,7 @@ def get_ast(cst) -> list:
     elif _type == OperandNode:
         root.append(get_ast(cst.value))
     elif _type == CallNode:
+        current_scope = 3  # !!
         root.append(get_ast(cst.name))
         args = cst.args
         if len(args) == 0:
@@ -89,6 +90,7 @@ def get_ast(cst) -> list:
         root.append('give')
         root.append(get_ast(cst.value))  # call or exp
     elif _type == FunctionNode:
+        current_scope = 3  # really change the scope?
         # function definition: params, name, return DT, body (decs + statements)
         root.append('func')
         func_stuff = [cst.name]
@@ -106,18 +108,16 @@ def get_ast(cst) -> list:
         return [get_ast(cst.typespec), get_ast(cst.name)]  # these are strings
     else:
         ## remaining: Selection, Loop
-        print('unhandled type', _type)
+        print('unhandled type for the moment:', _type)
     return root
     
 def main(filepath: str, default: bool, from_parser, from_analyzer):
-    global symbol_table, literal_table
+    global symbol_table
 
     cst = get_cst(filepath, default, from_parser, from_analyzer)
     # get symbol and literal tables from ../milestone3/lex_output/
     with open('../milestone3/lex_output/symbol_table.json') as f:
         symbol_table = json.load(f)
-    with open('../milestone3/lex_output/literal_table.json') as f:
-        literal_table = json.load(f)
     if cst:
         print('Parse tree ready:')
         cst.display()

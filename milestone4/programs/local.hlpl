@@ -1,20 +1,14 @@
-~ Complexity level: 3
+~ Complexity level: 4 (highest)
+~ Entry + function + parameters + return values + global variables
 
-func (num grade) => get_letter => (ascii) [
-	check (gt(grade, 90)) [
-		give 'A'.
-	]
-	other [
-		give 'B'.
-	]
-	~ might get rid of check other and do something simpler
+fix num a := 10.
+
+func (num b) => multiply_by_a => () [
+	give *(a, b).
 ]
 
 () => entry => () [
-	var num grade.
-	var ascii letter.
-
-	grade := 100.
-	letter := (grade) => get_letter.
-	(letter) => write.
+	var num b.
+	b := () => read.
+	(b) => multiply_by_a.
 ]
