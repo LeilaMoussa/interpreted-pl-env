@@ -24,10 +24,10 @@ def open_output_file():
     # it's empty first.
     # We're appending because we'd like partial results even in case of failure, for some reason,
     # or to see progress in the middle.
-    op = open('../milestone3/lex_output/tokens.txt', 'w')
+    op = open('./lex_output/tokens.txt', 'w')
     op.write('')
     op.close()
-    op = open('../milestone3/lex_output/tokens.txt', 'a')
+    op = open('./lex_output/tokens.txt', 'a')
     return op
 
 def handle_literal(token_type: str, token_val: str):
@@ -75,8 +75,6 @@ def lex(code_line: str, line_number: int):
         yield write and (token_val, token_type, token_id)
         
 def main(filepath: str, default: bool, from_parser=False):
-    # this is the weirdest error i've ever seen: main isn't executed!
-    print('in main')
     if default:
         # Only retrieve default code if we have to.
         code = constants.get_default_code()
@@ -90,6 +88,7 @@ def main(filepath: str, default: bool, from_parser=False):
     # Open the output file.
     if not from_parser:
         tokens_file = open_output_file()
+    generator = []
     # We'd like to keep track of line numbers, so we're scanning the code line by line.
     code = code.split('\n')
     for number, line in enumerate(code):
@@ -97,16 +96,21 @@ def main(filepath: str, default: bool, from_parser=False):
             if result:
                 (lexeme, token, _id) = result
                 if from_parser:
-                    yield (token, lexeme, number+1)
+                    generator.append((token, lexeme, number+1))
                 else:
                     tokens_file.write(f'Line {number+1} Token #{_id} ({token}) : {lexeme}\n')
-    tokens_file.close()
+    if not from_parser:
+        tokens_file.close()
     # At this point, the literal table and symbol table have been filled,
     # now save them as JSON files in the output folder.
     with open('../milestone3/lex_output/symbol_table.json', 'w') as op:
+        print('OPENING')
         op.write(json.dumps(symbol_table, indent=4))
     with open('../milestone3/lex_output/literal_table.json', 'w') as op:
         op.write(json.dumps(literal_table, indent=4))
+    if from_parser:
+        for elt in generator:
+            yield elt
 
 if __name__ == '__main__':
     default = False

@@ -4,4 +4,6 @@
 
 **/__pycache__/
 
-/milestone3/lex_output/
+/milestone3/lex_output/literal_table.json
+
+/milestone3/lex_output/symbol_table.json
