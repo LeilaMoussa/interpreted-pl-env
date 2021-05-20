@@ -30,7 +30,7 @@
 
 <loop> → LOOP_KW LPAREN <conditionStatement> RPAREN LBRACK {<declaration>} {<statement>} RBRACK
 
-<operation> → (ADD | SUB | MULT | DIV) LPAREN <operand> COMMA <operand> RPAREN ENDSTAT
+<operation> → (ADD | SUB | MULT | DIV) LPAREN <operand> COMMA <operand> RPAREN 
 
 <operand> → <numericLiteral> | <userDefinedIdentifier> | <operation> | <functionCall>
 
@@ -42,7 +42,7 @@
 
 <compared> → <numericLiteral> | <userDefinedIdentifier> | <functionCall>
 
-<expression> → CHAR_LIT | STR_LIT | <numericLiteral> | <userDefinedIdentifier>
+<expression> → CHAR_LIT | STR_LIT | <numericLiteral> | <userDefinedIdentifier> | <operation>
 
 <identifier> → <userDefinedIdentifier> | <reservedWord>
 
