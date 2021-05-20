@@ -6,5 +6,5 @@ func () => greet => () [
 ]
 
 () => entry => () [
-	greet().
+	() => greet.
 ]
