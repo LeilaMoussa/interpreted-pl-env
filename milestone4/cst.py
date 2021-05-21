@@ -1,3 +1,9 @@
+#this program contains different classes to create the nodes of our parse tree
+#each class contains a constructor and a display method that will be used later
+#to display our cst starting from the root
+
+#this program is imported in parse.py
+
 
 class TypeNode:
     def __init__(self, value: str):
@@ -57,8 +63,7 @@ class OperandNode:
         print(f'--operand.{self.type}--')
         self.value.display()
 
-# the repetition here is quite ugly and stupid, but using inheritance doesn't seem worth it
-# i tried a superclass, but it looked too bloated for nothing
+
 class AddNode():
     def __init__(self, opd1: OperandNode, opd2: OperandNode):
         # golden opportunity for type checking but it doesn't fit here :(
