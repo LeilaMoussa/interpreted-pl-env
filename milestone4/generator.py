@@ -84,41 +84,19 @@ def main():
 if __name__ == '__main__':
     global literal_table
 
-    sample_ast = ['program', ['func', ['greet', None, None, ['call', ['write', '"hello"']]]], 
-        ['entry', ['funcall', ['greet', None]]]]
-    '''
-    DATA.SECTION
-    CODE.SECTION
-    CALL GREET 0000
-    HLT 0000 0000
-    FUNC.GREET
-    OUT 0000 0002
-    HLT 0000 0000
-    '''
-
-    ## sample_ast = ['program', ['fix', ['num', 'a', 1]], ['entry', ['var', ['num', 'b']], 
-    ##            ['funcall', ['write', ['literal', '"hello"']]]]]
-    '''
-    DATA.SECTION
-    GLOB a 0001
-    ENTR b 0000
-    CODE.SECTION
-    OUT 0000 0003  // assuming address of 'hello' is 0003
-    HLT 0000 0000
-    '''
+    sample_ast = []  # to be gotten from static semantics
     
     '''
-    sample 1: 
+    1.hlpl: 
     DATA.SECTION
     GLOB a +0002
     GLOB b +0000
     CODE.SECTION
     OUT 0000 [0002] // this is lit hello's address, from literal table
     HLT 0000 0000
-
     '''
     '''
-    sample 2: 
+    2.hlpl: 
     DATA.SECTION
     CODE.SECTION
     CALL GREET 0000
@@ -126,10 +104,9 @@ if __name__ == '__main__':
     FUNC.GREET
     OUT 0000 [0000]
     HLT 0000 0000
-
     '''
     '''
-    sample 3: 
+    3.hlpl: 
     DATA.SECTION
     GLOB init [0000]
     CODE.SECTION
@@ -139,10 +116,9 @@ if __name__ == '__main__':
     OUT 0000 [0001]
     OUT 0000 [0000]
     HLT 0000 0000
-
     '''
     '''
-    sample 4: 
+    4.hlpl: 
     DATA.SECTION
     GLOB a +0010
     ENTR b +0000

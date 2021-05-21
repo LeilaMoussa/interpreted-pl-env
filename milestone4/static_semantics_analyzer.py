@@ -52,9 +52,9 @@ def get_ast(cst) -> list:
         root.append(get_ast(cst.identifer))
         root.append(cst.value)
     elif _type == ExpressionNode:
-        # literal or udi, we need to make a difference between these 2 types
+        # literal, udi, or op
         if cst.type != 'userdefined':
-              root.append('literal')    # labeling only literal, may have to rethink this based on generator   
+              root.append('literal')
         root.append(get_ast(cst.value))
     elif _type == OperationNode:
         root.append(get_ast(cst.value))
@@ -91,12 +91,10 @@ def get_ast(cst) -> list:
         root.append(get_ast(cst.value))  # call or exp
     elif _type == FunctionNode:
         current_scope = 3  # really change the scope?
-        # function definition: params, name, return DT, body (decs + statements)
         root.append('func')
-        func_stuff = [cst.name]
-        [func_stuff.append(param) for param in cst.args]  # i admit, idk what's the difference between arg & param
+        func_stuff = [get_ast(cst.name)]
+        [func_stuff.append(get_ast(param)) for param in cst.args]
         if cst.return_type == None:
-            # there's likely a better way to write this, this is ugly
             func_stuff.append(None)
         else:
             func_stuff.append(get_ast(cst.return_type))
