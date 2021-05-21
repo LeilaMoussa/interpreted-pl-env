@@ -79,8 +79,8 @@ HLT 0000 0000
 '''
 
 data_section = ['DATA.SECTION', ]
-code_section = ['CODE.SECTION', ]
-function_section = []
+entry_code_section = ['CODE.SECTION', ]
+function_code_section = []
 scope = None
 
 def create_dec(dec: list, scope: str):
@@ -102,7 +102,7 @@ def create_dec(dec: list, scope: str):
     data_section.append(f'{scope} {name} {sign}{val.rjust(4, "0")}')
 
 def create_call(call: list):
-    global code_section
+    global entry_code_section
 
     # function call: name, args (None or a single value for now)
     [name, arg] = call
@@ -112,33 +112,34 @@ def create_call(call: list):
             [_type, val] = arg
             if _type == 'literal':
                 address = str(literal_table[val])
-                code_section.append(f'OUT 0000 [{address.rjust(4, "0")}]')
+                entry_code_section.append(f'OUT 0000 [{address.rjust(4, "0")}]')
             else:
-                code_section.append(f'OUT 0000 {val}')
+                entry_code_section.append(f'OUT 0000 {val}')
     elif name == 'read':
         # () => read.       ========>  IN <????> 0000
         # or
         # b := () => read.  ========>  IN <address of b> 0000
         # how to remember the assignee, if it exists, in this case:
         # i think i need to implement create_assign() first, this would definitely clarify it
-        code_section.append('IN ???? 0000')
+        entry_code_section.append('IN ???? 0000')
     else:
         # function with no params: CALL <name> 0000
         # one param: CALL <name> <identifier>
         # how this works on the stack under the hood is suggested up above
-        code_section.append(f'CALL {name}')
+        entry_code_section.append(f'CALL {name}')
 
 def create_function_def(func: list):
-    global function_section
+    global function_code_section
 
-    # handle args if necessary here
     [name, args, return_type, body] = func
-    function_section.append(f'FUNC.{name}')
+    function_code_section.append(f'FUNC.{name}')
     [traverse(elt) for elt in body]
-    function_section.append('GIVE 0000 0000')
+    ## append push if necessary
+    function_code_section.append('HLT 0000 0000')   # but we're handling 'give' in traverse(), so?
 
 def create_assign(assign: list):
     [lhs, rhs] = assign
+    op = ''
     '''
     possible cases
     b := 1. ==> MOV b +0001 OR MOV b [0001]  // assuming 1 is in address 0001
@@ -149,6 +150,17 @@ def create_assign(assign: list):
     b := () => somefunc. ====> CALL somefunc 0000; POP 0000 0000; MOVAC b 0000
     // POP: from stack to AC
     '''
+    if type(rhs) == list:
+        # literal like ['literal', 2], operation like ['add', [a, b]], or funcall like ['funcall', ['write', a]]
+        # traverse(rhs) and append corresponding code to the appropriate section: entry_code_section OR func_section
+        # but to complete the corresponding code line, we need to remember b
+        # => either have a global variable called assignee for assignment statements in progress
+        # OR pass and return stuff across functions
+        pass
+    else:
+        line = f'MOV {lhs} {rhs}'
+        if scope == 'ENTR': entry_code_section.append(line)
+        elif scope == 'FUNC': function_code_section.append(line)
 
 def traverse(ast: list):
     global scope
@@ -185,7 +197,7 @@ def traverse(ast: list):
     asm = ''
     for line in data_section:
         asm += line+'\n'
-    for line in code_section:
+    for line in entry_entry_code_section:
         asm += line+'\n'
     asm += 'HLT 0000 0000\n'
     ##
