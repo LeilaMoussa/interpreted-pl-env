@@ -258,7 +258,7 @@ class FunctionNode:
         print('init func')
         self.name = name
         self.args = args
-        self.return_type = return_type  # can be None
+        self.return_type = return_type
         self.declarations = declarations
         self.statements = statements
     def display(self):

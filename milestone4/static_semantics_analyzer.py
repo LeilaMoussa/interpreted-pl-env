@@ -72,7 +72,7 @@ def get_ast(cst) -> list:
         root.append('div')
         root.append([get_ast(cst.opd1), get_ast(cst.opd2)])
     elif _type == OperandNode:
-        root.append(get_ast(cst.value))
+        return get_ast(cst.value)
     elif _type == CallNode:
         current_scope = 3  # !!
         root.append(get_ast(cst.name))
@@ -90,16 +90,17 @@ def get_ast(cst) -> list:
         root.append('give')
         root.append(get_ast(cst.value))  # call or exp
     elif _type == FunctionNode:
+        # function defincition
         current_scope = 3  # really change the scope?
         root.append('func')
         func_stuff = [get_ast(cst.name)]
         [func_stuff.append(get_ast(param)) for param in cst.args]
-        if cst.return_type == None:
+        if not cst.return_type:
             func_stuff.append(None)
         else:
             func_stuff.append(get_ast(cst.return_type))
-        [func_stuff.append(dec) for dec in cst.declarations]
-        [func_stuff.append(stat) for stat in cst.statements]
+        [func_stuff.append(get_ast(dec)) for dec in cst.declarations]
+        [func_stuff.append(get_ast(stat)) for stat in cst.statements]
         root.append(func_stuff)
     elif _type == ParamNode:
         ## params from function definition, defined with typespec and udi
