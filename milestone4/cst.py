@@ -1,3 +1,9 @@
+#this program contains different classes to create the nodes of our parse tree
+#each class contains a constructor and a display method that will be used later
+#to display our cst starting from the root
+
+#this program is imported in parse.py
+
 
 class TypeNode:
     def __init__(self, value: str):
@@ -35,7 +41,7 @@ class NumLiteralNode:
         print(self.value)
 
 class OperandNode:
-    def __init(self, num: NumLiteralNode, uid: UserDefinedNode, \
+    def __init__(self, num: NumLiteralNode, uid: UserDefinedNode, \
         op, call):  # sadly, I have to remove type hints here because i can't keep shifting interdependent class definitions
         if num:
             self.type = 'numlit'
@@ -57,8 +63,7 @@ class OperandNode:
         print(f'--operand.{self.type}--')
         self.value.display()
 
-# the repetition here is quite ugly and stupid, but using inheritance doesn't seem worth it
-# i tried a superclass, but it looked too bloated for nothing
+
 class AddNode():
     def __init__(self, opd1: OperandNode, opd2: OperandNode):
         # golden opportunity for type checking but it doesn't fit here :(
@@ -180,7 +185,7 @@ class CharLiteralNode:
 
 class ExpressionNode:
     def __init__(self, char: CharLiteralNode, string: StringLiteralNode, \
-        num: NumLiteralNode, udi: UserDefinedNode):
+        num: NumLiteralNode, udi: UserDefinedNode, op: OperationNode):
         print('init expr')
         if char:
             self.type = 'char'
@@ -194,6 +199,9 @@ class ExpressionNode:
         elif udi:
             self.type = 'userdefined'
             self.value = udi
+        elif op:
+            self.type = 'op'
+            self.value = op
         else:
             raise Exception('nothing matches on expr node')
     def display(self):
@@ -316,7 +324,7 @@ class ReturnNode:
         print('--return.type--')
         print(self.type)
         print(f'return.{self.type}--')
-        self.type.display()
+        self.value.display()
 
 class SelectionNode:
     def __init__(self):

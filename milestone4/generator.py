@@ -106,6 +106,56 @@ if __name__ == '__main__':
     OUT 0000 0003  // assuming address of 'hello' is 0003
     HLT 0000 0000
     '''
+    
+    '''
+    sample 1: 
+    DATA.SECTION
+    GLOB a +0002
+    GLOB b +0000
+    CODE.SECTION
+    OUT 0000 [0002] // this is lit hello's address, from literal table
+    HLT 0000 0000
+
+    '''
+    '''
+    sample 2: 
+    DATA.SECTION
+    CODE.SECTION
+    CALL GREET 0000
+    HLT 0000 0000
+    FUNC.GREET
+    OUT 0000 [0000]
+    HLT 0000 0000
+
+    '''
+    '''
+    sample 3: 
+    DATA.SECTION
+    GLOB init [0000]
+    CODE.SECTION
+    CALL GREET 0000
+    HLT 0000 0000 
+    FUNC.GREET
+    OUT 0000 [0001]
+    OUT 0000 [0000]
+    HLT 0000 0000
+
+    '''
+    '''
+    sample 4: 
+    DATA.SECTION
+    GLOB a +0010
+    ENTR b +0000
+    CODE.SECTION
+    IN b 0000
+    CALL GREET b
+    HLT 0000 0000 
+    FUNC.PRODUCT
+    MULT a b
+    MOVAC [0002] 0000
+    GIVE [0002]
+    HLT 0000 0000
+    '''
     with open('../milestone3/lex_output/literal_table.json') as f:
         literal_table = json.load(f)
 
