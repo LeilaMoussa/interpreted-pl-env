@@ -69,11 +69,12 @@ CALL GREET b
 HLT 0000 0000
 FUNC.PRODUCT
 MULT a b
-MOVS 0000 0000  // new instruction to move from AC to top of stack
+PUSH 0000 0000  // new instruction to move from AC to top of stack
 // (making the return value available)
 // i.e. push onto the stack the contents of the AC
 GIVE 0000 0000 // give terminates the program
 // and the caller can have access to the top of the stack if the result is used
+// with a POP instruction
 HLT 0000 0000
 '''
 
@@ -97,7 +98,8 @@ def create_dec(dec: list, scope: str):
             if val < 0: sign = '-'
         else:
             val = f'[{literal_table[val]}]'
-    data_section.append(f'{scope} {name} {sign}{val}')
+    val = str(val)
+    data_section.append(f'{scope} {name} {sign}{val.rjust(4, "0")}')
 
 def create_call(call: list):
     global code_section
@@ -109,8 +111,8 @@ def create_call(call: list):
             # not an empty list
             [_type, val] = arg
             if _type == 'literal':
-                address = literal_table[val]
-                code_section.append(f'OUT 0000 [{address}]')
+                address = str(literal_table[val])
+                code_section.append(f'OUT 0000 [{address.rjust(4, "0")}]')
             else:
                 code_section.append(f'OUT 0000 {val}')
     elif name == 'read':
@@ -137,23 +139,15 @@ def create_function_def(func: list):
 
 def create_assign(assign: list):
     [lhs, rhs] = assign
-    # lhs: always an userdefined id  ==> MOV/MOVAC statement
-    # rhs: add/sub/mult/div, literal, userdefined, OR funcall
-    # MOV <dest> <source>
-    # dest: address of lhs --> symbol table
-    # source: literal value or address
-    # since all literals in the HLPL are in the literal table,
-    # just use an address
-
     '''
-    examples (assume address of b is 1234)
-    // NOTE: brackets
-    b := 1. ==> MOV 1234 +0001 OR MOV 1234 [0001]  // assuming 1 is in address 0001
+    possible cases
+    b := 1. ==> MOV b +0001 OR MOV b [0001]  // assuming 1 is in address 0001
     // preference: literal option
-    b := 'leila'.  ==> MOV 1234 [0010]  // address only
-    b := +(this, that).  ==> ADD this that; MOVAC 1234 0000   // same for all other arithmetic
-    b := a. ===> assuming a is in address 2222, MOV 1234 2222
-    
+    b := 'leila'.  ==> MOV b [0010]  // address only
+    b := +(this, that).  ==> ADD this that; MOVAC b 0000   // same for all other arithmetic
+    b := a. ===> MOV b a
+    b := () => somefunc. ====> CALL somefunc 0000; POP 0000 0000; MOVAC b 0000
+    // POP: from stack to AC
     '''
 
 def traverse(ast: list):
