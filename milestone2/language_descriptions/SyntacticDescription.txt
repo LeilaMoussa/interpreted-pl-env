@@ -51,14 +51,3 @@
 <reservedWord> → IN_KW | OUT_KW
 
 <numericLiteral> → NUM_LIT
-
--------------------------------------- Rules we don't need anymore ----------------------------
-<comment> → CMNT
-
-<char> → every keyboard character 
-
-<commentChar> → every keyboard character
-
-<digit> → ‘0’| ‘1’ | ‘2’| ’3’ | ’4’ | ‘5’ | ‘6’ | ‘7’ | ‘8’ | ‘9’
-
-<alpha> → all alphabets

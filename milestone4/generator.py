@@ -50,7 +50,7 @@ MULT a b
 MOVAC [0002] 0000
 GIVE [0002]        // using memory cells like this goes against use of a stack
 // where the return value is implictly pushed by the callee & popped the caller
-// i'll make changes aspa and let you know!
+// i'll make changes asap and let you know!
 HLT 0000 0000
 
 ALT 4.hlpl WITH STACK CONCEPT:
@@ -63,16 +63,17 @@ CALL GREET b
 // using b is not just a matter of accessing a memory cell
 // because b is not global
 // so here, CALL needs to push the VALUE of b onto the stack (forgetting about its address)
-// and when the name b is encountered in the function definition
+// and when the name b is encountered in the function
 // the value is not retrieved from memory, but from the top of the stack!
-// if you have an opinion please share :)
+// weak points: make it clear that something is a parameter to stop the function from looking in global (?)
 HLT 0000 0000
 FUNC.PRODUCT
 MULT a b
 MOVS 0000 0000  // new instruction to move from AC to top of stack
+// (making the return value available)
 // i.e. push onto the stack the contents of the AC
 GIVE 0000 0000 // give terminates the program
-// and the callee can have access to the top of the stack if the result is used
+// and the caller can have access to the top of the stack if the result is used
 HLT 0000 0000
 '''
 
@@ -85,13 +86,18 @@ def create_dec(dec: list, scope: str):
     global data_section
 
     val = 0
+    sign = '+'
     if len(dec) == 2:
         [_, name] = dec
     elif len(dec) == 3:
         [_, name, val] = dec
     if type(val) == list:
         val = val[1]
-    data_section.append(f'{scope} {name} {val}')
+        if type(val) == int:
+            if val < 0: sign = '-'
+        else:
+            val = f'[{literal_table[val]}]'
+    data_section.append(f'{scope} {name} {sign}{val}')
 
 def create_call(call: list):
     global code_section
@@ -127,10 +133,28 @@ def create_function_def(func: list):
     [name, args, return_type, body] = func
     function_section.append(f'FUNC.{name}')
     [traverse(elt) for elt in body]
-    # handle return
+    function_section.append('GIVE 0000 0000')
 
-def create_assign():
-    pass
+def create_assign(assign: list):
+    [lhs, rhs] = assign
+    # lhs: always an userdefined id  ==> MOV/MOVAC statement
+    # rhs: add/sub/mult/div, literal, userdefined, OR funcall
+    # MOV <dest> <source>
+    # dest: address of lhs --> symbol table
+    # source: literal value or address
+    # since all literals in the HLPL are in the literal table,
+    # just use an address
+
+    '''
+    examples (assume address of b is 1234)
+    // NOTE: brackets
+    b := 1. ==> MOV 1234 +0001 OR MOV 1234 [0001]  // assuming 1 is in address 0001
+    // preference: literal option
+    b := 'leila'.  ==> MOV 1234 [0010]  // address only
+    b := +(this, that).  ==> ADD this that; MOVAC 1234 0000   // same for all other arithmetic
+    b := a. ===> assuming a is in address 2222, MOV 1234 2222
+    
+    '''
 
 def traverse(ast: list):
     global scope
@@ -150,7 +174,8 @@ def traverse(ast: list):
     elif root == 'funcall':
         create_call(ast[1])
     elif root == 'assign':
-        create_assign()
+        # ['assign', [lhs, rhs]]
+        create_assign(ast[1])
     elif root == 'give':
         pass
     elif root == 'add':
@@ -174,17 +199,20 @@ def traverse(ast: list):
     return asm
 
 def main(filepath: str, default: bool, from_parser, from_analyzer, from_generator):
-    global literal_table
+    global literal_table, symbol_table
 
     ast = analyze(filepath, default, from_parser, from_analyzer, from_generator)
     print('ast given to generator:', ast)
 
     with open('../milestone3/lex_output/literal_table.json') as f:
         literal_table = json.load(f)
+    with open('../milestone3/lex_output/symbol_table.json') as f:
+        symbol_table = json.load(f)
 
     asm = traverse(ast)
     print('----ASSEMBLY----')
     print(asm)
+    # write to .asbl file
 
 if __name__ == '__main__':
     default = False

@@ -94,7 +94,10 @@ def get_ast(cst) -> list:
         current_scope = 3  # really change the scope?
         root.append('func')
         func_stuff = [get_ast(cst.name)]
-        [func_stuff.append(get_ast(param)) for param in cst.args]
+        if len(cst.args) == 0:
+            func_stuff.append([])
+        else:
+            [func_stuff.append(get_ast(param)) for param in cst.args]
         if not cst.return_type:
             func_stuff.append(None)
         else:
