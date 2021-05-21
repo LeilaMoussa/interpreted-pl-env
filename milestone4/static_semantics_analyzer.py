@@ -110,7 +110,7 @@ def get_ast(cst) -> list:
         print('unhandled type for the moment:', _type)
     return root
     
-def main(filepath: str, default: bool, from_parser, from_analyzer):
+def main(filepath: str, default: bool, from_parser, from_analyzer, from_generator=False):
     global symbol_table
 
     cst = get_cst(filepath, default, from_parser, from_analyzer)
@@ -121,7 +121,11 @@ def main(filepath: str, default: bool, from_parser, from_analyzer):
         print('Parse tree ready:')
         cst.display()
         ast = get_ast(cst)
-        print(ast)
+        if from_generator:
+            return ast
+        else:
+            print('-------AST------')
+            print(ast)
     else:
         print("Error parsing the program -> parse tree couldn't be built.")
 

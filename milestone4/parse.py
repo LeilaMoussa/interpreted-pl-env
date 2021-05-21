@@ -25,7 +25,7 @@ def get_next_token():
         if VERBOSE: print("Current token:", token)
         return token
     except:
-        print('exhausted')
+        print('Exhausted token stream.')
         return None
 
 #function for program nonterminal 
