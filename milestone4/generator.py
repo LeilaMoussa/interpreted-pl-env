@@ -78,6 +78,9 @@ def traverse(ast: list):
     asm += '\nINPUT.SECTION\n'
     return asm
 
+def main():
+    pass
+
 if __name__ == '__main__':
     global literal_table
 
