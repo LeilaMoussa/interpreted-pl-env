@@ -2,6 +2,8 @@ import json, sys
 from static_semantics_analyzer import main as analyze
 
 '''
+NOTE: INPUT.SECTION header will be added regardless of whether input data exists
+
 1.hlpl: 
 DATA.SECTION
 GLOB a +0002
@@ -87,6 +89,8 @@ def create_dec(dec: list, scope: str):
         [_, name] = dec
     elif len(dec) == 3:
         [_, name, val] = dec
+    if type(val) == list:
+        val = val[1]
     data_section.append(f'{scope} {name} {val}')
 
 def create_call(call: list):
@@ -100,7 +104,7 @@ def create_call(call: list):
             [_type, val] = arg
             if _type == 'literal':
                 address = literal_table[val]
-                code_section.append(f'OUT 0000 {address}')
+                code_section.append(f'OUT 0000 [{address}]')
             else:
                 code_section.append(f'OUT 0000 {val}')
     elif name == 'read':
