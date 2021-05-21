@@ -108,7 +108,9 @@ if __name__ == '__main__':
     '''
     3.hlpl: 
     DATA.SECTION
-    GLOB init [0000]
+    GLOB init [0000]  // 'L' address
+    // we didn't really have to rename initial to init
+    // because len(initial) <= 9
     CODE.SECTION
     CALL GREET 0000
     HLT 0000 0000 
@@ -129,7 +131,9 @@ if __name__ == '__main__':
     FUNC.PRODUCT
     MULT a b
     MOVAC [0002] 0000
-    GIVE [0002]
+    GIVE [0002]        // using memory cells like this goes against use of a stack
+    // where the return value is implictly pushed by the callee & popped the caller
+    // i'll make changes aspa and let you know!
     HLT 0000 0000
     '''
     with open('../milestone3/lex_output/literal_table.json') as f:
