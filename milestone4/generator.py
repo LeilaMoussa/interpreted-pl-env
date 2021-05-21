@@ -120,20 +120,42 @@ if __name__ == '__main__':
     HLT 0000 0000
     '''
     '''
-    4.hlpl: 
+    4.hlpl: (SEE COMMENTS!)
     DATA.SECTION
     GLOB a +0010
     ENTR b +0000
     CODE.SECTION
     IN b 0000
     CALL GREET b
-    HLT 0000 0000 
+    HLT 0000 0000
     FUNC.PRODUCT
     MULT a b
     MOVAC [0002] 0000
     GIVE [0002]        // using memory cells like this goes against use of a stack
     // where the return value is implictly pushed by the callee & popped the caller
     // i'll make changes aspa and let you know!
+    HLT 0000 0000
+
+    ALT 4.hlpl WITH STACK CONCEPT:
+    DATA.SECTION
+    GLOB a +0010
+    ENTR b +0000
+    CODE.SECTION
+    IN b 0000
+    CALL GREET b
+    // using b is not just a matter of accessing a memory cell
+    // because b is not global
+    // so here, CALL needs to push the VALUE of b onto the stack (forgetting about its address)
+    // and when the name b is encountered in the function definition
+    // the value is not retrieved from memory, but from the top of the stack!
+    // if you have an opinion please share :)
+    HLT 0000 0000
+    FUNC.PRODUCT
+    MULT a b
+    MOVS 0000 0000  // new instruction to move from AC to top of stack
+    // i.e. push onto the stack the contents of the AC
+    GIVE 0000 0000 // give terminates the program
+    // and the callee can have access to the top of the stack if the result is used
     HLT 0000 0000
     '''
     with open('../milestone3/lex_output/literal_table.json') as f:
