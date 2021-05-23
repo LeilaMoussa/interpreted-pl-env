@@ -151,16 +151,81 @@ def create_assign(assign: list):
     // POP: from stack to AC
     '''
     if type(rhs) == list:
+        root = rhs[0]
         # literal like ['literal', 2], operation like ['add', [a, b]], or funcall like ['funcall', ['write', a]]
         # traverse(rhs) and append corresponding code to the appropriate section: entry_code_section OR func_section
         # but to complete the corresponding code line, we need to remember b
         # => either have a global variable called assignee for assignment statements in progress
         # OR pass and return stuff across functions
+        if root == 'literal':
+            literal = rhs[1]
+            if type(literal) == int:
+                sign = '-' if literal < 0 else '+'
+                line = f'MOV {lhs} {sign}{literal}'  # padding
+            else:
+                line = f'MOV {lhs} [{literal_table[literal]}]'  # padding
+        else:
+            traverse(rhs)
+            # wtf
+            if root == 'funcall':
+                pop = 'POP 0000 0000'
+                if scope == 'ENTR': entry_code_section.append(pop)
+                elif scope == 'FUNC': function_code_section.append(pop)
+            movac = f'MOVAC {lhs} 0000'
+            if scope == 'ENTR': entry_code_section.append(movac)
+            elif scope == 'FUNC': function_code_section.append(movac)
+    else:
+        # rhs is udi
+        line = f'MOV {lhs} {rhs}'
+    if scope == 'ENTR': entry_code_section.append(line)
+    elif scope == 'FUNC': function_code_section.append(line)
+
+def create_arithmetic(op: int, operands: list):
+    [opd1, opd2] = operands
+    line = ''
+    if op == 1: line += 'ADD '
+    elif op == 2: line += 'SUB '
+    elif op == 3: line += 'MULT '
+    elif op == 4: line += 'DIV '
+    # operands can be any pair of num literals, identifiers, arithmetic operations, or function calls
+    # literals and identifiers are no problem, but the others require some care
+    # examples (i'm using hlpl examples, but same structure as ast):
+    # +(1, 2) ==> ADD +0001 +0002
+    # +(a, b) ==> ADD a b
+    # +(a, 1) ==> ADD a +0001
+
+    # +(a, +(b, c)) ==> ADD b c; MOVAC [<next available location>] 0000; ADD a [<that location>]
+
+    # +(a, () => somefunc) ==> CALL somefunc 0000; POP 0000 0000; MOVAC [<some address>] 0000; ADD a [<that address>]
+
+    # +((b) => somefunc, -(a, -1)) ==>
+    #   CALL somefunc b; POP 0000 0000; MOVAC [<x>] 0000; SUB a -0001; MOVAC [<y>] 0000; ADD [x] [y]
+
+    # i'll implement these last 2 cases later
+    if type(opd1) == list and type(opd2) == list:
+        # it could be both of them or just one of them!
+        # there will be traversing, but the tricky part here is that we're building an unfinished line
         pass
     else:
-        line = f'MOV {lhs} {rhs}'
-        if scope == 'ENTR': entry_code_section.append(line)
-        elif scope == 'FUNC': function_code_section.append(line)
+        # ids
+        line += f'{opd1} {opd2}'
+    if scope == 'ENTR': entry_code_section.append(line)
+    elif scope == 'FUNC': function_code_section.append(line)
+
+def create_return(give: list):
+    # give can be a userdefined id, an operation, a literal, or a function call
+    # the way we defined PUSH, the VALUE of the returnedExpression needs to be in the AC
+    # easy for number values, but what about string/char literals?
+    # we'd have to use an address
+    # but how can we differentiate between
+    # give a.  ==> ???? PUSH 0000 0000; HLT 0000 0000
+    # give 1.  ==> ADD +0001 0000; PUSH 0000 0000; HLT 0000 0000 (add to put it on the AC)
+    # give +(a, b) ==> ADD a b; PUSH 0000 0000; HLT...
+    # give "yes". ==> ????
+
+    # ...
+    function_code_section.append('PUSH 0000 0000')
+    function_code_section.append('HLT 0000 0000')
 
 def traverse(ast: list):
     global scope
@@ -183,21 +248,22 @@ def traverse(ast: list):
         # ['assign', [lhs, rhs]]
         create_assign(ast[1])
     elif root == 'give':
-        pass
+        # when a function finishes, it pushes whatever is after 'give'
+        # and halts
+        create_return(ast[1])
     elif root == 'add':
-        pass
+        create_arithmetic(1, ast[1])
     elif root == 'sub':
-        pass
+        create_arithmetic(2, ast[1])
     elif root == 'mult':
-        pass
+        create_arithmetic(3, ast[1])
     elif root == 'div':
-        pass
-    # maybe a couple of other language elements....
+        create_arithmetic(4, ast[1])
 
     asm = ''
     for line in data_section:
         asm += line+'\n'
-    for line in entry_entry_code_section:
+    for line in entry_code_section:
         asm += line+'\n'
     asm += 'HLT 0000 0000\n'
     ##

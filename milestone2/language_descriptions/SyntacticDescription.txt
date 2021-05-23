@@ -20,7 +20,7 @@
 
 <statement> → (<assignment> | <return> | <selection> | <loop> | <comment> | <functionCall>) ENDSTAT  // we don't use comment anymore
 
-<assignment> → <userDefinedIdentifier> ASGN (<expression> | <operation> | <functionCall>)
+<assignment> → <userDefinedIdentifier> ASGN (<expression> | <operation> | <functionCall>)  // expression can be operation!!
 
 <return> → RETURN_KW <returnedExpression> ENDSTAT
 
