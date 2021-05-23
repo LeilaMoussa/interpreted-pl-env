@@ -102,8 +102,10 @@ def get_ast(cst) -> list:
             func_stuff.append(None)
         else:
             func_stuff.append(get_ast(cst.return_type))
-        [func_stuff.append(get_ast(dec)) for dec in cst.declarations]
-        [func_stuff.append(get_ast(stat)) for stat in cst.statements]
+        body = []
+        [body.append(get_ast(dec)) for dec in cst.declarations]
+        [body.append(get_ast(stat)) for stat in cst.statements]
+        func_stuff.append(body)
         root.append(func_stuff)
     elif _type == ParamNode:
         ## params from function definition, defined with typespec and udi

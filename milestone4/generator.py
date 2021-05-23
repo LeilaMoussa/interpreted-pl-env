@@ -3,6 +3,7 @@ from static_semantics_analyzer import main as analyze
 
 '''
 NOTE: INPUT.SECTION header will be added regardless of whether input data exists
+important NOTE: make sure the identifiers are 9 characters or less, otherwise truncate
 
 1.hlpl: 
 DATA.SECTION
@@ -25,9 +26,7 @@ HLT 0000 0000
 '''
 3.hlpl: 
 DATA.SECTION
-GLOB init [0000]  // 'L' address
-// we didn't really have to rename initial to init
-// because len(initial) <= 9
+GLOB init [0001]  // 'L' address
 CODE.SECTION
 CALL GREET 0000
 HLT 0000 0000 
@@ -71,7 +70,7 @@ def create_dec(dec: list, scope: str):
     global data_section
 
     val = 0
-    sign = '+'
+    sign = ''
     if len(dec) == 2:
         [_, name] = dec
     elif len(dec) == 3:
@@ -79,26 +78,28 @@ def create_dec(dec: list, scope: str):
     if type(val) == list:
         val = val[1]
         if type(val) == int:
-            if val < 0: sign = '-'
+            sign = '+' if val >= 0 else '-'
+            val = str(val).rjust(4, "0")
         else:
-            val = f'[{literal_table[val]}]'
-    val = str(val)
-    data_section.append(f'{scope} {name} {sign}{val.rjust(4, "0")}')
+            val = f'[{str(literal_table[val]).rjust(4, "0")}]'
+    data_section.append(f'{scope} {name} {sign}{val}')
 
 def create_call(call: list):
     global entry_code_section
 
     # function call: name, args (None or a single value)
+    print('in call', call)
     [name, arg] = call
     if name == 'write':
         print('in write with scope', scope)
-        if len(arg) > 0:
-            [_type, val] = arg
-            if _type == 'literal':
+        if arg:
+            if type(arg) == list and len(arg) > 1:  # it should always be a list though, soo
+                [_, val] = arg
                 address = str(literal_table[val])
                 line = f'OUT 0000 [{address.rjust(4, "0")}]'
             else:
-                line = f'OUT 0000 {val}'
+                # extremely ugly code here
+                line = f'OUT 0000 {arg[0]}'
     elif name == 'read':
         # () => read.       ========>  IN <????> 0000
         # or
@@ -120,8 +121,7 @@ def create_function_def(func: list):
     [name, args, _, body] = func
     # do we use args?
     function_code_section.append(f'FUNC.{name}')
-    # [traverse(elt) for elt in body]
-    traverse(body)  # i need to put body in a list!
+    [traverse(elt) for elt in body]
     # PUSH & HLT are handled in 'give'
 
 def create_assign(assign: list):
