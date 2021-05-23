@@ -19,7 +19,7 @@ CODE.SECTION
 CALL GREET 0000
 HLT 0000 0000
 FUNC.GREET
-OUT 0000 [0000]
+OUT 0000 [0001]
 HLT 0000 0000
 '''
 '''
@@ -37,22 +37,6 @@ OUT 0000 [0000]
 HLT 0000 0000
 '''
 '''
-4.hlpl: (SEE COMMENTS!)
-DATA.SECTION
-GLOB a +0010
-ENTR b +0000
-CODE.SECTION
-IN b 0000
-CALL GREET b
-HLT 0000 0000
-FUNC.PRODUCT
-MULT a b
-MOVAC [0002] 0000
-GIVE [0002]        // using memory cells like this goes against use of a stack
-// where the return value is implictly pushed by the callee & popped the caller
-// i'll make changes asap and let you know!
-HLT 0000 0000
-
 ALT 4.hlpl WITH STACK CONCEPT:
 DATA.SECTION
 GLOB a +0010
@@ -104,42 +88,44 @@ def create_dec(dec: list, scope: str):
 def create_call(call: list):
     global entry_code_section
 
-    # function call: name, args (None or a single value for now)
+    # function call: name, args (None or a single value)
     [name, arg] = call
     if name == 'write':
-        if arg:
-            # not an empty list
+        print('in write with scope', scope)
+        if len(arg) > 0:
             [_type, val] = arg
             if _type == 'literal':
                 address = str(literal_table[val])
-                entry_code_section.append(f'OUT 0000 [{address.rjust(4, "0")}]')
+                line = f'OUT 0000 [{address.rjust(4, "0")}]'
             else:
-                entry_code_section.append(f'OUT 0000 {val}')
+                line = f'OUT 0000 {val}'
     elif name == 'read':
         # () => read.       ========>  IN <????> 0000
         # or
         # b := () => read.  ========>  IN <address of b> 0000
         # how to remember the assignee, if it exists, in this case:
         # i think i need to implement create_assign() first, this would definitely clarify it
-        entry_code_section.append('IN ???? 0000')
+        line = 'IN ???? 0000'
     else:
         # function with no params: CALL <name> 0000
         # one param: CALL <name> <identifier>
         # how this works on the stack under the hood is suggested up above
-        entry_code_section.append(f'CALL {name}')
+        line = f'CALL {name}'
+    if scope == 'ENTR': entry_code_section.append(line)
+    elif scope == 'FUNC': function_code_section.append(line)
 
 def create_function_def(func: list):
     global function_code_section
 
-    [name, args, return_type, body] = func
+    [name, args, _, body] = func
+    # do we use args?
     function_code_section.append(f'FUNC.{name}')
-    [traverse(elt) for elt in body]
-    ## append push if necessary
-    function_code_section.append('HLT 0000 0000')   # but we're handling 'give' in traverse(), so?
+    # [traverse(elt) for elt in body]
+    traverse(body)  # i need to put body in a list!
+    # PUSH & HLT are handled in 'give'
 
 def create_assign(assign: list):
     [lhs, rhs] = assign
-    op = ''
     '''
     possible cases
     b := 1. ==> MOV b +0001 OR MOV b [0001]  // assuming 1 is in address 0001
@@ -205,7 +191,8 @@ def create_arithmetic(op: int, operands: list):
     if type(opd1) == list and type(opd2) == list:
         # it could be both of them or just one of them!
         # there will be traversing, but the tricky part here is that we're building an unfinished line
-        pass
+        if scope == 'ENTR': entry_code_section.append('stuff')
+        elif scope == 'FUNC': function_code_section.append('stuff')
     else:
         # ids
         line += f'{opd1} {opd2}'
@@ -224,6 +211,7 @@ def create_return(give: list):
     # give "yes". ==> ????
 
     # ...
+    function_code_section.append('return stuff')
     function_code_section.append('PUSH 0000 0000')
     function_code_section.append('HLT 0000 0000')
 
@@ -262,11 +250,12 @@ def traverse(ast: list):
 
     asm = ''
     for line in data_section:
-        asm += line+'\n'
+        asm += line + '\n'
     for line in entry_code_section:
-        asm += line+'\n'
+        asm += line + '\n'
     asm += 'HLT 0000 0000\n'
-    ##
+    for line in function_code_section:
+        asm += line + '\n'
     asm += 'INPUT.SECTION\n'
     return asm
 
