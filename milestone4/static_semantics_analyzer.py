@@ -55,10 +55,12 @@ def get_ast(cst) -> list:
         # literal, udi, or op
         if cst.type == 'userdefined':
             return get_ast(cst.value)
+        elif cst.type == 'op':
+            return get_ast(cst.value)
         root.append('literal')
         root.append(get_ast(cst.value))
     elif _type == OperationNode:
-        root.append(get_ast(cst.value))
+        return get_ast(cst.value)
     # again, ugly repetitive code, sorry
     elif _type == AddNode:
         root.append('add')
@@ -85,8 +87,7 @@ def get_ast(cst) -> list:
     elif _type == NumLiteralNode or _type == StringLiteralNode or _type == CharLiteralNode:
         return cst.value ## we'll see
     elif _type == ReturnNode:
-        root.append('give')
-        root.append(get_ast(cst.value))  # call or exp
+        return get_ast(cst.value)  # call or exp
     elif _type == FunctionNode:
         # function definition
         current_scope = 3  # really change the scope?

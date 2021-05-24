@@ -12,5 +12,3 @@ func (num b) => product => () [
 	b := () => read.
 	(b) => product.
 ]
-
- 

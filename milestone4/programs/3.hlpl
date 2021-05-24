@@ -11,5 +11,3 @@ func () => greet => () [
 () => entry => () [
 	() => greet.
 ]
-
-

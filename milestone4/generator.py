@@ -2,8 +2,8 @@ import json, sys
 from static_semantics_analyzer import main as analyze
 
 '''
-NOTE: INPUT.SECTION header will be added regardless of whether input data exists
-important NOTE: make sure the identifiers are 9 characters or less, otherwise truncate
+NOTE: make sure the identifiers are 9 characters or less, otherwise truncate
+SPICY ADDITION: capitalize identifiers + if we have time, beautify assembly with space padding
 
 1.hlpl: 
 DATA.SECTION
@@ -12,8 +12,8 @@ GLOB b +0000
 CODE.SECTION
 OUT 0000 [0002] // this is lit hello's address, from literal table
 HLT 0000 0000
-'''
-'''
+INPUT.SECTION
+-----------------------------------
 2.hlpl: 
 DATA.SECTION
 CODE.SECTION
@@ -22,8 +22,8 @@ HLT 0000 0000
 FUNC.GREET
 OUT 0000 [0001]
 HLT 0000 0000
-'''
-'''
+INPUT.SECTION
+-------------------------
 3.hlpl: 
 DATA.SECTION
 GLOB init [0001]
@@ -34,31 +34,32 @@ FUNC.GREET
 OUT 0000 [0002]
 OUT 0000 initial
 HLT 0000 0000
-'''
-'''
-ALT 4.hlpl WITH STACK CONCEPT:
+INPUT.SECTION
+-----------------------------------------
+4.hlpl:
 DATA.SECTION
 GLOB a +0010
 ENTR b +0000
 CODE.SECTION
 IN b 0000
-CALL GREET b
+CALL product b
+HLT 0000 0000
+FUNC.PRODUCT
+MULT a b
+PUSH 0000 0000
+HLT 0000 0000
 // using b is not just a matter of accessing a memory cell
 // because b is not global
 // so here, CALL needs to push the VALUE of b onto the stack (forgetting about its address)
 // and when the name b is encountered in the function
 // the value is not retrieved from memory, but from the top of the stack!
 // weak points: make it clear that something is a parameter to stop the function from looking in global (?)
-HLT 0000 0000
-FUNC.PRODUCT
-MULT a b
-PUSH 0000 0000  // new instruction to move from AC to top of stack
+// new instruction to move from AC to top of stack
 // (making the return value available)
 // i.e. push onto the stack the contents of the AC
-GIVE 0000 0000 // give terminates the program
+// give terminates the program
 // and the caller can have access to the top of the stack if the result is used
 // with a POP instruction
-HLT 0000 0000
 '''
 
 data_section = ['DATA.SECTION', ]
@@ -110,7 +111,18 @@ def create_call(call: list):
         # function with no params: CALL <name> 0000
         # one param: CALL <name> <identifier>
         # how this works on the stack under the hood is suggested up above
-        line = f'CALL {name} 0000'
+        line = f'CALL {name} '
+        if len(args) == 0:
+            line += '0000'
+        else:
+            # arguments are expressions
+            arg = args[0]
+            if type(arg) == list:
+                # literal or operation
+                pass
+            else:
+                # udi
+                line += arg  # identifier name
     if scope == 'ENTR': entry_code_section.append(line)
     elif scope == 'FUNC': function_code_section.append(line)
 

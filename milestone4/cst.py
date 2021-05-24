@@ -278,8 +278,8 @@ class FunctionNode:
 
 class AssignmentNode:
     def __init__(self, identifier: UserDefinedNode, exp: ExpressionNode, \
-        op: OperationNode, call: CallNode):
-        print('init assign')
+          op: OperationNode, call: CallNode):
+        print('******************************init assign')
         self.identifier = identifier
         if exp:
             self.type = 'expression'
@@ -342,7 +342,7 @@ class StatementNode:
             self.type = 'assign'
             self.value = a_node
         elif r_node:
-            self.type = 'return'
+            self.type = 'give'
             self.value = r_node
         elif s_node:
             self.type = 'selection'

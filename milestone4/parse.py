@@ -326,9 +326,11 @@ def assignment():
             call_node = functionCall()
             if not call_node:
                 return False
+            print('FUNCTION CALL IS GOOD!!!!!!!!!', current_token)
     if current_token != 'ENDSTAT':
         return False
     current_token = get_next_token()
+    print('ABOUT TO CALL ASSIGNMENTNODE!!!!')
     #if we're here, we can construct a node of the cst
     return AssignmentNode(udi_node, exp_node, op_node, call_node)
 
@@ -500,8 +502,6 @@ def functionCall():
     if not current_token: return False
     name = identifier()
     if not name:
-        return False
-    if current_token != 'ENDSTAT':
         return False
     current_token = get_next_token()
     #if we're here, we can construct a node of the cst
