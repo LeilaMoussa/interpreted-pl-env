@@ -53,8 +53,9 @@ def get_ast(cst) -> list:
         root.append(cst.value)
     elif _type == ExpressionNode:
         # literal, udi, or op
-        if cst.type != 'userdefined':
-              root.append('literal')
+        if cst.type == 'userdefined':
+            return get_ast(cst.value)
+        root.append('literal')
         root.append(get_ast(cst.value))
     elif _type == OperationNode:
         root.append(get_ast(cst.value))
@@ -76,28 +77,25 @@ def get_ast(cst) -> list:
     elif _type == CallNode:
         current_scope = 3  # !!
         root.append(get_ast(cst.name))
-        args = cst.args
-        if len(args) == 0:
-            root.append(None)
-        else:
-            # we'll see about this representation of parameters
-            [root.append(get_ast(arg)) for arg in args]  # arg is ExpressionNode, i.e. literal or udi
-            ## type checking needs to be done here => need to look at symbol table for function called cst.name
-            ## if the definition is not there, raise an exception
+        arg_stuff = []
+        [arg_stuff.append(get_ast(arg)) for arg in cst.args]
+        root.append(arg_stuff)
+        ## type checking needs to be done here => need to look at symbol table for function called cst.name
+        ## if the definition is not there, raise an exception
     elif _type == NumLiteralNode or _type == StringLiteralNode or _type == CharLiteralNode:
         return cst.value ## we'll see
     elif _type == ReturnNode:
         root.append('give')
         root.append(get_ast(cst.value))  # call or exp
     elif _type == FunctionNode:
-        # function defincition
+        # function definition
         current_scope = 3  # really change the scope?
         root.append('func')
         func_stuff = [get_ast(cst.name)]
         if len(cst.args) == 0:
             func_stuff.append([])
         else:
-            [func_stuff.append(get_ast(param)) for param in cst.args]
+            [func_stuff.append(get_ast(param)) for param in cst.args]  # generalized for many args
         if not cst.return_type:
             func_stuff.append(None)
         else:

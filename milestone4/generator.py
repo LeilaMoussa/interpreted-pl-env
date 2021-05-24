@@ -26,13 +26,13 @@ HLT 0000 0000
 '''
 3.hlpl: 
 DATA.SECTION
-GLOB init [0001]  // 'L' address
+GLOB init [0001]
 CODE.SECTION
 CALL GREET 0000
 HLT 0000 0000 
 FUNC.GREET
-OUT 0000 [0001]
-OUT 0000 [0000]
+OUT 0000 [0002]
+OUT 0000 initial
 HLT 0000 0000
 '''
 '''
@@ -69,37 +69,36 @@ scope = None
 def create_dec(dec: list, scope: str):
     global data_section
 
-    val = 0
+    val = '+0000'
     sign = ''
-    if len(dec) == 2:
+    if len(dec) == 2:  # var
         [_, name] = dec
-    elif len(dec) == 3:
+    elif len(dec) == 3:  # fix
         [_, name, val] = dec
-    if type(val) == list:
+    if type(val) == list:  # literal
         val = val[1]
-        if type(val) == int:
+        if type(val) == int:  # numlit
             sign = '+' if val >= 0 else '-'
             val = str(val).rjust(4, "0")
-        else:
+        else:  # str/charlit
             val = f'[{str(literal_table[val]).rjust(4, "0")}]'
     data_section.append(f'{scope} {name} {sign}{val}')
 
 def create_call(call: list):
     global entry_code_section
 
-    # function call: name, args (None or a single value)
-    print('in call', call)
-    [name, arg] = call
+    [name, args] = call
+    # args is a list, can be empty, or have one element only (that's all we want to handle, though theoretically
+    # we could do any number)
     if name == 'write':
-        print('in write with scope', scope)
-        if arg:
-            if type(arg) == list and len(arg) > 1:  # it should always be a list though, soo
-                [_, val] = arg
-                address = str(literal_table[val])
-                line = f'OUT 0000 [{address.rjust(4, "0")}]'
-            else:
-                # extremely ugly code here
-                line = f'OUT 0000 {arg[0]}'
+        if len(args) > 0:
+            arg = args[0]
+            if type(arg) == list:  # literal
+                print('ARG IS', arg)
+                val = arg[1]
+                line = f'OUT 0000 [{str(literal_table[val]).rjust(4, "0")}]'
+            else:  # udi
+                line = f'OUT 0000 {arg}'
     elif name == 'read':
         # () => read.       ========>  IN <????> 0000
         # or
@@ -111,18 +110,18 @@ def create_call(call: list):
         # function with no params: CALL <name> 0000
         # one param: CALL <name> <identifier>
         # how this works on the stack under the hood is suggested up above
-        line = f'CALL {name}'
+        line = f'CALL {name} 0000'
     if scope == 'ENTR': entry_code_section.append(line)
     elif scope == 'FUNC': function_code_section.append(line)
 
 def create_function_def(func: list):
     global function_code_section
 
-    [name, args, _, body] = func
+    [name, _, _, body] = func  # anon: args & return_type
     # do we use args?
     function_code_section.append(f'FUNC.{name}')
     [traverse(elt) for elt in body]
-    # PUSH & HLT are handled in 'give'
+    if function_code_section[-1] != 'HLT 0000 0000': function_code_section.append('HLT 0000 0000')
 
 def create_assign(assign: list):
     [lhs, rhs] = assign
