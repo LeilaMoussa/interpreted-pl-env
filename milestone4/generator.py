@@ -68,8 +68,6 @@ function_code_section = []
 scope = None
 
 def create_dec(dec: list, scope: str):
-    global data_section
-
     val = '+0000'
     sign = ''
     if len(dec) == 2:  # var
@@ -86,8 +84,6 @@ def create_dec(dec: list, scope: str):
     data_section.append(f'{scope} {name} {sign}{val}')
 
 def create_call(call: list):
-    global entry_code_section
-
     [name, args] = call
     # args is a list, can be empty, or have one element only (that's all we want to handle, though theoretically
     # we could do any number)
@@ -95,17 +91,17 @@ def create_call(call: list):
         if len(args) > 0:
             arg = args[0]
             if type(arg) == list:  # literal
-                print('ARG IS', arg)
                 val = arg[1]
                 line = f'OUT 0000 [{str(literal_table[val]).rjust(4, "0")}]'
             else:  # udi
                 line = f'OUT 0000 {arg}'
     elif name == 'read':
-        # () => read.       ========>  IN <????> 0000
-        # or
-        # b := () => read.  ========>  IN <address of b> 0000
-        # how to remember the assignee, if it exists, in this case:
-        # i think i need to implement create_assign() first, this would definitely clarify it
+        # read is usually used as the RHS of an assignment
+        # in which case, create_assign() would take care of that
+        # so this code is very unlikely to execute
+        # because it corresponds to the standalone statement () => read.
+        # if it's not explicitly assigned anywhere, it should be disposed of simply
+        # but the question is where it should be put?
         line = 'IN ???? 0000'
     else:
         # function with no params: CALL <name> 0000
@@ -117,26 +113,28 @@ def create_call(call: list):
         else:
             # arguments are expressions
             arg = args[0]
+            # again, we're only implementing one argument on purpose, 
+            # though theoretically it would be pretty easy to accommodate any number
             if type(arg) == list:
                 # literal or operation
+                # requires preceding assembly instructions and saving in memory (or stack right away, idk)
                 pass
             else:
                 # udi
+                # pickle: PUSHING HERE? DOABLE? REASONABLE? CONSISENT?
                 line += arg  # identifier name
     if scope == 'ENTR': entry_code_section.append(line)
     elif scope == 'FUNC': function_code_section.append(line)
 
 def create_function_def(func: list):
-    global function_code_section
-
     [name, _, _, body] = func  # anon: args & return_type
-    # do we use args?
     function_code_section.append(f'FUNC.{name}')
     [traverse(elt) for elt in body]
     if function_code_section[-1] != 'HLT 0000 0000': function_code_section.append('HLT 0000 0000')
 
 def create_assign(assign: list):
     [lhs, rhs] = assign
+    line = ''  # just a hack, looks bad
     '''
     possible cases
     b := 1. ==> MOV b +0001 OR MOV b [0001]  // assuming 1 is in address 0001
@@ -145,15 +143,11 @@ def create_assign(assign: list):
     b := +(this, that).  ==> ADD this that; MOVAC b 0000   // same for all other arithmetic
     b := a. ===> MOV b a
     b := () => somefunc. ====> CALL somefunc 0000; POP 0000 0000; MOVAC b 0000
+    b := () => read. ====> IN b 0000  // this is the most exceptional one
     // POP: from stack to AC
     '''
     if type(rhs) == list:
-        root = rhs[0]
-        # literal like ['literal', 2], operation like ['add', [a, b]], or funcall like ['funcall', ['write', a]]
-        # traverse(rhs) and append corresponding code to the appropriate section: entry_code_section OR func_section
-        # but to complete the corresponding code line, we need to remember b
-        # => either have a global variable called assignee for assignment statements in progress
-        # OR pass and return stuff across functions
+        [root, body] = rhs
         if root == 'literal':
             literal = rhs[1]
             if type(literal) == int:
@@ -161,16 +155,28 @@ def create_assign(assign: list):
                 line = f'MOV {lhs} {sign}{literal}'  # padding
             else:
                 line = f'MOV {lhs} [{literal_table[literal]}]'  # padding
+        elif root == 'funcall':
+            # read, write, or userdefined function
+            # 1. read:  IN <lhs> 0000
+            # 2. write: shouldn't happen because it makes no sense, so won't bother writing the expected result
+            # 3. userdefined: CALL, POP, MOVAC (remember, MOVAC means move OUT of the AC)
+            if body[0] == 'read':
+                # why bother call traverse here if the result is so easy to get like this? => not very elegant, but i can live with that
+                line = f'IN {lhs} 0000'
+            else:  # assuming the hlpl writer isn't crazy enough to use write, though that wouldn't be an issue for code generation
+                traverse(rhs)
+                pop = 'POP 0000 0000'  # to use the return value, put in AC
+                movac = f'MOVAC {lhs} 0000'  # put return value in LHS
+                if scope == 'ENTR':
+                    entry_code_section.append(pop)
+                    entry_code_section.append(movac)
+                elif scope == 'FUNC':
+                    function_code_section.append(pop)
+                    function_code_section.append(movac)
         else:
-            traverse(rhs)
-            # wtf
-            if root == 'funcall':
-                pop = 'POP 0000 0000'
-                if scope == 'ENTR': entry_code_section.append(pop)
-                elif scope == 'FUNC': function_code_section.append(pop)
-            movac = f'MOVAC {lhs} 0000'
-            if scope == 'ENTR': entry_code_section.append(movac)
-            elif scope == 'FUNC': function_code_section.append(movac)
+            # arithmetic operation
+            # also involves MOVAC, not MOV, so the last few lines of this function are pretty dumb
+            pass
     else:
         # rhs is udi
         line = f'MOV {lhs} {rhs}'
@@ -202,16 +208,15 @@ def create_arithmetic(op: int, operands: list):
     if type(opd1) == list and type(opd2) == list:
         # it could be both of them or just one of them!
         # there will be traversing, but the tricky part here is that we're building an unfinished line
-        if scope == 'ENTR': entry_code_section.append('stuff')
-        elif scope == 'FUNC': function_code_section.append('stuff')
+        line += 'stuff'
     else:
-        # ids
+        # just userdefined ids
         line += f'{opd1} {opd2}'
     if scope == 'ENTR': entry_code_section.append(line)
     elif scope == 'FUNC': function_code_section.append(line)
 
-def create_return(give: list):
-    # give can be a userdefined id, an operation, a literal, or a function call
+def create_return(given: list):
+    # given can be a userdefined id, an operation, a literal, or a function call
     # the way we defined PUSH, the VALUE of the returnedExpression needs to be in the AC
     # easy for number values, but what about string/char literals?
     # we'd have to use an address
@@ -220,9 +225,7 @@ def create_return(give: list):
     # give 1.  ==> ADD +0001 0000; PUSH 0000 0000; HLT 0000 0000 (add to put it on the AC)
     # give +(a, b) ==> ADD a b; PUSH 0000 0000; HLT...
     # give "yes". ==> ????
-
-    # ...
-    function_code_section.append('return stuff')
+    traverse(given)
     function_code_section.append('PUSH 0000 0000')
     function_code_section.append('HLT 0000 0000')
 

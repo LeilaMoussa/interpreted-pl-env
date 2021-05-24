@@ -48,9 +48,14 @@ def get_ast(cst) -> list:
         root.append(cst.type)
         root.append(get_ast(cst.value))
     elif _type == AssignmentNode:
-        # [<identifier_name>, <rhs, which may or may not be a list>]
-        root.append(get_ast(cst.identifer))
-        root.append(cst.value)
+        root.append(get_ast(cst.identifier))
+        # this code sucks!
+        if cst.type == 'funcall':
+            assign_stuff = ['funcall']
+            assign_stuff.append(get_ast(cst.value))
+            root.append(assign_stuff)
+        else:
+            root.append(get_ast(cst.value))  # exp, op, or funcall
     elif _type == ExpressionNode:
         # literal, udi, or op
         if cst.type == 'userdefined':
