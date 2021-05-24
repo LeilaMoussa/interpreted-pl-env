@@ -279,7 +279,6 @@ class FunctionNode:
 class AssignmentNode:
     def __init__(self, identifier: UserDefinedNode, exp: ExpressionNode, \
           op: OperationNode, call: CallNode):
-        print('******************************init assign')
         self.identifier = identifier
         if exp:
             self.type = 'expression'
@@ -295,7 +294,7 @@ class AssignmentNode:
     def display(self):
         print('--assign.type--')
         print(self.type)
-        print('f--assign.{self.type}--')
+        print(f'--assign.{self.type}--')
         self.value.display()
 
 class ParamNode:
@@ -323,7 +322,7 @@ class ReturnNode:
     def display(self):
         print('--return.type--')
         print(self.type)
-        print(f'return.{self.type}--')
+        print(f'--return.{self.type}--')
         self.value.display()
 
 class SelectionNode:
@@ -358,7 +357,7 @@ class StatementNode:
     def display(self):
         print('--stat.type--')
         print(self.type)
-        print(f'--stat.{self.type}')
+        print(f'--stat.{self.type}--')
         self.value.display()            
 
 class MainNode:

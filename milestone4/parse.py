@@ -1,10 +1,10 @@
+# NOTE: selections, loops, comparisons, and structured types are not not implemented
+
 import sys
 import os
 sys.path.append(os.path.abspath('../milestone3'))
 from lex import main as generate
 from cst import *
-
-#global variables to simplify code and decrease parameters
 
 VERBOSE = True
 
@@ -15,7 +15,6 @@ line = -1
 position = -1
 
 #utility function to get the look up token from the generator object
-
 def get_next_token():
     global token_gen, line, position, lexeme
     try:
@@ -33,18 +32,21 @@ def get_next_token():
 
 def program():
     global current_token
+
     if VERBOSE: print("In program.")
     local_position = position
     dec_nodes = []
     while node := declaration():
-        local_position = position
         dec_nodes.append(node)
+        current_token = get_next_token()
+        local_position = position
     # by virtue of LL(1)
-    if position > local_position: return False  
+    if position > local_position: return False
     func_nodes = []
     while node := function():
-        local_position = position
         func_nodes.append(node)
+        current_token = get_next_token()
+        local_position = position
     if position > local_position: return False
     if not current_token: return False
     main_node = mainFunction()
@@ -56,6 +58,7 @@ def program():
 #function for declaration nonterminal
 def declaration():
     global current_token
+
     if VERBOSE: print("In declaration.")
     var_node = varDeclaration()
     fix_node = None
@@ -63,6 +66,7 @@ def declaration():
         fix_node = fixDeclaration()
         if not fix_node:
             return False
+    current_token = get_next_token()
     if current_token != 'ENDSTAT':
         return False
     #if we're here, we can construct a node of the cst
@@ -71,6 +75,7 @@ def declaration():
 #function for vardeclaration nonterminal
 def varDeclaration():
     global current_token
+
     if VERBOSE: print("In varDeclaration.")
     if current_token != 'VAR_KW':
         return False
@@ -79,6 +84,7 @@ def varDeclaration():
     type_node = typeSpecifier()
     if not type_node:
         return False
+    current_token = get_next_token()
     if not current_token: return False
     udi_node = userDefinedIdentifier()
     if not udi_node:
@@ -89,6 +95,7 @@ def varDeclaration():
 #function for fixdeclaration nonterminal
 def fixDeclaration():
     global current_token
+
     if VERBOSE: print("In fixDeclaration.")
     if current_token != 'CONST_KW':
         return False
@@ -97,10 +104,12 @@ def fixDeclaration():
     type_node = typeSpecifier()
     if not type_node:
         return False
+    current_token = get_next_token()
     if not current_token: return False
     udi_node = userDefinedIdentifier()
     if not udi_node:
         return False
+    current_token = get_next_token()
     if current_token != 'ASGN':
         return False
     current_token = get_next_token()
@@ -119,6 +128,7 @@ def fixDeclaration():
 #function for typeSpecifier nonterminal
 def typeSpecifier():
     global current_token
+
     if VERBOSE: print("In typeSpecifier.")
     if current_token != 'NUM_KW':
         if current_token != 'CHAR_KW':
@@ -141,6 +151,7 @@ def userDefinedIdentifier():
 #function for mainFunction nonterminal
 def mainFunction():
     global current_token
+
     if VERBOSE: print("In mainFunction.")
     if current_token != 'LPAREN':
         return False
@@ -173,19 +184,21 @@ def mainFunction():
     decs = []
     while node := declaration():
         decs.append(node)
+        current_token = get_next_token()
         local_position = position
     if position > local_position: return False
     stats = []
     while True:
         if node := statement():
             stats.append(node)
-        elif node := function():  # we can forget about nested functions for now
+        elif node := function():
+            # Not implementing nested functions.
             pass
         else:
             break
+        current_token = get_next_token()
         local_position = position
     if position > local_position: return False
-    print('current', current_token)
     if current_token != 'RBRACK':
         return False
     #if we're here, we can construct a node of the cst
@@ -202,10 +215,10 @@ def size():
         # because the token is a NUM_LIT
     return True
 
-#function for function nonterminal
+#function for function definition nonterminal
 def function():
-    # rule for function definition
     global current_token
+
     if VERBOSE: print("In function.")
     if current_token != 'FUNC_KW':
         return False
@@ -216,6 +229,7 @@ def function():
     args = []
     if node := parameter():
         args.append(node)
+        current_token = get_next_token()
     if current_token != 'RPAREN':
         return False
     current_token = get_next_token()
@@ -226,6 +240,7 @@ def function():
     udi_node = userDefinedIdentifier()
     if not udi_node:
         return False
+    current_token = get_next_token()
     if current_token != 'ARROW':
         return False
     current_token = get_next_token()
@@ -233,8 +248,9 @@ def function():
         return False
     current_token = get_next_token()
     if not current_token: return False
-    type_node = typeSpecifier()  # return type
-    # could be None or False if function doesn't return anything
+    type_node = typeSpecifier()  # Could be a False, i.e. no return type applicable.
+    if type_node:
+        current_token = get_next_token()
     if current_token != 'RPAREN':
         return False
     current_token = get_next_token()
@@ -245,11 +261,13 @@ def function():
     decs = []
     while node := declaration():
         decs.append(node)
+        current_token = get_next_token()
         local_position = position
     if position > local_position: return False
     stats = []
     while node := statement():
         stats.append(node)
+        current_token = get_next_token()
         local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
@@ -260,11 +278,13 @@ def function():
 #function for parameter nonterminal
 def parameter():
     global current_token
+
     if VERBOSE: print("In parameter.")
     if not current_token: return False
     type_node = typeSpecifier()
     if not type_node:
         return False
+    current_token = get_next_token()
     if not current_token: return False
     udi_node = userDefinedIdentifier()
     if not udi_node:
@@ -275,9 +295,9 @@ def parameter():
 #function for statement nonterminal
 def statement():
     global current_token
+
     if VERBOSE: print("In statement.")
-    if not current_token:
-        return False
+    if not current_token: return False
     a_node = assignment()
     r_node = s_node = l_node = f_node = None
     if not a_node:
@@ -288,8 +308,13 @@ def statement():
                 l_node = loop()
                 if not l_node:
                     f_node = functionCall()
-                    print('made a call node')
                     if not f_node:
+                        return False
+                    # Need to check for ENDSTAT because functionCall
+                    # doesn't always in ENDSTAT unless it's 
+                    # a standalone statement
+                    current_token = get_next_token()
+                    if current_token != 'ENDSTAT':
                         return False
     #if we're here, we can construct a node of the cst
     return StatementNode(a_node, r_node, s_node, l_node, f_node)
@@ -297,11 +322,13 @@ def statement():
 #function for assignment nonterminal
 def assignment():
     global current_token
+
     if VERBOSE: print("In assignment.")
     if not current_token: return False
     udi_node = userDefinedIdentifier()
     if not udi_node:
         return False
+    current_token = get_next_token()
     if current_token != 'ASGN':
         return False
     current_token = get_next_token()
@@ -314,6 +341,7 @@ def assignment():
             call_node = functionCall()
             if not call_node:
                 return False
+    current_token = get_next_token()
     if current_token != 'ENDSTAT':
         return False
     #if we're here, we can construct a node of the cst
@@ -322,6 +350,7 @@ def assignment():
 #function for returnStatement nonterminal
 def returnStatement():
     global current_token
+
     if VERBOSE: print("In returnStatement.")
     if current_token != 'RETURN_KW':
         return False
@@ -333,6 +362,7 @@ def returnStatement():
         call_node = functionCall()
         if not call_node:
             return False
+    current_token = get_next_token()
     if current_token != 'ENDSTAT':
         return False
     #if we're here, we can construct a node of the cst
@@ -340,8 +370,8 @@ def returnStatement():
 
 #function for selection nonterminal
 def selection():
-    # still not handled for the CST!
     global current_token
+
     if VERBOSE: print("In selection.")
     if current_token != 'IF_KW':
         return False
@@ -351,6 +381,7 @@ def selection():
     current_token = get_next_token()
     if not conditionStatement():
         return False
+    current_token = get_next_token()
     if current_token != 'RPAREN':
         return False
     current_token = get_next_token()
@@ -359,9 +390,11 @@ def selection():
     current_token = get_next_token()
     local_position = position
     while declaration():
+        current_token = get_next_token()
         local_position = position
     if position > local_position: return False
     while statement():
+        current_token = get_next_token()
         local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
@@ -375,19 +408,22 @@ def selection():
     current_token = get_next_token()
     local_position = position
     while declaration():
+        current_token = get_next_token()
         local_position = position
     if position > local_position: return False
     while statement() or function():
+        current_token = get_next_token()
         local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
         return False
     #if we're here, we can construct a node of the cst
-    return True
+    return True  # again, we didn't implement selection()
 
 #function for loop nonterminal
 def loop():
     global current_token
+
     if VERBOSE: print("In loop.")
     if current_token != 'LOOP_KW':
         return False
@@ -397,6 +433,7 @@ def loop():
     current_token = get_next_token()
     if not conditionStatement():
         return False
+    current_token = get_next_token()
     if current_token != 'RPAREN':
         return False
     current_token = get_next_token()
@@ -405,19 +442,22 @@ def loop():
     current_token = get_next_token()
     local_position = position
     while declaration():
+        current_token = get_next_token()
         local_position = position
     if position > local_position: return False
     while statement():
+        current_token = get_next_token()
         local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
         return False
     #if we're here, we can construct a node of the cst
-    return True
+    return True  # again, didn't implement loop()
 
 #function for operation nonterminal
 def operation():
     global current_token
+
     if VERBOSE: print("In operation.")
     op = None
     if current_token == 'ADD':
@@ -437,12 +477,14 @@ def operation():
     opd1_node = operand()
     if not opd1_node:
         return False
+    current_token = get_next_token()
     if current_token != 'COMMA':
         return False
     current_token = get_next_token()
     opd2_node = operand()
     if not opd2_node:
         return False
+    current_token = get_next_token()
     if current_token != 'RPAREN':
         return False
     #if we're here, we can construct a node of the cst
@@ -467,13 +509,17 @@ def operand():
 #function for functioncall nonterminal
 def functionCall():
     global current_token
+
     if VERBOSE: print("In functionCall.")
+    print(current_token)
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
     args = []
     if node := expression():  # if we need to handle multiple params, this should be a while
         args.append(node)
+        current_token = get_next_token()
+        # local_position?
     if current_token != 'RPAREN':
         return False
     current_token = get_next_token()
@@ -499,19 +545,24 @@ def conditionStatement():
 #function for comparison nonterminal
 def comparison():
     global current_token
+
     if VERBOSE: print("In comparison.")
     if current_token != 'EQ' and current_token != 'GT':
         return False
     current_token = get_next_token()
     if current_token != 'LPAREN':
         return False
+    current_token = get_next_token()
     if not compared():
         return False
+    # $
+    current_token = get_next_token()
     if not compared():
         return False
+    current_token = get_next_token()
     if current_token != 'RPAREN':
         return False
-    return True
+    return True  # again, not implemented
 
 #function for compared nonterminal
 def compared():
@@ -520,25 +571,26 @@ def compared():
         if not userDefinedIdentifier():
             if not functionCall():
                 return False
-    return True
+    return True  # not implemented either
 
 #function for expression nonterminal
 def expression():
     global current_token
+
     if VERBOSE: print("In expression.")
     char_node = str_node = num_node = udi_node = op_node = None
     if current_token == 'CHAR_LIT':
         char_node = CharLiteralNode(lexeme)
     elif current_token == 'STR_LIT':
         str_node = StringLiteralNode(lexeme)
-        current_token = get_next_token()
     elif current_token == 'NUM_LIT':
         num_node = NumLiteralNode(int(lexeme))
     elif op_node := operation():
+        # op_node already constructed at this point
         pass
     elif udi_node := userDefinedIdentifier():
         pass
-    else:  # none of these 4, or None
+    else:
         return False
     #if we're here, we can construct a node of the cst
     return ExpressionNode(char_node, str_node, num_node, udi_node, op_node)
@@ -558,7 +610,6 @@ def identifier():
 
 #function for reservedword nonterminal
 def reservedWord():
-    global current_token
     if VERBOSE: print("In reservedWord.")
     if current_token != 'IN_KW' and current_token != 'OUT_KW':
         return False
@@ -567,12 +618,12 @@ def reservedWord():
 
 #function for numericliteral nonterminal
 def numericLiteral():
-    global current_token
     if VERBOSE: print("In numericLiteral.")
     if current_token != 'NUM_LIT':
         return False
     #if we're here, we can construct a node of the cst
     return NumLiteralNode(lexeme)
+
 
 
 #function from which we will start parsing, by calling program
