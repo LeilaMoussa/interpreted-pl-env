@@ -8,9 +8,9 @@
     ~ b := +(1, a).
 
     ~ Scenario 2: assignments. HANDLED.
-    var num a.
-    a := 'L'.
+    ~ var num a.
+    ~ a := 'L'.
 
     ~ Scenario 3: bad initialization.
-    fix num a := 'L'.
+    ~ fix num a := 'L'.
 ]

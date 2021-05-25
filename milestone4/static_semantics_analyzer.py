@@ -35,31 +35,34 @@ def type_check_operands(opd1, opd2) -> bool:
     return is_number(opd1) and is_number(opd2)
     # is type_check_operands() a superfluous function then?
 
+def is_type(typespec: str, y):
+    if type(y) == list:
+        # op, funcall, or possibly a literal (the whole literal situation is a bit messy)
+        root = y[0]
+        if root == 'funcall':
+            return symbol_table[y[1][0]]['attributes']["return_type"] == typespec
+        elif root == 'literal':
+            v = y[1]
+            if v.isnumeric():
+                return typespec == 'num'
+            elif len(v) == 1:
+                return typespec == 'ascii'
+            # else is string, which we haven't implemented
+        elif root == 'add' or root == 'sub' or root == 'mult' or root == 'div':
+            return typespec == 'num'
+    elif type(y) == str:
+        # UDI or numeric literal (this is NOT the best code, i know)
+        if y.isnumeric():
+            return typespec == 'num'
+        else:
+            return symbol_table[y]['attributes']['data_type'] == typespec
+
 def has_same_type(x, y):
     # if we're in the context of an assignment, x is a variable
     # and y could be an operation ==> number, a function call, a literal, or a UDI
     # so we need to figure out what y is, get its type, and see if it's the same as x
     x_type = symbol_table[x]['attributes']['data_type']
-    if type(y) == list:
-        # op, funcall, or possibly a literal (the whole literal situation is a bit messy)
-        root = y[0]
-        if root == 'funcall':
-            return symbol_table[y[1][0]]['attributes']["return_type"] == x_type
-        elif root == 'literal':
-            v = y[1]
-            if v.isnumeric():
-                return x_type == 'num'
-            elif len(v) == 1:
-                return x_type == 'ascii'
-            # else is string, which we haven't implemented
-        elif root == 'add' or root == 'sub' or root == 'mult' or root == 'div':
-            return x_type == 'num'
-    elif type(y) == str:
-        # UDI or numeric literal (this is NOT the best code, i know)
-        if y.isnumeric():
-            return x_type == 'num'
-        else:
-            return symbol_table[y]['attributes']['data_type'] == x_type
+    return is_type(x_type, y)
 
 def get_ast(cst) -> list:
     global symbol_table, current_scope
@@ -85,7 +88,10 @@ def get_ast(cst) -> list:
         [dt, symbol] = dec_stuff[:2]  # ['num', 'b'] for example
         _class = cst.type
         if _class == 'fix':
-            value = dec_stuff[2]
+            [typespec, _, value] = dec_stuff
+            # here, value can be a literal, a UDI, an operation, or a function call
+            if not is_type(typespec, value):
+                sys.exit('Type error: mismatch on constant initialization.')
             if type(value) == list:
                 value = value[1]
             symbol_table[symbol]['attributes']['value'] = value
