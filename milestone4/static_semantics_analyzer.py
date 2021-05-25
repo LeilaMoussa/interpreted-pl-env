@@ -29,6 +29,7 @@ def get_ast(cst) -> list:
         dec_stuff = get_ast(cst.value)
         symbol = dec_stuff[1]  # ['num', 'b'] for example
         symbol_table[symbol]['attributes']['scope'] = current_scope
+        symbol_table[symbol]['attributes']['class'] = cst.type  # var or fix
         root.append(dec_stuff)
     elif _type ==  VarDeclarationNode:
         typespec, ident = cst.typespec, cst.identifier
