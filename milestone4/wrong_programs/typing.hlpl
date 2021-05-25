@@ -1,6 +1,11 @@
 ~ wrong_programs/ contains examples of syntactically correct wrong_programs
 ~ that fail in static semantics.
 
+~ Scenario 5: returns. HANDLED.
+func () => cheese => (num) [
+    give 'L'.
+]
+
 () => entry => () [
     ~ Scenario one: arithmetic operations. HANDLED.
     ~ fix ascii a := 'L'.
@@ -21,5 +26,4 @@
     ~ ]
     ~ other [ ]
 
-    ~ Scenario 5: 
 ]

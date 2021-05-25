@@ -36,7 +36,6 @@ def type_check_operands(opd1, opd2) -> bool:
     # is type_check_operands() a superfluous function then?
 
 def is_type(typespec: str, y):
-    print('in is_type', typespec, y)
     if type(y) == list:
         # op, funcall, or possibly a literal (the whole literal situation is a bit messy)
         root = y[0]
@@ -64,6 +63,20 @@ def has_same_type(x, y):
     # so we need to figure out what y is, get its type, and see if it's the same as x
     x_type = symbol_table[x]['attributes']['data_type']
     return is_type(x_type, y)
+
+def match_return(returned):
+    # returned is an expression or a function call, handled above
+    # tricky part: efficiently retrieve name of our used defined function
+    # it's much simpler for us because we're only handling one userdefined function at most
+    # and of course, you could iterate over symbol_table looking for class == function,
+    # but that sucks
+    # since we don't have the luxury to consider efficiency, i'll just do that
+    for entry in symbol_table:
+        try:
+            if symbol_table[entry]['attributes']['class'] == 'function':
+                return is_type(symbol_table[entry]['attributes']['return_type'], returned)
+        except:
+            pass
 
 def get_ast(cst) -> list:
     global symbol_table, current_scope
@@ -154,7 +167,10 @@ def get_ast(cst) -> list:
     elif _type == NumLiteralNode or _type == StringLiteralNode or _type == CharLiteralNode:
         return cst.value ## we'll see
     elif _type == ReturnNode:
-        return get_ast(cst.value)  # call or exp
+        returned = get_ast(cst.value)
+        if not match_return(returned):
+            sys.exit('Type error: return type mismatch.')
+        return returned # call or exp
     elif _type == FunctionNode:
         root.append('func')
         name = get_ast(cst.name)
