@@ -78,6 +78,19 @@ def match_return(returned):
         except:
             pass
 
+def match_argument(passed: list):
+    if len(passed) > 0:
+        # handling only one argument
+        argument = passed[0]
+        # argument can be a literal, a UDI, or an operation
+        for entry in symbol_table:
+            try:
+                if symbol_table[entry]['attributes']['class'] == 'function':
+                    return is_type(symbol_table[entry]['attributes']['arguments'][0]['type'],
+                                     argument)
+            except:
+                pass
+
 def get_ast(cst) -> list:
     global symbol_table, current_scope
 
@@ -161,6 +174,8 @@ def get_ast(cst) -> list:
         root.append(get_ast(cst.name))
         arg_stuff = []
         [arg_stuff.append(get_ast(arg)) for arg in cst.args]
+        if not match_argument(arg_stuff):
+            sys.exit('Type error: argument data type mismatch.')
         root.append(arg_stuff)
         ## type checking needs to be done here => need to look at symbol table for function called cst.name
         ## if the definition is not there, raise an exception

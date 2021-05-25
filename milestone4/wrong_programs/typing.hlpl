@@ -2,8 +2,13 @@
 ~ that fail in static semantics.
 
 ~ Scenario 5: returns. HANDLED.
-func () => cheese => (num) [
-    give 'L'.
+~ func () => cheese => (num) [
+~     give 'L'.
+~ ]
+
+~ Scenario 6a: arguments.
+func (num a) => grapes => () [
+
 ]
 
 () => entry => () [
@@ -25,5 +30,8 @@ func () => cheese => (num) [
     ~     ("oops") => write.
     ~ ]
     ~ other [ ]
+
+    ~ Scenario 6b: arguments.
+    ('L') => grapes.
 
 ]
