@@ -140,7 +140,8 @@ def get_ast(cst) -> list:
     elif _type == SelectionNode:
         root.append('if')
         root.append(get_ast(cst.condition))    # condition node
-        then = _else = []
+        then = []
+        _else = []
         [then.append(get_ast(stat)) for stat in cst.then]    # statement nodes
         [_else.append(get_ast(stat)) for stat in cst._else]
         root.append(then)
@@ -157,11 +158,8 @@ def get_ast(cst) -> list:
         # numlit, udi, or call
         return get_ast(cst.value)
     elif _type == LoopNode:
-        # ['loop', condition, [stats]]
-        root.append('loop')  # it doesn't really matter what we call it -- does it have to be a terminal?
-        # with what we've done so far, that makes no sense
-        # i admit that our trees maybe don't look like the way the professor wanted it
-        # but they play the same role and work perfectly
+        # ['loop', [condition, [stats]]]
+        # where 'loop' was already appended
         root.append(get_ast(cst.condition))
         body = []
         [body.append(get_ast(stat)) for stat in cst.body]
