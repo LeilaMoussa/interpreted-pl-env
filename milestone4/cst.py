@@ -325,8 +325,54 @@ class ReturnNode:
         print(f'--return.{self.type}--')
         self.value.display()
 
+class ComparedNode:
+    def __init__(self, n_node: NumLiteralNode, u_node: UserDefinedNode, f_node: CallNode):
+        if n_node:
+            self.type = 'numlit'
+            self.value = n_node
+        elif u_node:
+            self.type = 'userdefined'
+            self.value = u_node
+        elif f_node:
+            self.type = 'funcall'
+            self.value = f_node
+        else:
+            raise Exception('nothing matches on compared node')
+    def display(self):
+        print('--compared.type--')
+        print(self.type)
+        print('--compared.value--')
+        self.value.display()
+
+class ComparisonNode:
+    def __init__(self, operator: str, comp1: ComparedNode, comp2: ComparedNode):
+        self.type = operator.lower()
+        self.comp1 = comp1
+        self.comp2 = comp2
+    def display(self):
+        print('--comparison.type--')
+        print(self.type)
+        print('--compared1--')
+        self.comp1.display()
+        print('--compared2--')
+        self.comp2.display()
+
+class ConditionNode:
+    def __init__(self, comparison: ComparisonNode):
+        # let's ignore boolean operators for now
+        # two possible conditions: eq or gt
+        self.value = comparison
+    def display(self):
+        print('--condition--')
+        self.value.display()
+
 class SelectionNode:
-    def __init__(self):
+    def __init__(self, condition, then: list, _else: list):
+        # all our selections are 2-way
+        # condition (combination of EQs or GTs with AND, OR, or NOT), 
+        # then (List[StatementNode]),
+        # else (same as then)
+        # because we're not doing blocks
         pass
 
 class LoopNode:

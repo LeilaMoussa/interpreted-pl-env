@@ -1,5 +1,6 @@
-# NOTE: selections, loops, comparisons, and structured types are not not implemented
+# NOTE: structured types are not going to be implemented
 
+from milestone4.cst import ComparisonNode
 import sys
 import os
 sys.path.append(os.path.abspath('../milestone3'))
@@ -535,8 +536,7 @@ def functionCall():
 
 #function for conditionStatement nonterminal
 def conditionStatement():
-    #only handling single comparisons without a 'not' for the time being
-    global current_token
+    # looks like we're not handling logic operators
     if VERBOSE: print("In conditionStatement.")
     if not comparison():
         return False
@@ -549,27 +549,34 @@ def comparison():
     if VERBOSE: print("In comparison.")
     if current_token != 'EQ' and current_token != 'GT':
         return False
+    op = current_token
     current_token = get_next_token()
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
-    if not compared():
+    node1 = compared()
+    if not node1:
         return False
-    # $
+    # >(a b), not >(a, b) ? Not that it matters...
     current_token = get_next_token()
-    if not compared():
+    node2 = compared()
+    if not node2:
         return False
     current_token = get_next_token()
     if current_token != 'RPAREN':
         return False
-    return True  # again, not implemented
+    return ComparisonNode(op, node1, node2)
 
 #function for compared nonterminal
 def compared():
     if VERBOSE: print("In compared.")
-    if not numericLiteral():
-        if not userDefinedIdentifier():
-            if not functionCall():
+    n_node = numericLiteral()
+    u_node = f_node = None
+    if not n_node:
+        u_node = userDefinedIdentifier()
+        if not u_node:
+            f_node = functionCall()
+            if not f_node:
                 return False
     return True  # not implemented either
 

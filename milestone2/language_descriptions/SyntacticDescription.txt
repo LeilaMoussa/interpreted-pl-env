@@ -26,7 +26,7 @@
 
 <returnedExpression> → <expression> | <functionCall>
 
-<selection> → IF_KW LPAREN <conditionStatement> RPAREN LBRACK {<declaration>} {<statement>} RBRACK ELSE_KW LBRACK {<declaration>} {(<statement> | <function>)} RBRACK
+<selection> → IF_KW LPAREN <conditionStatement> RPAREN LBRACK {<declaration>} {<statement>} RBRACK ELSE_KW LBRACK {<declaration>} {(<statement> | <function>)} RBRACK  // function??
 
 <loop> → LOOP_KW LPAREN <conditionStatement> RPAREN LBRACK {<declaration>} {<statement>} RBRACK
 
