@@ -40,10 +40,25 @@ def handle_literal(token_type: str, token_val: str):
         address += 1
 
 def handle_symbol(token_val: str):
+    global address
+
     # Duplicate symbols are not handled, necessarily, because scoping is still ahead of us.
     # Other than a a symbol being a user-defined identifier, we have no information at this stage
     # about its attributes (type, value, parameters for a function, etc.).
-    symbol_table[token_val] = {'symbol_type': 'IDENT', 'attributes': {}}
+    # We need to assign addresses to variables & constants, but not to functions,
+    # But at this point, we don't know what is a function and what isn't, so we'll just assign addresses
+    # to everyone. An address for a function means nothing.
+    symbol_table[token_val] = {'symbol_type': 'IDENT', 'attributes': {'address': address,
+                                                                       'class': None,  # var/fix/func
+                                                                       'scope': None,  # glob/entry/func OR 1/2/3
+                                                                       'data_type': None,  # applicable to vars/fixes
+                                                                       'value': None,  # same
+                                                                       'return_type': None,  # applicable to funcs
+                                                                       'arguments': None}}  # same
+    # The other attributes will be added in static_semantics_analyzer.py
+    address += 1
+    # All vars/constants and literals are all put in data memory, no division.
+    # Do you agree?
 
 def lex(code_line: str, line_number: int):
     # Given a line of code, find all matches.
