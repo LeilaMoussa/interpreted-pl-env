@@ -2,7 +2,6 @@ from parse import main as get_cst
 import sys, os
 import json
 from cst import *
-# sys.path.append(os.path.abspath('../milestone3'))
 
 current_scope = None  # 'glob', 'entry', or 'func'; OR 1, 2, 3
 
@@ -14,7 +13,7 @@ def get_ast(cst) -> list:
     if _type == ProgramNode:
         current_scope = 1
         root.append('program')
-        ## these 2 attributes of ProgramNode are always lists
+        # these 2 attributes of ProgramNode are always lists
         [root.append(get_ast(subtree)) for subtree in cst.declarations]
         [root.append(get_ast(subtree)) for subtree in cst.functions]
         # Program.main is of type MainNode
@@ -138,9 +137,37 @@ def get_ast(cst) -> list:
     elif _type == ParamNode:
         ## params from function definition, defined with typespec and udi
         return [get_ast(cst.typespec), get_ast(cst.name)]  # these are strings
+    elif _type == SelectionNode:
+        root.append('if')
+        root.append(get_ast(cst.condition))    # condition node
+        then = _else = []
+        [then.append(get_ast(stat)) for stat in cst.then]    # statement nodes
+        [_else.append(get_ast(stat)) for stat in cst._else]
+        root.append(then)
+        root.append(_else)
+    elif _type == ConditionNode:
+        # Again, the only type of conditions we're handling right now are pure comparisons
+        # i.e. EQ & GT
+        return get_ast(cst.value)
+    elif _type == ComparisonNode:
+        # ['eq', [a, b]]
+        root.append(cst.type)  # string
+        root.append([get_ast(cst.comp1), get_ast(cst.comp2)])
+    elif _type == ComparedNode:
+        # numlit, udi, or call
+        return get_ast(cst.value)
+    elif _type == LoopNode:
+        # ['loop', condition, [stats]]
+        root.append('loop')  # it doesn't really matter what we call it -- does it have to be a terminal?
+        # with what we've done so far, that makes no sense
+        # i admit that our trees maybe don't look like the way the professor wanted it
+        # but they play the same role and work perfectly
+        root.append(get_ast(cst.condition))
+        body = []
+        [body.append(get_ast(stat)) for stat in cst.body]
+        root.append(body)
     else:
-        ## remaining: Selection, Loop
-        print('unhandled type for the moment:', _type)
+        print('Node class does not match:', _type)
     return root
     
 def main(filepath: str, default: bool, from_parser, from_analyzer, from_generator=False):

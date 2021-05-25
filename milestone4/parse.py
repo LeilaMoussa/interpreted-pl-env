@@ -203,7 +203,8 @@ def mainFunction():
         return False
     #if we're here, we can construct a node of the cst
     return MainNode(decs, stats)
-
+    
+""" 
 # utility function for arrays and strings 
 # however, we are not using it for our sample programs
 # should probably comment this out because it's garbage
@@ -215,6 +216,7 @@ def size():
         # they need to be positive, so look at lexeme[0] => clunky, but necessary
         # because the token is a NUM_LIT
     return True
+"""
 
 #function for function definition nonterminal
 def function():
