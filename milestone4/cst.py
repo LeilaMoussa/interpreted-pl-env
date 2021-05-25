@@ -385,8 +385,15 @@ class SelectionNode:
         [stat.display() for stat in self._else]
 
 class LoopNode:
-    def __init__(self):
-        pass
+    def __init__(self, condition: ConditionNode, stats: list):
+        # condition, list of statements
+        self.condition = condition
+        self.body = stats
+    def display(self):
+        print('--loop.condition--')
+        self.condition.display()
+        print('--loop.body--')
+        [stat.display() for stat in self.body]
 
 class StatementNode:
     def __init__(self, a_node: AssignmentNode, r_node: ReturnNode, s_node: SelectionNode,\

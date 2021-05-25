@@ -1,6 +1,5 @@
 # NOTE: structured types are not going to be implemented
 
-from milestone4.cst import ComparedNode, ComparisonNode, ConditionNode, SelectionNode
 import sys
 import os
 sys.path.append(os.path.abspath('../milestone3'))
@@ -205,8 +204,9 @@ def mainFunction():
     #if we're here, we can construct a node of the cst
     return MainNode(decs, stats)
 
-#utility function for arrays and strings 
-#however, we are not using it for our sample programs
+# utility function for arrays and strings 
+# however, we are not using it for our sample programs
+# should probably comment this out because it's garbage
 def size():
     if VERBOSE: print("In size.")
     if not userDefinedIdentifier():
@@ -439,7 +439,8 @@ def loop():
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
-    if not conditionStatement():
+    condition_node = conditionStatement()
+    if not condition_node:
         return False
     current_token = get_next_token()
     if current_token != 'RPAREN':
@@ -450,17 +451,20 @@ def loop():
     current_token = get_next_token()
     local_position = position
     while declaration():
+        # again, ignore declarations
         current_token = get_next_token()
         local_position = position
     if position > local_position: return False
-    while statement():
+    stats = []
+    while node := statement():
+        stats.append(node)
         current_token = get_next_token()
         local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
         return False
     #if we're here, we can construct a node of the cst
-    return True  # again, didn't implement loop()
+    return LoopNode(condition_node, stats)
 
 #function for operation nonterminal
 def operation():
