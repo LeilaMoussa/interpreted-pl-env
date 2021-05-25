@@ -373,7 +373,16 @@ class SelectionNode:
         # then (List[StatementNode]),
         # else (same as then)
         # because we're not doing blocks
-        pass
+        self.condition = condition
+        self.then = then
+        self._else = _else  # i mean, it's fine to just write else, but that's pretty confusing
+    def display(self):
+        print('--selection.condition--')
+        self.condition.display()
+        print('--selection.then--')
+        [stat.display() for stat in self.then]
+        print('--selection.else--')
+        [stat.display() for stat in self._else]
 
 class LoopNode:
     def __init__(self):

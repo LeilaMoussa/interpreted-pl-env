@@ -1,0 +1,20 @@
+~ Only adding this sample program to show selection & looping.
+~ This sample adds nothing to the task of subprogram call & return.
+
+() => entry => () [
+    var num i.
+    i := 0.
+
+    check (> (1 2)) [
+        ~ comma, no?
+        ("hello") => write.
+    ]
+    other [
+        ("sup") => write.
+    ]
+
+    iterif (>(5 i)) [
+        ("i am so tired") => write.
+        i := +(i, 1).
+    ]
+]

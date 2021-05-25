@@ -1,6 +1,6 @@
 # NOTE: structured types are not going to be implemented
 
-from milestone4.cst import ComparisonNode
+from milestone4.cst import ComparedNode, ComparisonNode, ConditionNode, SelectionNode
 import sys
 import os
 sys.path.append(os.path.abspath('../milestone3'))
@@ -380,7 +380,8 @@ def selection():
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
-    if not conditionStatement():
+    condition_node = conditionStatement()
+    if not condition_node:
         return False
     current_token = get_next_token()
     if current_token != 'RPAREN':
@@ -391,10 +392,13 @@ def selection():
     current_token = get_next_token()
     local_position = position
     while declaration():
+        # let's skip out on the hassle of handling declarations
         current_token = get_next_token()
         local_position = position
     if position > local_position: return False
-    while statement():
+    then_stats = []
+    while node := statement():
+        then_stats.append(node)
         current_token = get_next_token()
         local_position = position
     if position > local_position: return False
@@ -412,14 +416,17 @@ def selection():
         current_token = get_next_token()
         local_position = position
     if position > local_position: return False
-    while statement() or function():
+    else_stats = []
+    while node := statement() or function():
+        # again, let's not try to pretend we're handling nested function definitions, lol
+        else_stats.append(node)
         current_token = get_next_token()
         local_position = position
     if position > local_position: return False
     if current_token != 'RBRACK':
         return False
     #if we're here, we can construct a node of the cst
-    return True  # again, we didn't implement selection()
+    return SelectionNode(condition_node, then_stats, else_stats)
 
 #function for loop nonterminal
 def loop():
@@ -538,9 +545,10 @@ def functionCall():
 def conditionStatement():
     # looks like we're not handling logic operators
     if VERBOSE: print("In conditionStatement.")
-    if not comparison():
+    comp_node = comparison()
+    if not comp_node:
         return False
-    return True
+    return ConditionNode(comp_node)
 
 #function for comparison nonterminal
 def comparison():
@@ -578,7 +586,7 @@ def compared():
             f_node = functionCall()
             if not f_node:
                 return False
-    return True  # not implemented either
+    return ComparedNode(n_node, u_node, f_node)
 
 #function for expression nonterminal
 def expression():
