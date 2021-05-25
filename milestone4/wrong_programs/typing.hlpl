@@ -11,6 +11,15 @@
     ~ var num a.
     ~ a := 'L'.
 
-    ~ Scenario 3: bad initialization.
+    ~ Scenario 3: constant initialization. HANDLED.
     ~ fix num a := 'L'.
+
+    ~ Scenario 4: comparisons. HANDLED.
+    ~ fix ascii a := 'L'.
+    ~ check (=(1 a)) [
+    ~     ("oops") => write.
+    ~ ]
+    ~ other [ ]
+
+    ~ Scenario 5: 
 ]

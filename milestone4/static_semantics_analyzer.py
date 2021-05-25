@@ -36,6 +36,7 @@ def type_check_operands(opd1, opd2) -> bool:
     # is type_check_operands() a superfluous function then?
 
 def is_type(typespec: str, y):
+    print('in is_type', typespec, y)
     if type(y) == list:
         # op, funcall, or possibly a literal (the whole literal situation is a bit messy)
         root = y[0]
@@ -45,7 +46,7 @@ def is_type(typespec: str, y):
             v = y[1]
             if v.isnumeric():
                 return typespec == 'num'
-            elif len(v) == 1:
+            elif len(v) == 3:  # because len("'L'") == 3
                 return typespec == 'ascii'
             # else is string, which we haven't implemented
         elif root == 'add' or root == 'sub' or root == 'mult' or root == 'div':
@@ -204,6 +205,8 @@ def get_ast(cst) -> list:
     elif _type == ComparisonNode:
         # ['eq', [a, b]]
         root.append(cst.type)  # string
+        if not (is_number(get_ast(cst.comp1)) and is_number(get_ast(cst.comp2))):
+            sys.exit('Type error: cannot compare non numeric values.')
         root.append([get_ast(cst.comp1), get_ast(cst.comp2)])
     elif _type == ComparedNode:
         # numlit, udi, or call
