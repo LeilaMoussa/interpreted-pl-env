@@ -25,18 +25,21 @@ def get_ast(cst) -> list:
         [root.append(get_ast(subtree)) for subtree in cst.declarations]
         [root.append(get_ast(subtree)) for subtree in cst.statements]
     elif _type == DeclarationNode:
-        root.append(cst.type)
         dec_stuff = get_ast(cst.value)
         symbol = dec_stuff[1]  # ['num', 'b'] for example
+        _class = cst.type
+        if _class == 'fix':
+            value = dec_stuff[2]
+            symbol_table[symbol]['attributes']['value'] = value
         symbol_table[symbol]['attributes']['scope'] = current_scope
-        symbol_table[symbol]['attributes']['class'] = cst.type  # var or fix
+        symbol_table[symbol]['attributes']['class'] = _class  # var or fixéé
+        root.append(_class)
         root.append(dec_stuff)
     elif _type ==  VarDeclarationNode:
         typespec, ident = cst.typespec, cst.identifier
         return [get_ast(typespec), get_ast(ident)]
     elif _type == FixDeclarationNode:
-        typespec, ident, value = cst.typespec, cst.identifier, cst.value  ## value is Exp, Op, or Call
-        ## again, add info AND do type checking
+        typespec, ident, value = cst.typespec, cst.identifier, cst.value
         return [get_ast(typespec), get_ast(ident), get_ast(value)]
     elif _type == TypeNode:
         return cst.value  # just a string
@@ -58,6 +61,7 @@ def get_ast(cst) -> list:
             root.append(assign_stuff)
         else:
             root.append(get_ast(cst.value))  # exp, op, or funcall
+            # i'm wondering: it doesn't even make sense to change the value! that's literally execution!
     elif _type == ExpressionNode:
         # literal, udi, or op
         if cst.type == 'userdefined':
