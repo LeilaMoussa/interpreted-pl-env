@@ -24,15 +24,21 @@ def get_ast(cst) -> list:
         root.append('entry')
         [root.append(get_ast(subtree)) for subtree in cst.declarations]
         [root.append(get_ast(subtree)) for subtree in cst.statements]
+        current_scope = 1
     elif _type == DeclarationNode:
         dec_stuff = get_ast(cst.value)
-        symbol = dec_stuff[1]  # ['num', 'b'] for example
+        [dt, symbol] = dec_stuff[:2]  # ['num', 'b'] for example
         _class = cst.type
         if _class == 'fix':
             value = dec_stuff[2]
+            if type(value) == list:
+                value = value[1]
             symbol_table[symbol]['attributes']['value'] = value
         symbol_table[symbol]['attributes']['scope'] = current_scope
-        symbol_table[symbol]['attributes']['class'] = _class  # var or fixéé
+        symbol_table[symbol]['attributes']['class'] = _class  # var or fix
+        symbol_table[symbol]['attributes']['data_type'] = dt
+        del symbol_table[symbol]['attributes']['return_type']
+        del symbol_table[symbol]['attributes']['arguments']
         root.append(_class)
         root.append(dec_stuff)
     elif _type ==  VarDeclarationNode:
@@ -99,9 +105,14 @@ def get_ast(cst) -> list:
     elif _type == ReturnNode:
         return get_ast(cst.value)  # call or exp
     elif _type == FunctionNode:
-        current_scope = 3
         root.append('func')
-        func_stuff = [get_ast(cst.name)]
+        name = get_ast(cst.name)
+        func_stuff = [name]
+        symbol_table[name]['attributes']['scope'] = current_scope
+        symbol_table[name]['attributes']['class'] = 'function'
+        del symbol_table[name]['attributes']['address']  # address of function has no meaning at this point
+        del symbol_table[name]['attributes']['data_type']
+        del symbol_table[name]['attributes']['value']
         if len(cst.args) == 0:
             func_stuff.append([])
         else:
@@ -110,11 +121,13 @@ def get_ast(cst) -> list:
             func_stuff.append(None)
         else:
             func_stuff.append(get_ast(cst.return_type))
+        current_scope = 3
         body = []
         [body.append(get_ast(dec)) for dec in cst.declarations]
         [body.append(get_ast(stat)) for stat in cst.statements]
         func_stuff.append(body)
         root.append(func_stuff)
+        current_scope = 1
     elif _type == ParamNode:
         ## params from function definition, defined with typespec and udi
         return [get_ast(cst.typespec), get_ast(cst.name)]  # these are strings
