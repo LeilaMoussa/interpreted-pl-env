@@ -120,7 +120,9 @@ def get_ast(cst) -> list:
         if not cst.return_type:
             func_stuff.append(None)
         else:
-            func_stuff.append(get_ast(cst.return_type))
+            ret_type = get_ast(cst.return_type)
+            symbol_table[name]['attributes']['return_type'] = ret_type
+            func_stuff.append(ret_type)
         current_scope = 3
         body = []
         [body.append(get_ast(dec)) for dec in cst.declarations]

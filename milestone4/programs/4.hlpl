@@ -3,7 +3,7 @@
 
 fix num a := 10.
 
-func (num b) => product => () [
+func (num b) => product => (num) [
 	give *(a, b).
 ]
 
