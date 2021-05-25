@@ -4,7 +4,6 @@ import json
 from cst import *
 # sys.path.append(os.path.abspath('../milestone3'))
 
-symbol_table = {}
 current_scope = None  # 'glob', 'entry', or 'func'; OR 1, 2, 3
 
 def get_ast(cst) -> list:
@@ -27,10 +26,12 @@ def get_ast(cst) -> list:
         [root.append(get_ast(subtree)) for subtree in cst.statements]
     elif _type == DeclarationNode:
         root.append(cst.type)
-        root.append(get_ast(cst.value))
+        dec_stuff = get_ast(cst.value)
+        symbol = dec_stuff[1]  # ['num', 'b'] for example
+        symbol_table[symbol]['attributes']['scope'] = current_scope
+        root.append(dec_stuff)
     elif _type ==  VarDeclarationNode:
         typespec, ident = cst.typespec, cst.identifier
-        ## add type and scope to symbol table, tricky because of 'attributes' field in symbol_table
         return [get_ast(typespec), get_ast(ident)]
     elif _type == FixDeclarationNode:
         typespec, ident, value = cst.typespec, cst.identifier, cst.value  ## value is Exp, Op, or Call
@@ -82,7 +83,6 @@ def get_ast(cst) -> list:
     elif _type == OperandNode:
         return get_ast(cst.value)
     elif _type == CallNode:
-        current_scope = 3  # !!
         root.append(get_ast(cst.name))
         arg_stuff = []
         [arg_stuff.append(get_ast(arg)) for arg in cst.args]
@@ -94,8 +94,7 @@ def get_ast(cst) -> list:
     elif _type == ReturnNode:
         return get_ast(cst.value)  # call or exp
     elif _type == FunctionNode:
-        # function definition
-        current_scope = 3  # really change the scope?
+        current_scope = 3
         root.append('func')
         func_stuff = [get_ast(cst.name)]
         if len(cst.args) == 0:
@@ -135,6 +134,8 @@ def main(filepath: str, default: bool, from_parser, from_analyzer, from_generato
         else:
             print('-------AST------')
             print(ast)
+        with open('../milestone3/lex_output/symbol_table.json', 'w') as op:
+            op.write(json.dumps(symbol_table, indent=4))
     else:
         print("Error parsing the program -> parse tree couldn't be built.")
 
