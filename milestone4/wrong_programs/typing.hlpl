@@ -1,0 +1,8 @@
+~ wrong_programs/ contains examples of syntactically correct wrong_programs
+~ that fail in static semantics.
+
+() => entry => () [
+    var ascii a := 'L'.
+    fix num b := +(1, a).
+    ~ Type mismatch: can't add a number and a character.
+]
