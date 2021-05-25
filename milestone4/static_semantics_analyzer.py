@@ -35,6 +35,32 @@ def type_check_operands(opd1, opd2) -> bool:
     return is_number(opd1) and is_number(opd2)
     # is type_check_operands() a superfluous function then?
 
+def has_same_type(x, y):
+    # if we're in the context of an assignment, x is a variable
+    # and y could be an operation ==> number, a function call, a literal, or a UDI
+    # so we need to figure out what y is, get its type, and see if it's the same as x
+    x_type = symbol_table[x]['attributes']['data_type']
+    if type(y) == list:
+        # op, funcall, or possibly a literal (the whole literal situation is a bit messy)
+        root = y[0]
+        if root == 'funcall':
+            return symbol_table[y[1][0]]['attributes']["return_type"] == x_type
+        elif root == 'literal':
+            v = y[1]
+            if v.isnumeric():
+                return x_type == 'num'
+            elif len(v) == 1:
+                return x_type == 'ascii'
+            # else is string, which we haven't implemented
+        elif root == 'add' or root == 'sub' or root == 'mult' or root == 'div':
+            return x_type == 'num'
+    elif type(y) == str:
+        # UDI or numeric literal (this is NOT the best code, i know)
+        if y.isnumeric():
+            return x_type == 'num'
+        else:
+            return symbol_table[y]['attributes']['data_type'] == x_type
+
 def get_ast(cst) -> list:
     global symbol_table, current_scope
 
@@ -97,6 +123,8 @@ def get_ast(cst) -> list:
         else:
             root.append(get_ast(cst.value))  # exp, op, or funcall
             # i'm wondering: it doesn't even make sense to change the value! that's literally execution!
+        if not has_same_type(root[0], root[1]):
+            sys.exit('Type error: mismatch on assignment.')
     elif _type == ExpressionNode:
         # literal, udi, or op
         if cst.type == 'userdefined':
@@ -194,7 +222,7 @@ def get_ast(cst) -> list:
             print('Node class does not match:', _type)
             return
         if not type_check_operands(get_ast(cst.opd1), get_ast(cst.opd2)):
-            sys.exit('Type error: mismatched type on add operation.')
+            sys.exit(f'Type error: mismatched type on {root[0]} operation.')
         root.append([get_ast(cst.opd1), get_ast(cst.opd2)])
     return root
     
