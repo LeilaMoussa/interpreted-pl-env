@@ -113,10 +113,15 @@ def get_ast(cst) -> list:
         del symbol_table[name]['attributes']['address']  # address of function has no meaning at this point
         del symbol_table[name]['attributes']['data_type']
         del symbol_table[name]['attributes']['value']
+        symbol_table[name]['attributes']['arguments'] = []  # we'll see if this is a convenient representation
         if len(cst.args) == 0:
             func_stuff.append([])
         else:
-            [func_stuff.append(get_ast(param)) for param in cst.args]  # generalized for many args
+            for elt in cst.args:
+                param = get_ast(elt)
+                [data_type, param_name] = param
+                symbol_table[name]['attributes']['arguments'].append({'name': param_name, 'type': data_type})
+                func_stuff.append(param)
         if not cst.return_type:
             func_stuff.append(None)
         else:
