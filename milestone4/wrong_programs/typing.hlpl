@@ -2,7 +2,9 @@
 ~ that fail in static semantics.
 
 () => entry => () [
-    var ascii a := 'L'.
-    fix num b := +(1, a).
+    fix ascii a := 'L'.
+    var num b.
+
+    b := +(1, a).
     ~ Type mismatch: can't add a number and a character.
 ]

@@ -5,6 +5,36 @@ from cst import *
 
 current_scope = None  # 'glob', 'entry', or 'func'; OR 1, 2, 3
 
+def is_number(operand) -> bool:
+    if type(operand) == str:
+        if not operand.isnumeric():
+            if symbol_table[operand]['attributes']['data_type'] != 'num':
+                return False
+    elif type(operand) == list:
+        op = operand[0]
+        if op != 'add' and op != 'sub' and op != 'mult' and op != 'div':
+            # must be a function call
+            func_name = operand[1][0]  # bad code, i know
+            if symbol_table[func_name]['attributes']['return_type'] != 'num':
+                return False
+    else:
+        print('something fishy is going on')
+        return False
+    return True
+
+def type_check_operands(opd1, opd2) -> bool:
+    # operands can be any combination of numeric literals, UDIs, operations, or function calls
+    # representation of numeric literal: just the number as a string, like '1'
+    # UDI: just the name
+    # op: since type checking will be done from the inside out, we can rest assured
+    # they're represented as [<op>, [a, b]]
+    # that operations are numbers
+    # function calls are represented as ['funcall', [name, [args]]] 
+    # ==> symbol_table[name][attributes][return_type] should be num
+
+    return is_number(opd1) and is_number(opd2)
+    # is type_check_operands() a superfluous function then?
+
 def get_ast(cst) -> list:
     global symbol_table, current_scope
 
@@ -76,20 +106,7 @@ def get_ast(cst) -> list:
         root.append('literal')
         root.append(get_ast(cst.value))
     elif _type == OperationNode:
-        return get_ast(cst.value)
-    # again, ugly repetitive code, sorry
-    elif _type == AddNode:
-        root.append('add')
-        root.append([get_ast(cst.opd1), get_ast(cst.opd2)])
-    elif _type == SubNode:
-        root.append('sub')
-        root.append([get_ast(cst.opd1), get_ast(cst.opd2)])
-    elif _type == MultNode:
-        root.append('mult')
-        root.append([get_ast(cst.opd1), get_ast(cst.opd2)])
-    elif _type == DivNode:
-        root.append('div')
-        root.append([get_ast(cst.opd1), get_ast(cst.opd2)])
+        return get_ast(cst.value)    
     elif _type == OperandNode:
         return get_ast(cst.value)
     elif _type == CallNode:
@@ -165,7 +182,20 @@ def get_ast(cst) -> list:
         [body.append(get_ast(stat)) for stat in cst.body]
         root.append(body)
     else:
-        print('Node class does not match:', _type)
+        if _type == AddNode:
+            root.append('add')
+        elif _type == SubNode:
+            root.append('sub')
+        elif _type == MultNode:
+            root.append('mult')
+        elif _type == DivNode:
+            root.append('div')
+        else:
+            print('Node class does not match:', _type)
+            return
+        if not type_check_operands(get_ast(cst.opd1), get_ast(cst.opd2)):
+            sys.exit('Type error: mismatched type on add operation.')
+        root.append([get_ast(cst.opd1), get_ast(cst.opd2)])
     return root
     
 def main(filepath: str, default: bool, from_parser, from_analyzer, from_generator=False):
