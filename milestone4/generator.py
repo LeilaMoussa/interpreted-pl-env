@@ -5,6 +5,11 @@ data_section = ['DATA.SECTION', ]
 entry_code_section = ['CODE.SECTION', ]
 function_code_section = []
 scope = None
+input_count = 0
+
+def append_to_code(line: str):
+    if scope == 'ENTR': entry_code_section.append(line)
+    elif scope == 'FUNC': function_code_section.append(line)
 
 def create_dec(dec: list, scope: str):
     val = '+0000'
@@ -23,6 +28,8 @@ def create_dec(dec: list, scope: str):
     data_section.append(f'{scope} {name} {sign}{val}')
 
 def create_call(call: list):
+    global input_count
+
     [name, args] = call
     # args is a list, can be empty, or have one element only (that's all we want to handle, though theoretically
     # we could do any number)
@@ -41,6 +48,7 @@ def create_call(call: list):
         # because it corresponds to the standalone statement () => read.
         # if it's not explicitly assigned anywhere, it should be disposed of simply
         # but the question is where it should be put?
+        input_count += 1
         line = 'IN ???? 0000'
     else:
         # function with no params: CALL <name> 0000
@@ -60,8 +68,7 @@ def create_call(call: list):
             else:
                 # udi
                 line += arg  # identifier name
-    if scope == 'ENTR': entry_code_section.append(line)
-    elif scope == 'FUNC': function_code_section.append(line)
+    append_to_code(line)
 
 def create_function_def(func: list):
     [name, _, _, body] = func  # anon: args & return_type
@@ -73,6 +80,8 @@ def create_function_def(func: list):
         function_code_section.append('HLT 0000 0000')
 
 def create_assign(assign: list):
+    global input_count
+
     [lhs, rhs] = assign
     line = ''
     '''
@@ -103,16 +112,13 @@ def create_assign(assign: list):
             if body[0] == 'read':
                 # why bother call traverse here if the result is so easy to get like this? => not very elegant, but i can live with that
                 line = f'IN {lhs} 0000'
+                input_count += 1
             else:  # assuming the hlpl writer isn't crazy enough to use write, though that wouldn't be an issue for code generation
                 traverse(rhs)
                 pop = 'POP 0000 0000'  # to use the return value, put in AC
                 movac = f'MOVAC {lhs} 0000'  # put return value in LHS
-                if scope == 'ENTR':
-                    entry_code_section.append(pop)
-                    entry_code_section.append(movac)
-                elif scope == 'FUNC':
-                    function_code_section.append(pop)
-                    function_code_section.append(movac)
+                append_to_code(pop)
+                append_to_code(movac)
         else:
             # arithmetic operation
             # also involves MOVAC, not MOV, so the last few lines of this function are pretty dumb
@@ -120,8 +126,7 @@ def create_assign(assign: list):
     else:
         # rhs is udi
         line = f'MOV {lhs} {rhs}'
-    if scope == 'ENTR': entry_code_section.append(line)
-    elif scope == 'FUNC': function_code_section.append(line)
+    append_to_code(line)
 
 def create_arithmetic(op: int, operands: list):
     [opd1, opd2] = operands
@@ -152,8 +157,7 @@ def create_arithmetic(op: int, operands: list):
     else:
         # just userdefined ids
         line += f'{opd1} {opd2}'
-    if scope == 'ENTR': entry_code_section.append(line)
-    elif scope == 'FUNC': function_code_section.append(line)
+    append_to_code(line)
 
 def create_return(given: list):
     # given can be a userdefined id, an operation, a literal, or a function call
@@ -167,6 +171,55 @@ def create_return(given: list):
     # give "yes". ==> ????
     traverse(given)
     function_code_section.append('RETURN 0000 0000')
+
+def create_test(condition: list):
+    [operator, [comp1, comp2]] = condition
+    line = ''
+    if operator == 'eq':
+        line += 'JMPE '
+    elif operator == 'gt':
+        line += 'JMPGE '
+    # comparands can be numeric literals, identifiers, or function calls
+    # let's ignore function calls right now, they're far too complicated 
+    # (they involve CALL POP and potentially MOV)
+    if comp2.isnumeric():
+        val = int(comp2)
+        sign = '+' if val >= 0 else '-'
+        val = str(val).rjust(4, "0")
+        to_add = sign + val
+    else:
+        to_add = comp2  # symbol
+    to_ac = f'ADD +0000 {to_add}'
+    append_to_code(to_ac)
+    # jump address is determined by the start of then_stats from create_selection
+    line += 'xxxx '  # can't know jump address yet (label)
+    if comp1.isnumeric():
+        val = int(comp1)
+        sign = '+' if val >= 0 else '-'
+        val = str(val).rjust(4, "0")
+        comp1 = sign + val
+    line += comp1
+    append_to_code(line)
+
+def create_selection(select: list):
+    # condition is eq ==> JMPE
+    # condition is gt ==> JMPGE (yes, it's okay, GTE can encompass GT)
+    [condition, then_stats, else_stats] = select
+    create_test(condition)
+    # then else_stats go here
+    [traverse(elt) for elt in else_stats]
+    # best i can do right now is end the program at the end of the selection
+    # so a HLT comes after both blocks of stats (sorry)
+    halt = 'HLT 0000 0000'
+    append_to_code(halt)
+    append_to_code('then')  # mark lines to determine jump line number, will be replaced by label
+    [traverse(elt) for elt in then_stats]
+    # append_to_code(halt)
+    # line at which then_stats starts is the jump address, can't be known at the time condition is being created
+    # so i'll put it there when asm is being built, at the end of traverse()
+
+def create_loop(loop: list):
+    pass
 
 def traverse(ast: list):
     global scope
@@ -186,11 +239,8 @@ def traverse(ast: list):
     elif root == 'funcall':
         create_call(ast[1])
     elif root == 'assign':
-        # ['assign', [lhs, rhs]]
         create_assign(ast[1])
     elif root == 'give':
-        # when a function finishes, it pushes whatever is after 'give'
-        # and halts
         create_return(ast[1])
     elif root == 'add':
         create_arithmetic(1, ast[1])
@@ -200,16 +250,27 @@ def traverse(ast: list):
         create_arithmetic(3, ast[1])
     elif root == 'div':
         create_arithmetic(4, ast[1])
+    elif root == 'loop':
+        create_loop(ast[1])
+    elif root == 'selection':
+        create_selection(ast[1])
 
+def build_asm():
     asm = ''
     for line in data_section:
         asm += line + '\n'
     for line in entry_code_section:
+        if line == 'then':
+            line = 'LBL 0000 L1'
+            asm = asm.replace('xxxx', 'L1')  # formatting, and not just L1
+            print('just replaced')
         asm += line + '\n'
     asm += 'HLT 0000 0000\n'
     for line in function_code_section:
         asm += line + '\n'
-    asm += 'INPUT.SECTION\n'  # trailing line return
+    asm += 'INPUT.SECTION\n'
+    for _ in range(input_count):
+        asm += '0 0 0000 0123\n'
     return asm
 
 def test(asm: str, prog: str) -> bool:
@@ -268,14 +329,16 @@ FUNC.PRODUCT
 MULT a b
 RETURN 0000 0000
 INPUT.SECTION
-'''   # notice what i mean with input issue, elaborated above
+0 0 0000 0123
+'''   # our dummy value is always 123
     elif prog == '5':
         expect = '''DATA.SECTION
 CODE.SECTION
-ADD +0002 0000
-JMPGE [0004] +0001
+ADD +0000 +0002
+JMPGE L1 +0001
 OUT 0000 [9996]
 HLT 0000 0000
+LBL 0000 L1
 OUT 0000 [9997]
 HLT 0000 0000
 INPUT.SECTION
@@ -308,7 +371,8 @@ def main(filepath: str, default: bool, from_parser, from_analyzer, from_generato
     with open('../milestone3/lex_output/symbol_table.json') as f:
         symbol_table = json.load(f)
 
-    asm = traverse(ast)
+    traverse(ast)
+    asm = build_asm()
     print('----ASSEMBLY----')
     print(asm)
     prog_number = 'default'

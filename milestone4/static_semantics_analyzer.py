@@ -281,7 +281,6 @@ def get_ast(cst) -> list:
         ## params from function definition, defined with typespec and udi
         return [get_ast(cst.typespec), get_ast(cst.name)]  # these are strings
     elif _type == SelectionNode:
-        root.append('if')
         root.append(get_ast(cst.condition))    # condition node
         then = []
         _else = []
