@@ -12,13 +12,13 @@
 
 () => entry => () [
     ~ Scenario one: arithmetic operations. HANDLED.
-    fix ascii a := 'L'.
-    var num b.
-    b := +(1, a).
+    ~ fix ascii a := 'L'.
+    ~ var num b.
+    ~ b := +(1, a).
 
     ~ Scenario 2: assignments. HANDLED.
-    ~ var num a.
-    ~ a := 'L'.
+    var num a.
+    a := 'L'.
 
     ~ Scenario 3: constant initialization. HANDLED.
     ~ fix num a := 'L'.
