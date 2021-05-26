@@ -1,20 +1,12 @@
-~ Only adding this sample program to show selection & looping.
-~ This sample adds nothing to the task of subprogram call & return.
+~ Only adding programs 5 & 6 to show selection & looping.
+~ They add nothing to the task of subprogram call & return.
+~ 5.hlpl demonstrates selection.
 
 () => entry => () [
-    var num i.
-    i := 0.
-
     check (> (1 2)) [
-        ~ comma, no?
         ("hello") => write.
     ]
     other [
         ("sup") => write.
-    ]
-
-    iterif (>(5 i)) [
-        ("i am so tired") => write.
-        i := +(i, 1).
     ]
 ]

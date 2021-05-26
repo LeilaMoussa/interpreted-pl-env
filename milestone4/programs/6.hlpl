@@ -1,0 +1,11 @@
+~ To demonstrate looping
+
+() => entry => () [
+    var num i.
+    i := 0.
+
+    iterif (>(5 i)) [
+        ("i am so tired") => write.
+        i := +(i, 1).
+    ]
+]

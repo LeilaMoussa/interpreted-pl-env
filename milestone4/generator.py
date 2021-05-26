@@ -270,8 +270,100 @@ def traverse(ast: list):
     asm += 'HLT 0000 0000\n'
     for line in function_code_section:
         asm += line + '\n'
-    asm += 'INPUT.SECTION\n'
+    asm += 'INPUT.SECTION\n'  # trailing line return
     return asm
+
+def test(asm: str, prog: str) -> bool:
+    # changes to accommodate these expectations: no more PUSH or POP
+    # and just CALL & RETURN instead
+    # name capitalization/truncation if necessary
+    # HLT in the case of non-give function termination
+    # do we even need input.section, when we can implement it as a scanf() in the interpreter?
+    # because otherwise, we'd have to come up with input here
+    if prog == '1':
+        expect = '''
+            DATA.SECTION
+            GLOB a +0002
+            GLOB b +0000
+            CODE.SECTION
+            OUT 0000 [9999]
+            HLT 0000 0000 
+            INPUT.SECTION
+
+                 '''
+    elif prog == '2':
+        expect = '''
+            DATA.SECTION
+            CODE.SECTION
+            CALL GREET 0000
+            HLT 0000 0000
+            FUNC.GREET
+            OUT 0000 [9999]
+            HLT 0000 0000
+            INPUT.SECTION
+
+                 '''
+    elif prog == '3':
+        expect = '''
+            DATA.SECTION
+            GLOB initial [9999]
+            CODE.SECTION
+            CALL GREET 0000
+            HLT 0000 0000
+            FUNC.GREET
+            OUT 0000 [9998]
+            OUT 0000 [9997]
+            HLT 0000 0000
+            INPUT.SECTION
+
+                '''
+    elif prog == '4':
+        expect = '''
+            DATA.SECTION
+            GLOB a +0010
+            ENTR b +0000
+            CODE.SECTION
+            IN b 0000
+            CALL product b
+            HLT 0000 0000
+            FUNC.PRODUCT
+            MULT a b
+            RETURN 0000 0000
+            INPUT.SECTION
+            0 0 0000 0012
+
+                 '''
+    elif prog == '5':
+        expect = '''
+            DATA.SECTION
+            CODE.SECTION
+            ADD +0002 0000
+            JMPGE [0004] +0001
+            OUT 0000 [9996]
+            HLT 0000 0000
+            OUT 0000 [9997]
+            HLT 0000 0000
+            INPUT.SECTION
+
+                 '''
+    elif prog == '6':
+        expect = '''
+            DATA.SECTION
+            ENTR I 0000
+            CODE.SECTION
+            MOV I 0000
+            ADD I +0000
+            OUT 0000 [9997]
+            ADD I +0001
+            MOVAC I 0000
+            LOOP +0005 [0001]
+            HLT 0000 0000
+            INPUT.SECTION
+
+                 '''
+    else:
+        return True
+    return asm == expect
 
 def main(filepath: str, default: bool, from_parser, from_analyzer, from_generator):
     global literal_table, symbol_table
@@ -287,13 +379,18 @@ def main(filepath: str, default: bool, from_parser, from_analyzer, from_generato
     asm = traverse(ast)
     print('----ASSEMBLY----')
     print(asm)
-    # write to .asbl file
+    prog_number = filepath.split('.')[0]
+    if not test(asm, prog_number):
+        sys.exit('Generated assembly was not expected.')
+    with open(f'./assembly/{prog_number}.asbl') as op:
+        op.write(asm)
 
 if __name__ == '__main__':
     default = False
     filepath = ''
     if len(sys.argv) < 2:
-        print('No HLPL input file provided for code generation, proceeding with default code from milestone3/constants.py.')
+        print('No HLPL input file provided for code generation,\
+        proceeding with default code from milestone3/constants.py.')
         default = True
     else:
         filepath = sys.argv[1]

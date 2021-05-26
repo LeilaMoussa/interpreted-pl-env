@@ -15,8 +15,8 @@ literal_table = {}
 # to identify exactly what we matched to and be able to print output.
 master_regex = '|'.join(f'(?P<{group}__{_id}>{regex})' for (regex, group, _id) in groups)
 
-# According to out understanding, it is at this stage that literals
-# are assigned addresses. Addresses start at data location 0001.
+# Literals are assigned addresses bottom up.
+lit_address = 9999
 address = 1
 
 def open_output_file():
@@ -31,13 +31,13 @@ def open_output_file():
     return op
 
 def handle_literal(token_type: str, token_val: str):
-    global address
+    global lit_address
     # Duplicates could not exist anyway in a dictionary, but this check serves to
     # guarantee that memory (our VM's memory that will be populated at the level of the
     # interpreter) isn't wasted in the case of duplicate literals.
     if token_val not in literal_table:
-        literal_table[token_val] = address
-        address += 1
+        literal_table[token_val] = lit_address
+        lit_address -= 1
 
 def handle_symbol(token_val: str):
     global address
