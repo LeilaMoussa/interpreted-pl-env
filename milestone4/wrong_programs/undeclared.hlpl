@@ -1,4 +1,12 @@
 () => entry => () [
     ~ Scenario 1: assign.
-    a := 1.
+    ~ a := 1.
+
+    ~ Scenario 2: function call with undeclared argument.
+    (a) => write.
+
+    ~ Scenario 3: function call with undeclared function.
+    ~ () => somefunc.
+
+    ~ Take a look at instructions, i think they talk about possible scenarios.
 ]
