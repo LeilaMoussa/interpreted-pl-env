@@ -1,7 +1,7 @@
 ~ Complexity level: 3
 ~ Function with no parameters or return values, but access to global vars.
 
-fix ascii initial := 'L'.
+fix ascii initial := 3.
 
 func () => greet => () [
 	("Hello ") => write.
