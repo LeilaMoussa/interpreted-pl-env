@@ -33,7 +33,7 @@ HashTable* labels;
 /*Variable to count errors if present, used in the error message*/
 int errorCount = 0;
 /* Verbose option */
-int VERBOSE = TRUE;
+int VERBOSE = FALSE;
 
 /*Function prototypes*/
 
