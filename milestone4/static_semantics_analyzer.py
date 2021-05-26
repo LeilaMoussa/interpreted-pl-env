@@ -24,6 +24,7 @@ def is_number(operand) -> bool:
     return True
 
 def type_check_operands(opd1, opd2) -> bool:
+    return True  # TEMP!! $
     # operands can be any combination of numeric literals, UDIs, operations, or function calls
     # representation of numeric literal: just the number as a string, like '1'
     # UDI: just the name
@@ -36,11 +37,13 @@ def type_check_operands(opd1, opd2) -> bool:
     return is_number(opd1) and is_number(opd2)
     # is type_check_operands() a superfluous function then?
 
-def is_type(typespec: str, y):
+def is_type(typespec: str, y) -> bool:
+    return True  # TEMP!! $
     if type(y) == list:
         # op, funcall, or possibly a literal (the whole literal situation is a bit messy)
         root = y[0]
         if root == 'funcall':
+            # $ read & write don't have attributes
             return symbol_table[y[1][0]]['attributes']["return_type"] == typespec
         elif root == 'literal':
             v = y[1]
@@ -79,6 +82,7 @@ def match_return(returned):
                 return is_type(symbol_table[entry]['attributes']['return_type'], returned)
         except:
             pass
+    return False  # i guess?
 
 def match_argument(passed: list, function_name: str):
     # this is tricky, because we can call 4 functions:
@@ -105,6 +109,7 @@ def match_argument(passed: list, function_name: str):
     return True
 
 def in_ref_env(identifier: str) -> bool:
+    return True  # TEMP!!$
     # If we're not in the middle of declaring a var/const or defining a function,
     # (in_dec is True if we're in the middle of doing that),
     # check if the identifier is within our referencing environment.
@@ -115,7 +120,9 @@ def in_ref_env(identifier: str) -> bool:
     #       but even if it's not, that's not necessarily an error (think function parameters).
     #       ==> parameters: we're in scope 3 and referend exists in arguments field of that function.
     symbol_info = symbol_table[identifier]['attributes']
+    print('symbol info of', symbol_info, identifier)
     symbol_scope = symbol_info['scope']
+    # parameters fail here
     if not symbol_scope:
         return False
     if symbol_scope == current_scope or symbol_scope == 1:
@@ -130,7 +137,9 @@ def in_ref_env(identifier: str) -> bool:
         if symbol_info['class'] == 'function':
             return False  # False for potentially different reasons, but error nonetheless
         for elt in symbol_info['arguments']:
+            print('iterating over arguments')
             if elt['name'] == identifier:
+                print('found b in arguments')
                 return True
         return False
 
@@ -195,7 +204,7 @@ def get_ast(cst) -> list:
         root.append(cst.type)
         root.append(get_ast(cst.value))
     elif _type == AssignmentNode:
-        root.append(cst.identifier)
+        root.append(get_ast(cst.identifier))
         # this code sucks!
         if cst.type == 'funcall':
             assign_stuff = ['funcall']
