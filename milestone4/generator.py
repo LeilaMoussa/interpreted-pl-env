@@ -48,8 +48,9 @@ def create_call(call: list):
         # because it corresponds to the standalone statement () => read.
         # if it's not explicitly assigned anywhere, it should be disposed of simply
         # but the question is where it should be put?
+        # I guess data location 5000 is very unlikely to be occupied...
         input_count += 1
-        line = 'IN ???? 0000'
+        line = 'IN [5000] 0000'
     else:
         # function with no params: CALL <name> 0000
         # one param: CALL <name> <param as symbol or numeric literal or address>
@@ -62,9 +63,12 @@ def create_call(call: list):
             # again, we're only implementing one argument on purpose, 
             # though theoretically it would be pretty easy to accommodate any number
             if type(arg) == list:
-                # literal or operation
-                # requires preceding assembly instructions and saving in memory
-                pass
+                kind = arg[0]
+                if kind == 'literal':
+                    line += literal_table[arg[1]].rjust(4, "0")
+                else:
+                    # operation, we decided not to do this
+                    pass
             else:
                 # udi
                 line += arg  # identifier name
@@ -76,7 +80,6 @@ def create_function_def(func: list):
     [traverse(elt) for elt in body]
     last_written = function_code_section[-1]
     if last_written != 'HLT 0000 0000' and last_written != 'RETURN 0000 0000':
-        # idk
         function_code_section.append('HLT 0000 0000')
 
 def create_assign(assign: list):
@@ -111,10 +114,12 @@ def create_assign(assign: list):
             # 2. write: shouldn't happen because it makes no sense, so won't bother writing the expected result
             # 3. userdefined: CALL, POP, MOVAC (remember, MOVAC means move OUT of the AC)
             if body[0] == 'read':
-                # why bother call traverse here if the result is so easy to get like this? => not very elegant, but i can live with that
+                # why bother call traverse here if the result is so easy to get like this?
+                #  => not very elegant, but we can live with that
                 line = f'IN {lhs} 0000'
                 input_count += 1
-            else:  # assuming the hlpl writer isn't crazy enough to use write, though that wouldn't be an issue for code generation
+            else:
+                # assuming the hlpl writer isn't crazy enough to use write, though that wouldn't be an issue for code generation
                 traverse(rhs)
                 pop = 'POP 0000 0000'  # to use the return value, put in AC
                 movac = f'MOVAC {lhs} 0000'  # put return value in LHS
@@ -147,22 +152,20 @@ def create_arithmetic(op: int, operands: list):
     # +(1, 2) ==> ADD +0001 +0002
     # +(a, b) ==> ADD a b
     # +(a, 1) ==> ADD a +0001
-
     # +(a, +(b, c)) ==> ADD b c; MOVAC [<next available location>] 0000; ADD a [<that location>]
-
     # +(a, () => somefunc) ==> CALL somefunc 0000; POP 0000 0000; MOVAC [<some address>] 0000; ADD a [<that address>]
-
     # +((b) => somefunc, -(a, -1)) ==>
     #   CALL somefunc b; POP 0000 0000; MOVAC [<x>] 0000; SUB a -0001; MOVAC [<y>] 0000; ADD [x] [y]
 
-    # i'll implement these last 2 cases later
     if type(opd1) == list and type(opd2) == list:
+        # function calls or operations
         # it could be both of them or just one of them!
         # there will be traversing, but the tricky part here is that we're building an unfinished line
-        line += 'stuff'
+        # unimplemented, unfortunately
+        pass
     else:
         # just userdefined ids or numeric literals
-        # $$
+        # We recognize the sub-optimal code quality, sorry!
         if opd2.isnumeric():
             sign = '+' if int(opd2) >= 0 else '-'
             opd2 = sign + opd2.rjust(4, "0")
@@ -174,14 +177,15 @@ def create_arithmetic(op: int, operands: list):
 
 def create_return(given: list):
     # given can be a userdefined id, an operation, a literal, or a function call
-    # the way we defined PUSH, the VALUE of the returnedExpression needs to be in the AC
-    # easy for number values, but what about string/char literals?
-    # we'd have to use an address
-    # but how can we differentiate between
-    # give a.  ==> ???? PUSH 0000 0000; HLT 0000 0000
-    # give 1.  ==> ADD +0001 0000; PUSH 0000 0000; HLT 0000 0000 (add to put it on the AC)
-    # give +(a, b) ==> ADD a b; PUSH 0000 0000; HLT...
-    # give "yes". ==> ????
+    # we decided to keep details away from the AL and push them over to the interpreter
+    # where actual stack management should be implemented.
+    # the alternative was to handle pushing return values here, but that has proven to be difficult
+    # because we envisioned the stack as holding return addresses, parameters, and return values
+    # and pushing a return value requires an empty stack
+    # (this is a pretty nuanced discussion and we've been quite confused about it,
+    # if you'd like to know more we can elaborate later)
+
+    # In short: RETURN 0000 0000
     traverse(given)
     function_code_section.append('RETURN 0000 0000')
 
@@ -204,7 +208,7 @@ def create_test(condition: list):
         to_add = comp2  # symbol
     to_ac = f'ADD +0000 {to_add}'
     append_to_code(to_ac)
-    # jump address is determined by the start of then_stats from create_selection
+    # jump address (label) is determined by the start of then_stats from create_selection
     line += 'xxxx '  # can't know jump address yet (label)
     if comp1.isnumeric():
         val = int(comp1)
@@ -215,36 +219,29 @@ def create_test(condition: list):
     append_to_code(line)
 
 def create_selection(select: list):
-    # condition is eq ==> JMPE
-    # condition is gt ==> JMPGE (yes, it's okay, GTE can encompass GT)
     [condition, then_stats, else_stats] = select
     create_test(condition)
-    # then else_stats go here
+    # condition can be eq or gt
+    # else_stats go first
     [traverse(elt) for elt in else_stats]
-    # best i can do right now is end the program at the end of the selection
-    # so a HLT comes after both blocks of stats (sorry)
     halt = 'HLT 0000 0000'
     append_to_code(halt)
-    append_to_code('then')  # mark lines to determine jump line number, will be replaced by label
+    # Ending the code after the 'then' and 'else' clauses for simplicity.
+    append_to_code('then')  # mark lines to determine jump line number, will be replaced by label in build_asm()
     [traverse(elt) for elt in then_stats]
-    # line at which then_stats starts is the jump address, can't be known at the time condition is being created
-    # so i'll put it there when asm is being built, at the end of traverse()
+    # line at which then_stats starts is the jump address (label), which 
+    # can't be known at the time condition is being created
+    # so i'll put it there when asm is being built in build_asm()
 
 def create_loop(loop: list):
     [[_, [comp1, comp2]], stats] = loop
     append_to_code('LBL 0000 yyyy')
-    # i need to make sure all labels across the whole code (loops and selections) don't repeat
-    # structure: label, body, loop instruction
-    # condition can be eq or gt
-    # but LOOP keeps going while AC < upper bound
-    # so let's only handle GT in conditions, and i'll assume that's all there is
-    # comp1 is upperbound
-    # need to keep putting value of comp2 in AC at the beginning of the loop
+    # yyyy is the placeholder for loop labels, the same way xxxx is the placeholder for selection labels
+    # with some small differences between the 2 (depends on where LBL is relative to JMP or LOOP)
     if comp2.isnumeric():
         val = int(comp2)
         sign = '+' if val >= 0 else '-'
         comp2 = f'{sign}{comp2.rjust(4, "0")}'
-    # i'm aware that this code needs to be put in a function
     append_to_code(f'ADD +0000 {comp2}')
     [traverse(elt) for elt in stats]
     if comp1.isnumeric():
@@ -252,7 +249,6 @@ def create_loop(loop: list):
         sign = '+' if val >= 0 else '-'
         comp1 = f'{sign}{comp1.rjust(4, "0")}'
     append_to_code(f'LOOP {comp1} yyyy')
-    pass
 
 def traverse(ast: list):
     global scope
@@ -293,6 +289,9 @@ def build_asm():
     for line in data_section:
         asm += line + '\n'
     label_count = 0
+    # Sorry for the eye sore: the repeated code below takes care of resolving labels
+    # such that JMPs refer to a label defined after them, and LOOPs refer to labels defined before them
+    # in both the main function and the user defined function
     for line in entry_code_section:
         if line == 'then':
             label_count += 1
@@ -307,21 +306,26 @@ def build_asm():
         asm += line + '\n'
     asm += 'HLT 0000 0000\n'
     for line in function_code_section:
-        # in theory, i need to do the same protocol for selection & loop labels here
-        # but it's not a priority
+        if line == 'then':
+            label_count += 1
+            label = 'L' + str(label_count)
+            line = 'LBL 0000 ' + label
+            asm = asm.replace('xxxx', label)
+        elif 'yyyy' in line:
+            if line[:3] == 'LBL':
+                label_count += 1
+                label = 'L' + str(label_count)
+            line = line.replace('yyyy', label)
         asm += line + '\n'
     asm += 'INPUT.SECTION\n'
     for _ in range(input_count):
+        # For programs using () => read. , i.e. reading user input,
+        # we decided to provide dummy input at this level
+        # type checking these reads is doable, but we didn't do it
         asm += '0 0 0000 0123\n'
     return asm
 
 def test(asm: str, prog: str) -> bool:
-    # changes to accommodate these expectations: no more PUSH or POP
-    # and just CALL & RETURN instead
-    # name capitalization/truncation if necessary
-    # HLT in the case of non-give function termination
-    # do we even need input.section, when we can implement it as a scanf() in the interpreter?
-    # because otherwise, we'd have to come up with input here
     if prog == 'default':
         expect = '''DATA.SECTION
 CODE.SECTION
@@ -404,7 +408,7 @@ INPUT.SECTION
     return asm == expect
 
 def main(filepath: str, default: bool, from_parser, from_analyzer, from_generator):
-    global literal_table, symbol_table
+    global literal_table
 
     ast = analyze(filepath, default, from_parser, from_analyzer, from_generator)
     print('-------- AST: ---------')
@@ -412,8 +416,6 @@ def main(filepath: str, default: bool, from_parser, from_analyzer, from_generato
 
     with open('../milestone3/lex_output/literal_table.json') as f:
         literal_table = json.load(f)
-    with open('../milestone3/lex_output/symbol_table.json') as f:
-        symbol_table = json.load(f)
 
     print('============================= START CODE GENERATION ==================================')
     traverse(ast)

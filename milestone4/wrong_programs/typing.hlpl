@@ -7,15 +7,14 @@
 ~ ]
 
 ~ Scenario 6a: arguments.
-func (num a) => grapes => () [
-
-]
+~ func (num a) => grapes => () [
+~ ]
 
 () => entry => () [
     ~ Scenario one: arithmetic operations. HANDLED.
-    ~ fix ascii a := 'L'.
-    ~ var num b.
-    ~ b := +(1, a).
+    fix ascii a := 'L'.
+    var num b.
+    b := +(1, a).
 
     ~ Scenario 2: assignments. HANDLED.
     ~ var num a.
@@ -32,6 +31,6 @@ func (num a) => grapes => () [
     ~ other [ ]
 
     ~ Scenario 6b: arguments.
-    ('L') => grapes.
+    ~ ('L') => grapes.
 
 ]

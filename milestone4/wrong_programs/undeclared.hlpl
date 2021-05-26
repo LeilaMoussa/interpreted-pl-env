@@ -1,17 +1,12 @@
 () => entry => () [
 
     ~ Scenario 1a: assign.
-    ~ a := 1.
+    a := 1.
 
     ~ Scenario 1b: function call with undeclared argument.
     ~ (a) => write.
 
     ~ Scenario 2: function call with undeclared function.
     ~ () => somefunc.
-
-    ~ Take a look at instructions, i think they talk about possible scenarios.
-    ~ Now that i think about it, all these scenarios can be summarized in checking
-    ~ UserDefinedNode, unless of course if we're in a declaration (flag?).
-    ~ I'll change that in the morning. Also think scopes!
 
 ]
