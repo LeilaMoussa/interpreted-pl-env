@@ -1,5 +1,5 @@
 from parse import main as get_cst
-import sys, os
+import sys
 import json
 from cst import *
 
@@ -18,13 +18,9 @@ def is_number(operand) -> bool:
             func_name = operand[1][0]  # bad code, i know
             if symbol_table[func_name]['attributes']['return_type'] != 'num':
                 return False
-    else:
-        print('something fishy is going on')
-        return False
     return True
 
 def type_check_operands(opd1, opd2) -> bool:
-    return True  # TEMP!! $
     # operands can be any combination of numeric literals, UDIs, operations, or function calls
     # representation of numeric literal: just the number as a string, like '1'
     # UDI: just the name
@@ -33,17 +29,14 @@ def type_check_operands(opd1, opd2) -> bool:
     # that operations are numbers
     # function calls are represented as ['funcall', [name, [args]]] 
     # ==> symbol_table[name][attributes][return_type] should be num
-
     return is_number(opd1) and is_number(opd2)
-    # is type_check_operands() a superfluous function then?
 
 def is_type(typespec: str, y) -> bool:
-    return True  # TEMP!! $
     if type(y) == list:
         # op, funcall, or possibly a literal (the whole literal situation is a bit messy)
         root = y[0]
         if root == 'funcall':
-            # $ read & write don't have attributes
+            # $ read & write don't have attributes!
             return symbol_table[y[1][0]]['attributes']["return_type"] == typespec
         elif root == 'literal':
             v = y[1]
@@ -88,7 +81,6 @@ def match_argument(passed: list, function_name: str):
     # this is tricky, because we can call 4 functions:
     # the userdefined function, entry (which should be an error), read, & write
     # so we need to give the function's name to match_argument
-    print('passed', passed)
     number_passed = len(passed)
     if number_passed > 1:
         return False
@@ -109,7 +101,6 @@ def match_argument(passed: list, function_name: str):
     return True
 
 def in_ref_env(identifier: str) -> bool:
-    return True  # TEMP!!$
     # If we're not in the middle of declaring a var/const or defining a function,
     # (in_dec is True if we're in the middle of doing that),
     # check if the identifier is within our referencing environment.
