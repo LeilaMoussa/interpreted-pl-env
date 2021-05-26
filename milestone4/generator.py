@@ -30,8 +30,6 @@ def create_dec(dec: list, scope: str):
 def create_call(call: list):
     global input_count
 
-    print('in call......')
-
     [name, args] = call
     # args is a list, can be empty, or have one element only (that's all we want to handle, though theoretically
     # we could do any number)
@@ -84,7 +82,6 @@ def create_function_def(func: list):
 def create_assign(assign: list):
     global input_count
 
-    print('in assign......')
     [lhs, rhs] = assign
     line = ''
     '''
@@ -302,7 +299,6 @@ def build_asm():
             label = 'L' + str(label_count)
             line = 'LBL 0000 ' + label
             asm = asm.replace('xxxx', label)
-            print('just replaced')
         elif 'yyyy' in line:
             if line[:3] == 'LBL':
                 label_count += 1
@@ -411,22 +407,26 @@ def main(filepath: str, default: bool, from_parser, from_analyzer, from_generato
     global literal_table, symbol_table
 
     ast = analyze(filepath, default, from_parser, from_analyzer, from_generator)
-    print('ast given to generator:', ast)
+    print('-------- AST: ---------')
+    print(ast)
 
     with open('../milestone3/lex_output/literal_table.json') as f:
         literal_table = json.load(f)
     with open('../milestone3/lex_output/symbol_table.json') as f:
         symbol_table = json.load(f)
 
+    print('============================= START CODE GENERATION ==================================')
     traverse(ast)
     asm = build_asm()
-    print('----ASSEMBLY----')
+    print('----ASSEMBLY----\n')
     print(asm)
     prog_number = 'default'
     if filepath:
         prog_number = filepath.split('.hlpl')[0].split('/')[-1]  # Unix-style path.
     if not test(asm, prog_number):
         sys.exit('Generated assembly was not expected.')
+    else:
+        print('Generated assembly matches expectations!')
     with open(f'./assembly/{prog_number}.asbl', 'w') as op:
         op.write(asm)
 
@@ -434,8 +434,8 @@ if __name__ == '__main__':
     default = False
     filepath = ''
     if len(sys.argv) < 2:
-        print('No HLPL input file provided for code generation,\
-        proceeding with default code from milestone3/constants.py.')
+        print('No HLPL input file provided for code generation, \
+proceeding with default code from milestone3/constants.py.')
         default = True
     else:
         filepath = sys.argv[1]

@@ -98,11 +98,9 @@ def match_argument(passed: list, function_name: str):
     if function_name == 'read':
         return number_passed == 0
     if function_name == 'write':
-        print('supposed to be here')
         return True  # we'll allow anything to be passed to write
     # at this point, we're dealing with a userdefine function
     params = symbol_table[function_name]['attributes']['arguments']
-    print('params', params)
     if number_passed != len(params):
         return False
     if number_passed > 0:
@@ -335,13 +333,14 @@ def main(filepath: str, default: bool, from_parser, from_analyzer, from_generato
     with open('../milestone3/lex_output/symbol_table.json') as f:
         symbol_table = json.load(f)
     if cst:
-        print('Parse tree ready:')
+        print('---------------- Parse tree: --------------------------------')
         cst.display()
+        print('============================= START STATIC SEMANTICS ==================================')
         ast = get_ast(cst)
         if from_generator:
             return ast
         else:
-            print('-------AST------')
+            print('-------------- AST: ---------------')
             print(ast)
         with open('../milestone3/lex_output/symbol_table.json', 'w') as op:
             op.write(json.dumps(symbol_table, indent=4))
@@ -352,8 +351,8 @@ if __name__ == '__main__':
     default = False
     filepath = ''
     if len(sys.argv) < 2:
-        print('No HLPL input file provided for static semantics\
-            analysis, proceeding with default code from milestone3/constants.py.')
+        print('No HLPL input file provided for static semantics \
+analysis, proceeding with default code from milestone3/constants.py.')
         default = True
     else:
         filepath = sys.argv[1]

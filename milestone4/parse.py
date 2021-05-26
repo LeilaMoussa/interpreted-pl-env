@@ -6,7 +6,8 @@ sys.path.append(os.path.abspath('../milestone3'))
 from lex import main as generate
 from cst import *
 
-VERBOSE = True
+VERBOSE = False  # We would have liked to make this a CL argument, but we didn't have time.
+                 # If you'd like to see verbose execution, just change this manually.
 
 token_gen = None  # token_gen is a generator object of (token, lexeme, line_number)
 current_token = None
@@ -525,7 +526,6 @@ def functionCall():
     global current_token
 
     if VERBOSE: print("In functionCall.")
-    print(current_token)
     if current_token != 'LPAREN':
         return False
     current_token = get_next_token()
@@ -650,18 +650,20 @@ def numericLiteral():
 #function from which we will start parsing, by calling program
 def main(filepath, default, from_parser, from_analyzer=False):
     global token_gen, current_token
+
+    print('============================= START PARSING ==================================')
     token_gen = generate(filepath, default, from_parser)
     current_token = get_next_token()
     parse_tree = program()
     #if parse tree was constructed
     if parse_tree:
-        if from_analyzer: return parse_tree
-        print('displaying parse tree...')
+        if from_analyzer:
+            return parse_tree
+        print('---------- Parse tree: ------------')
         parse_tree.display()
-    #parse tree didn't get constructed
+    # if parse tree didn't get constructed...
     else:
         print('Error.')
-        print(current_token)
         
 #program entry point
 if __name__ == '__main__':
@@ -669,7 +671,7 @@ if __name__ == '__main__':
     filepath = ''
     if len(sys.argv) < 2:
         print('No HLPL input file provided for parsing, proceeding with default code \
-            from milestone3/constants.py.')
+from milestone3/constants.py.')
         default = True
     else:
         filepath = sys.argv[1]

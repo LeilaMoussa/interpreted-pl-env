@@ -7,7 +7,6 @@
 
 class TypeNode:
     def __init__(self, value: str):
-        print('init type')
         self.value = value  # num or ascii for now
     def display(self):
         print('--typespec--')
@@ -15,7 +14,6 @@ class TypeNode:
 
 class UserDefinedNode:
     def __init__(self, name: str):
-        print('init userdefine')
         self.name = name
     def display(self):
         print('--userdefined--')
@@ -23,7 +21,6 @@ class UserDefinedNode:
 
 class VarDeclarationNode:
     def __init__(self, typespec: TypeNode, identifier: UserDefinedNode):
-        print('init var')
         self.typespec = typespec
         self.identifier = identifier
     def display(self):
@@ -34,7 +31,6 @@ class VarDeclarationNode:
 
 class NumLiteralNode:
     def __init__(self, value: int):
-        print('init numlit')
         self.value = value
     def display(self):
         print('--numlit.value--')
@@ -66,7 +62,6 @@ class OperandNode:
 
 class AddNode():
     def __init__(self, opd1: OperandNode, opd2: OperandNode):
-        # golden opportunity for type checking but it doesn't fit here :(
         self.opd1 = opd1
         self.opd2 = opd2
     def display(self):
@@ -133,7 +128,6 @@ class OperationNode:
         
 class ReservedNode:
     def __init__(self, value: str):
-        print('init reserved')
         self.value = value  # write or read
     def display(self):
         print('--reserved--')
@@ -141,7 +135,6 @@ class ReservedNode:
 
 class IdentifierNode:
     def __init__(self, udi: UserDefinedNode, res: ReservedNode):
-        print('init id')
         if udi:
             self.type = 'userdefined'
             self.value = udi
@@ -158,7 +151,6 @@ class IdentifierNode:
 
 class CallNode:  # function call
     def __init__(self, name: IdentifierNode, args: list):
-        print('init call')
         self.name = name
         self.args = args  # list[ExpressionNode]
     def display(self):
@@ -169,7 +161,6 @@ class CallNode:  # function call
 
 class StringLiteralNode:
     def __init__(self, value: str):
-        print('init str')
         self.value = value
     def display(self):
         print('--strlit.value--')
@@ -186,7 +177,6 @@ class CharLiteralNode:
 class ExpressionNode:
     def __init__(self, char: CharLiteralNode, string: StringLiteralNode, \
         num: NumLiteralNode, udi: UserDefinedNode, op: OperationNode):
-        print('init expr')
         if char:
             self.type = 'char'
             self.value = char
@@ -213,7 +203,6 @@ class ExpressionNode:
 class FixDeclarationNode:
     def __init__(self, typespec: TypeNode, identifier: UserDefinedNode, exp: ExpressionNode, \
         op: OperationNode, call: CallNode):
-        print('init fix')
         self.typespec = typespec
         self.identifier = identifier
         if exp:
@@ -237,7 +226,6 @@ class FixDeclarationNode:
 
 class DeclarationNode:
     def __init__(self, var: VarDeclarationNode, fix: FixDeclarationNode):
-        print('init dec')
         if var:
             self.type = 'var'
             self.value = var
@@ -255,7 +243,6 @@ class DeclarationNode:
 class FunctionNode:
     def __init__(self, name: UserDefinedNode, args: list, return_type: TypeNode, \
          declarations: list, statements: list):
-        print('init func')
         self.name = name
         self.args = args
         self.return_type = return_type
@@ -299,7 +286,6 @@ class AssignmentNode:
 
 class ParamNode:
     def __init__(self, type: TypeNode, name: UserDefinedNode):
-        print('init param')
         self.typespec = type
         self.name = name
     def display(self):
@@ -310,7 +296,6 @@ class ParamNode:
 
 class ReturnNode:
     def __init__(self, exp: ExpressionNode, call: CallNode):
-        print('init return')
         if exp:
             self.type = 'expression'
             self.value = exp
@@ -398,7 +383,6 @@ class LoopNode:
 class StatementNode:
     def __init__(self, a_node: AssignmentNode, r_node: ReturnNode, s_node: SelectionNode,\
             l_node: LoopNode, f_node: CallNode):
-        print('init stat')
         if a_node:
             self.type = 'assign'
             self.value = a_node
@@ -424,7 +408,6 @@ class StatementNode:
 
 class MainNode:
     def __init__(self, declarations: list, statements: list):
-        print('init main')
         # we won't implement nested functions
         self.declarations = declarations  # of type DeclarationNode
         self.statements = statements  # of type StatementNode
@@ -436,7 +419,6 @@ class MainNode:
     
 class ProgramNode:
     def __init__(self, declarations: list, functions: list, main_node: MainNode):
-        print('init prog')
         self.declarations = declarations
         self.functions = functions
         self.main = main_node
@@ -447,4 +429,3 @@ class ProgramNode:
         [func.display() for func in self.functions]
         print('--prog.main--')
         self.main.display()
-        
