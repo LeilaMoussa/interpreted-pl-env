@@ -33,7 +33,7 @@ HashTable* labels;
 /*Variable to count errors if present, used in the error message*/
 int errorCount = 0;
 /* Verbose option */
-int VERBOSE = FALSE;
+int VERBOSE = TRUE;
 
 /*Function prototypes*/
 
@@ -76,15 +76,16 @@ void formatML(char*, int);
 /*Function to format input data*/
 void formatIN (char*, int);
 
+void fillAddressesLabels ();
 /*Main: Entry Point and Driver Program*/
 
 int main (int argc, char* argv[]) {
     char filepath [1000];
-    strcpy(filepath, "code_samples\\Pyramid.asbl");
+    strcpy(filepath, "code_samples\\Pyramid.asbl"); // or default.asbl
 
     if (argc < 2) {
         printf("WARNING. Input Assembly Language file path missing.\n");
-        printf("Proceeding with default input file ALcode1.txt...\n");
+        printf("Proceeding with default input file _______...\n");
     }
     else if (argc > 3) {
         printf("ERROR. Too many arguments.\n");
@@ -103,6 +104,7 @@ int main (int argc, char* argv[]) {
     MLFile = fopen ("Assembler_Output.mlg", "w");
     initHashTables();
     fillOpcodes();
+    fillAddressesLabels();
     initData();
     initProgram();
     initInput();
@@ -116,6 +118,55 @@ int main (int argc, char* argv[]) {
     fclose(ALFile);
     fclose(MLFile);
     return 0;
+}
+
+void fillAddressesLabels()
+{
+
+    char line[STRSIZE];
+    char help[STRSIZE];
+    char* token;
+    int lineNum = 1;
+    fgets(line, STRSIZE, ALFile);
+    printf ("%s", line);
+    while (strcmp(line, "CODE.SECTION\n") != 0)
+    {
+
+        fgets(line, STRSIZE, ALFile);
+        printf ("here");
+        printf ("%s", line);
+    }
+    fgets(line, STRSIZE, ALFile);
+    while (!feof(ALFile))
+    {
+        printf("%s", line);
+        if (strcmp(line, "FUNC.GREET\n") == 0 || strcmp(line, "FUNC.PRODUCT\n")== 0)
+        {
+            char* token = strtok(line, ".");
+            token = strtok(NULL, ".");
+            sprintf (help, "%04d", lineNum+1);
+            insert(symbols, token, help);
+        }
+        else
+        {
+            char* token = strtok(line, " ");
+            printf ("token: %s\n", token);
+            if (strcmp(token, "LBL") == 0)
+            {
+                printf ("worked\n");
+                token = strtok(NULL, " ");
+                token = strtok(NULL, " ");
+                sprintf (help, "%04d", lineNum+1);
+                insert(labels, token, help);
+            }
+
+        }
+        fgets(line, STRSIZE, ALFile);
+
+
+    }
+    printf ("got out\n");
+    fseek(ALFile, 0, SEEK_SET);
 }
 
 void formatML(char* str, int flag)
@@ -204,7 +255,7 @@ void removeSign (char* str) {
 int isAddress(char* str) {
     /*Check if given string is an address
     (i.e. it's 4 digits enclosed in brackets).
-    Return 0 if so and return 1 if otherwise*/
+    Return 0 if so and return 1 otherwise*/
     int i;
     if (strlen(str) == 6) {
         if (str[0] == '[' && str[5] == ']') {
@@ -250,9 +301,10 @@ void initInput () {
     /*String to reach each line*/
     int input;
     char line[STRSIZE];
+    fgets(line, STRSIZE, ALFile);
     while (!feof (ALFile)) {
         fgets(line, STRSIZE, ALFile);
-        // printf("got input line %s.\n", line); // this line shows the funky behavior
+        printf ("Line in input section: %s", line);
         if (line[0] == '\n' || strcmp(line, "") == 0) { }
         else {
 	        input = atoi (line);
@@ -268,6 +320,8 @@ void initInput () {
 	        fprintf (MLFile, "%s\n", line);
         }
     }
+    printf ("reached here\n");
+    printf ("error count after data %d\n", errorCount);
 }
 
 void initProgram() {
@@ -292,14 +346,22 @@ void initProgram() {
     int indicator;
     /*String to store formatted ML instruction*/
     char instruction[STRSIZE];
+    /*helper string*/
+    char unused[10];
+    printf ("IN CODE!!\n");
     fgets(line, STRSIZE, ALFile);
-    /*In line in empty, just skip*/
+    /*If line is empty, just skip*/
     while(line[0] == '\n')
     {
         fgets(line, STRSIZE, ALFile);
     }
-    while (strcmp (line, "INPUT.SECTION\n") != 0) {
+    while (strcmp (line, "INPUT.SECTION") != 0) {
         /*Extract opcode and operands*/
+        if (strcmp(line, "FUNC.GREET\n") == 0 || strcmp(line, "FUNC.PRODUCT\n") == 0)
+        {
+            fgets(line, STRSIZE, ALFile);
+        }
+        printf ("Line in code section: %s", line);
         sscanf (line, "%s %s %s", opcode, op[0], op[1]); // supports empty operand
         /*Lookup opcode in hashtable*/
         temp = getOpcode(opcode);
@@ -486,9 +548,12 @@ void initProgram() {
                     return;
                 }
             }//END MOVAC
+
                 else if (strcmp(opcode, "+3") == 0 || strcmp(opcode, "+4") == 0) {
                     //START JUMPE, JUMPGE
                     /*op[0] can be address or label, op[1] can be symbol, address, or literal*/
+                    strcpy(unused, "\n");
+                    strcat(op[0], unused);
                     temp = getLabel(op[0]);
                     if (temp >= 0) {
                         strcpy (op[0], labels[temp].value);
@@ -669,6 +734,8 @@ void initProgram() {
                 else if (strcmp (opcode, "+6") == 0) {
                     //START LOOP
                     /*op[1] is address and op[0] can be symbol, address, or literal*/
+                    strcpy(unused, "\n");
+                    strcat(op[1], unused);
                     temp = getLabel(op[1]);
                     if (temp >= 0) {
                         strcpy (op[1], labels[temp].value);
@@ -730,22 +797,7 @@ void initProgram() {
                         return;
                     }
                 } //END LOOP
-                else if (strcmp (opcode, "-6") == 0) {
-                    //START LABEL
-                    /*op[0] is unused, op[1] is label*/
-                    if (strcmp (op[0], "0000") == 0) {
-                       sprintf (help, "%04d", lineNumber+1);
-                       insert (labels, op[1], help);
-                       temp = getLabel(op[1]);
-                       strcpy(op[1], labels[temp].value);
-                       indicator = 0;
-                    }
-                    else {
-                        if (VERBOSE) printf ("Error. LABEL statement invalid at line %d.\n", lineNumber);
-                        errorCount++;
-                        return;
-                    }
-                } //END LABEL
+
                 else if (strcmp (opcode, "+7") == 0) {
                     //START IN
                     /*op[1] is unused and op[0] is symbol or address*/
@@ -823,15 +875,52 @@ void initProgram() {
                         return;
                     }
                 } //END HLT
-                /*now format the instruction we obtained*/
-                sprintf (instruction, "%s %d %s %s", opcode, indicator, op[0], op[1]);
-                /*write instruction to output file*/
-                fprintf (MLFile, "%s\n", instruction);
-                lineNumber++;
-                /*scan new line of AL code*/
-                fgets(line, STRSIZE, ALFile);
+                else if (strcmp(opcode, "+9") == 0) {
+                    //START CALL
+
+                        indicator = 0;
+                        strcpy(unused,"\n");
+                        printf ("THIS IS OP0 %s", op[0]);
+                        strcat(op[0], unused);
+                        temp = getSymbol(op[0]);
+                        printf ("THIS IS TEMP %d\n", temp);
+                        if (temp >=0)
+                            strcpy(op[0],symbols[temp].value);
+                        else
+                            printf ("didn't work");
+                        if (strcmp(op[1], "0000") != 0)
+                        {
+                            temp = getSymbol(op[1]);
+                            strcpy(op[1],symbols[temp].value);
+                        }
+
+                    }//END CALL
+                else if (strcmp(opcode, "-9") == 0) {
+                    //START RETURN
+                    if (strcmp(op[0], "0000") == 0 && strcmp (op[1], "0000") == 0) {
+                        indicator = 0;
+                    }
+                    else {
+                        if (VERBOSE) printf ("Error. HLT statement invalid at line %d.", lineNumber);
+                        errorCount++;
+                        return;
+                    }
+                }//END RETURN
+
+                if (strcmp(opcode, "-6") != 0)
+                {
+
+                    /*now format the instruction we obtained*/
+                    sprintf (instruction, "%s %d %s %s", opcode, indicator, op[0], op[1]);
+                    /*write instruction to output file*/
+                    fprintf (MLFile, "%s\n", instruction);
+                }
+                    lineNumber++;
+                    /*scan new line of AL code*/
+                    fgets(line, STRSIZE, ALFile);
                 while(line[0] == '\n')
                 {
+
                     fgets(line, STRSIZE, ALFile);
                 }
             }
@@ -844,17 +933,21 @@ void initProgram() {
     } //END WHILE
     /*write separator*/
     fprintf (MLFile, "%s\n", "+8 8 8888 8888");
+    printf ("error count after code %d\n", errorCount);
 }
 
 void initData () {
+
     char line[STRSIZE];
     char help[STRSIZE];
     char ML_line[STRSIZE];
     char opcode[STRSIZE], op[2][STRSIZE];
     int lineNumber = 1;
     int literal_value;
+    printf ("IN DATA!!\n");
     /*write the very first line of the ML*/
     //fprintf (MLFile, "%s\n", "+0 0 0000 0000"); // we don't need this
+    //fseek(ALFile, 0, SEEK_SET);
     fgets(line, STRSIZE, ALFile);
     /*Read data section from AL file line by line, make sure that the right
     opcode is being used i.e. DEC, extract the operands, insert symbols
@@ -868,6 +961,7 @@ void initData () {
     if (strcmp(line, "DATA.SECTION\n") == 0) {
         /*scan first line of actual declarations*/
         fgets(line, STRSIZE, ALFile);
+
         while (line[0] == '\n')
         {
             fgets(line, STRSIZE, ALFile);
@@ -875,8 +969,9 @@ void initData () {
         while (strcmp (line, "CODE.SECTION\n") != 0) {
             /*we still didn't reach the end of the initialization section*/
             /*extract opcode and operands of DEC instructions*/
+            printf ("Line in data section: %s", line);
             sscanf(line, "%s %s %s", opcode, op[0], op[1]);
-            if (strcmp (opcode, "DEC") != 0) {
+            if (strcmp (opcode, "GLOB") != 0 && strcmp (opcode, "ENTR") != 0 && strcmp (opcode, "FUNC") != 0) {
                if (VERBOSE) printf ("Error. Invalid declaration operation at line %d.\n", lineNumber);
                errorCount++;
                return;
@@ -915,6 +1010,7 @@ void initData () {
         errorCount++;
         return;
     }
+    printf ("error count after data %d\n", errorCount);
 }
 
 int getOpcode(char* str){
@@ -942,6 +1038,7 @@ int getSymbol(char* str) {
     /*hash str, and check if the this entry exists*/
     /*return the index if it exists, return -1 otherwise*/
     int idx = hash(str);
+    printf ("THIS IS THE INDEX %d\n", idx);
     if (strcmp(symbols[idx].key, str) == 0) {
         return idx;
     }
@@ -1019,7 +1116,7 @@ void initHashTables() {
 void fillOpcodes () {
 	int i;
     /*these are the opcode entries*/
-    char* entries[15][2] = {{"MOVE", "+0"}, {"MOVAC", "-0"},
+    char* entries[18][2] = {{"MOVE", "+0"}, {"MOVAC", "-0"},
                             {"ADD", "+1"}, {"SUB", "-1"},
                             {"MULT", "+2"}, {"DIV", "-2"},
                             {"JMPE", "+3"},
@@ -1027,11 +1124,11 @@ void fillOpcodes () {
                             {"RARR", "+5"}, {"WARR", "-5"},
                             {"LOOP", "+6"}, {"LBL", "-6"},
                             {"IN", "+7"}, {"OUT", "-7"},
-                            {"HLT", "+8"}
+                            {"HLT", "+8"}, {"RETURN", "-9"},
+                            {"CALL", "+9"}
                             };
-                            /* Opcodes -3, -4, -8, +9, -9 free for now*/
 
-    for (i = 0; i < 15; i++) {
+    for (i = 0; i < 17; i++) {
         insert(opcodes, entries[i][0], entries[i][1]);
     }
 }

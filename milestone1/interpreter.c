@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define MEMORY_SIZE 10000   /* Size of each of the arrays. */
 #define WORD_SIZE 15        /* Length of an ML instruction, spaces and zero delimiter included. */
@@ -60,11 +61,13 @@ void strip_spaces(char* integer) {
     strcpy(integer, output);
 }
 
+
 void populate_memory() {
     /* This function populates data memory with the initialization data
      * found in the first section of an ML program.
      * It also loads all instructions into instruction memory. */
-
+    FILE * literal_table = fopen("literal_table.txt", "r");
+    char ch;
     char ml_line [WORD_SIZE];       /* The line currently being read from the ML program file. */
     int data_idx = 0;               /* The line number with respect to the initialization data section,
                                      * which maps directly to the next address in data memory. */
@@ -78,6 +81,8 @@ void populate_memory() {
         return;
     }
 
+
+
     fgets(ml_line, WORD_SIZE, ml_program);              /* Read the very first line. Can't use fscanf because we have spaces. */
     while(!feof(ml_program)) {
         if (strcmp(ml_line, "+8 8 8888 8888") == 0) {
@@ -89,13 +94,22 @@ void populate_memory() {
             value = atoi(ml_line);                      /* Parse line as signed integer. */
             data_memory[data_idx++] = value;            /* Write it in memory. */
             if(VERBOSE)
-                printf("Data location %d has value %d.\n", data_idx-1, value);
+                printf("Data location %d has value %ld.\n", data_idx-1, value);
         }
         else if (sep_count == 1) {                              /* In code section. */
             strcpy(instruction_memory[code_idx++], ml_line);    /* Load instruction into memory. */
         }
-        else if (sep_count == 2)
-            return;
+        else if (sep_count == 2){
+            while((ch=fgetc(literal_table))!= EOF){
+              if(isdigit(ch)){
+                value = atoi(&ch);
+                data_memory[data_idx++] =  value;
+              }
+          }
+           return;
+        }
+
+
             /* Input data section, stop reading.
              * Input data will be read when necessary, i.e. with each IN instruction. */
         else {
@@ -108,7 +122,10 @@ void populate_memory() {
             fgets(ml_line, WORD_SIZE, ml_program);              /* Sometimes a blank line is read, in which case we should skip it, */
                                                                 /* unless we're in the input data section, because otherwise
                                                                  * we would be skipping an actual data line. */
+
     }
+
+
 }
 
 instruction_struct destructure_instruction(char* instruct) {
@@ -411,7 +428,7 @@ void display_vm_state() {
 
 int main (int argc, char* argv[]) {
     char filepath [1000];
-    strcpy(filepath, "code_samples\\Rectangle.mlg");
+    strcpy(filepath, "Rectangle.mlg");
     if (argc < 2) {
         printf("WARNING. Input Machine Language file path missing.\n");
         printf("Proceeding with default input file Rectangle.mlg...\n");
@@ -425,11 +442,20 @@ int main (int argc, char* argv[]) {
     if (argc == 3 && strcmp(argv[2], "-v") == 0) VERBOSE = TRUE;
 
     initialize_memory();
-    ml_program = fopen(filepath, "r");      /* The input ML file is assumed to be in the same directory. */
-    populate_memory();                      /* Read data and program from file and populate data & instruction memory. */
-    read_decode_execute();
-    fclose(ml_program);                     /* Input file should not be closed before,
-                                             * because input data is read during execution when necessary. */
-    display_vm_state();                     /* Display AC, IP, and memory, for transparency & debugging. */
+    ml_program = fopen(filepath, "r");
+    if (ml_program == NULL)
+    {
+        printf ("Error opening file.\n");
+    }
+        /* The input ML file is assumed to be in the same directory. */
+    else
+    {
+        populate_memory();                      /* Read data and program from file and populate data & instruction memory. */
+        read_decode_execute();
+        fclose(ml_program);                     /* Input file should not be closed before,
+                                            * because input data is read during execution when necessary. */
+        display_vm_state();
+    }
+    /* Display AC, IP, and memory, for transparency & debugging. */
     return 0;
 }
