@@ -8,7 +8,7 @@
 
 <fixDeclaration> → CONST_KW <typeSpecifier> <userDefinedIdentifier> ASGN (<expression> | <operation> | <functionCall>)
 
-<typeSpecifier> → NUM_KW | CHAR_KW | NUM_ADDR_KW | CHAR_ADDR_KW | NUM_ARR_KW <size> | STRING_KW <size> | ' ' // what's ' ' for?
+<typeSpecifier> → NUM_KW | CHAR_KW | NUM_ADDR_KW | CHAR_ADDR_KW | NUM_ARR_KW <size> | STRING_KW <size>
 
 <size> → <userDefinedIdentifier> | <digit> {<digit>}
 
@@ -18,9 +18,9 @@
 
 <parameter> → <typeSpecifier> <identifier> {COMMA <typeSpecifier> <identifier>}
 
-<statement> → (<assignment> | <return> | <selection> | <loop> | <comment> | <functionCall>) ENDSTAT  // we don't use comment anymore
+<statement> → (<assignment> | <return> | <selection> | <loop> | <functionCall>) ENDSTAT
 
-<assignment> → <userDefinedIdentifier> ASGN (<expression> | <operation> | <functionCall>)  // expression can be operation!!
+<assignment> → <userDefinedIdentifier> ASGN (<expression> | <operation> | <functionCall>)
 
 <return> → RETURN_KW <returnedExpression> ENDSTAT
 
