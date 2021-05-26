@@ -81,23 +81,10 @@ def match_return(returned):
             pass
 
 def match_argument(passed: list):
-    if len(passed) == 0:
-        return True
-    # this is not perfect: think read(), write(), and userdefined functions with 0 args
-    # also would be easy to match number of argument here
-    
-    # handling only one argument
-    argument = passed[0]
-    # argument can be a literal, a UDI, or an operation
-    for entry in symbol_table:
-        symbol_info = symbol_table[entry]
-        if 'attributes' in symbol_info:
-            # not reserved
-            if symbol_info['attributes']['class'] == 'function':
-                return is_type(symbol_table[entry]['attributes']['arguments'][0]['type'],
-                                    argument)
-        else:
-            return True
+    # this is tricky, because we can call 4 functions:
+    # the userdefined function, entry (which should be an error), read, & write
+    # so we need to give the function's name to match_argument 
+    pass
 
 def in_ref_env(identifier: str) -> bool:
     # If we're not in the middle of declaring a var/const or defining a function,
@@ -218,7 +205,7 @@ def get_ast(cst) -> list:
         arg_stuff = []
         [arg_stuff.append(get_ast(arg)) for arg in cst.args]
         if not match_argument(arg_stuff):
-            sys.exit('Oops. Type error: argument data type mismatch.')
+            sys.exit('Oops. Type error: argument data type (or number) mismatch.')
         root.append(arg_stuff)
         ## type checking needs to be done here => need to look at symbol table for function called cst.name
         ## if the definition is not there, raise an exception
