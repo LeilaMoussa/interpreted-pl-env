@@ -4,6 +4,7 @@ import json
 from cst import *
 
 current_scope = None  # 'glob', 'entry', or 'func'; OR 1, 2, 3
+in_dec = False
 
 def is_number(operand) -> bool:
     if type(operand) == str:
@@ -91,8 +92,27 @@ def match_argument(passed: list):
             except:
                 pass
 
+def in_ref_env(identifier: str) -> bool:
+    # If we're not in the middle of declaring a var/const or defining a function,
+    # (in_dec is True if we're in the middle of doing that),
+    # check if the identifier is within our referencing environment.
+    # Two cases to raise an error:
+    # 1. Undeclared identifier ==> scope = None
+    # 2. Out of scope ==> scope is defined, but scope != 1 (not global)
+    #       ==> scope = 2 or 3. If scope == current_scope, we're sure it's fine
+    #       but even if it's not, that's not necessarily an error (think function parameters).
+    #       ==> parameters: we're in scope 3 and referend exists in arguments field of that function.
+
+    symbol_scope = symbol_table[identifier]['attributes']['scope']
+    if not symbol_scope:
+        return False
+    if symbol_scope == current_scope:
+        return True
+    if symbol_scope == 3:
+        pass
+
 def get_ast(cst) -> list:
-    global symbol_table, current_scope
+    global symbol_table, current_scope, in_dec
 
     root = []
     _type = type(cst)
@@ -111,6 +131,7 @@ def get_ast(cst) -> list:
         [root.append(get_ast(subtree)) for subtree in cst.statements]
         current_scope = 1
     elif _type == DeclarationNode:
+        in_dec = True
         dec_stuff = get_ast(cst.value)
         [dt, symbol] = dec_stuff[:2]  # ['num', 'b'] for example
         _class = cst.type
@@ -129,6 +150,7 @@ def get_ast(cst) -> list:
         del symbol_table[symbol]['attributes']['arguments']
         root.append(_class)
         root.append(dec_stuff)
+        in_dec = False
     elif _type ==  VarDeclarationNode:
         typespec, ident = cst.typespec, cst.identifier
         return [get_ast(typespec), get_ast(ident)]
@@ -140,17 +162,17 @@ def get_ast(cst) -> list:
     elif _type == IdentifierNode:
         return get_ast(cst.value)
     elif _type == UserDefinedNode:
-        return cst.name  # just name, as string
+        ref = cst.name
+        if not in_dec and not in_ref_env(ref):
+            sys.exit(f'Undeclared or out-of-scope reference to {ref}')
+        return ref
     elif _type == ReservedNode:
         return cst.value  # 'write' or 'read'
     elif _type == StatementNode:
         root.append(cst.type)
         root.append(get_ast(cst.value))
     elif _type == AssignmentNode:
-        lhs = get_ast(cst.identifier)
-        if not symbol_table[lhs]['attributes']['class']:
-            sys.exit(f'Undeclared reference to {lhs}')
-        root.append(lhs)
+        root.append(cst.identifier)
         # this code sucks!
         if cst.type == 'funcall':
             assign_stuff = ['funcall']
