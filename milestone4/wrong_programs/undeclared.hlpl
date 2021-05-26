@@ -1,4 +1,4 @@
 () => entry => () [
-    (a) => write.
-    ~ a is undeclared.
+    ~ Scenario 1: assign.
+    a := 1.
 ]

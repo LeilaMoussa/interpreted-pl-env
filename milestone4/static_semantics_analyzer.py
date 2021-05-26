@@ -43,7 +43,7 @@ def is_type(typespec: str, y):
             return symbol_table[y[1][0]]['attributes']["return_type"] == typespec
         elif root == 'literal':
             v = y[1]
-            if v.isnumeric():
+            if type(v) == int or v.isnumeric():
                 return typespec == 'num'
             elif len(v) == 3:  # because len("'L'") == 3
                 return typespec == 'ascii'
@@ -147,7 +147,10 @@ def get_ast(cst) -> list:
         root.append(cst.type)
         root.append(get_ast(cst.value))
     elif _type == AssignmentNode:
-        root.append(get_ast(cst.identifier))
+        lhs = get_ast(cst.identifier)
+        if not symbol_table[lhs]['attributes']['class']:
+            sys.exit(f'Undeclared reference to {lhs}')
+        root.append(lhs)
         # this code sucks!
         if cst.type == 'funcall':
             assign_stuff = ['funcall']
