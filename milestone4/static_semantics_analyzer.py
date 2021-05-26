@@ -74,23 +74,30 @@ def match_return(returned):
     # since we don't have the luxury to consider efficiency, i'll just do that
     for entry in symbol_table:
         try:
+            # i should get rid of this as well
             if symbol_table[entry]['attributes']['class'] == 'function':
                 return is_type(symbol_table[entry]['attributes']['return_type'], returned)
         except:
             pass
 
 def match_argument(passed: list):
-    if len(passed) > 0:
-        # handling only one argument
-        argument = passed[0]
-        # argument can be a literal, a UDI, or an operation
-        for entry in symbol_table:
-            try:
-                if symbol_table[entry]['attributes']['class'] == 'function':
-                    return is_type(symbol_table[entry]['attributes']['arguments'][0]['type'],
-                                     argument)
-            except:
-                pass
+    if len(passed) == 0:
+        return True
+    # this is not perfect: think read(), write(), and userdefined functions with 0 args
+    # also would be easy to match number of argument here
+    
+    # handling only one argument
+    argument = passed[0]
+    # argument can be a literal, a UDI, or an operation
+    for entry in symbol_table:
+        symbol_info = symbol_table[entry]
+        if 'attributes' in symbol_info:
+            # not reserved
+            if symbol_info['attributes']['class'] == 'function':
+                return is_type(symbol_table[entry]['attributes']['arguments'][0]['type'],
+                                    argument)
+        else:
+            return True
 
 def in_ref_env(identifier: str) -> bool:
     # If we're not in the middle of declaring a var/const or defining a function,
@@ -102,14 +109,25 @@ def in_ref_env(identifier: str) -> bool:
     #       ==> scope = 2 or 3. If scope == current_scope, we're sure it's fine
     #       but even if it's not, that's not necessarily an error (think function parameters).
     #       ==> parameters: we're in scope 3 and referend exists in arguments field of that function.
-
-    symbol_scope = symbol_table[identifier]['attributes']['scope']
+    symbol_info = symbol_table[identifier]['attributes']
+    symbol_scope = symbol_info['scope']
     if not symbol_scope:
         return False
-    if symbol_scope == current_scope:
+    if symbol_scope == current_scope or symbol_scope == 1:
         return True
+    # scope = 2 ==> in entry ==> a) ref to var/const ==> error; b) ref to function => defined because 
+    # caught in one of the 2 previous conditions ==> not error
+    if symbol_scope == 2:
+        return symbol_info['class'] == 'function'
+    # in function ===> a) ref to var/const ==> check params; b) ref to function => we don't support
+    #  multiple functions anyway or recursion lol
     if symbol_scope == 3:
-        pass
+        if symbol_info['class'] == 'function':
+            return False  # False for potentially different reasons, but error nonetheless
+        for elt in symbol_info['arguments']:
+            if elt['name'] == identifier:
+                return True
+        return False
 
 def get_ast(cst) -> list:
     global symbol_table, current_scope, in_dec
@@ -139,7 +157,7 @@ def get_ast(cst) -> list:
             [typespec, _, value] = dec_stuff
             # here, value can be a literal, a UDI, an operation, or a function call
             if not is_type(typespec, value):
-                sys.exit('Type error: mismatch on constant initialization.')
+                sys.exit('Oops. Type error: mismatch on constant initialization.')
             if type(value) == list:
                 value = value[1]
             symbol_table[symbol]['attributes']['value'] = value
@@ -164,7 +182,7 @@ def get_ast(cst) -> list:
     elif _type == UserDefinedNode:
         ref = cst.name
         if not in_dec and not in_ref_env(ref):
-            sys.exit(f'Undeclared or out-of-scope reference to {ref}')
+            sys.exit(f'Oops. Undeclared or out-of-scope reference to {ref}')
         return ref
     elif _type == ReservedNode:
         return cst.value  # 'write' or 'read'
@@ -182,7 +200,7 @@ def get_ast(cst) -> list:
             root.append(get_ast(cst.value))  # exp, op, or funcall
             # i'm wondering: it doesn't even make sense to change the value! that's literally execution!
         if not has_same_type(root[0], root[1]):
-            sys.exit('Type error: mismatch on assignment.')
+            sys.exit('Oops. Type error: mismatch on assignment.')
     elif _type == ExpressionNode:
         # literal, udi, or op
         if cst.type == 'userdefined':
@@ -200,7 +218,7 @@ def get_ast(cst) -> list:
         arg_stuff = []
         [arg_stuff.append(get_ast(arg)) for arg in cst.args]
         if not match_argument(arg_stuff):
-            sys.exit('Type error: argument data type mismatch.')
+            sys.exit('Oops. Type error: argument data type mismatch.')
         root.append(arg_stuff)
         ## type checking needs to be done here => need to look at symbol table for function called cst.name
         ## if the definition is not there, raise an exception
@@ -209,9 +227,10 @@ def get_ast(cst) -> list:
     elif _type == ReturnNode:
         returned = get_ast(cst.value)
         if not match_return(returned):
-            sys.exit('Type error: return type mismatch.')
+            sys.exit('Oops. Type error: return type mismatch.')
         return returned # call or exp
     elif _type == FunctionNode:
+        in_dec = True
         root.append('func')
         name = get_ast(cst.name)
         func_stuff = [name]
@@ -235,6 +254,7 @@ def get_ast(cst) -> list:
             ret_type = get_ast(cst.return_type)
             symbol_table[name]['attributes']['return_type'] = ret_type
             func_stuff.append(ret_type)
+        in_dec = False
         current_scope = 3
         body = []
         [body.append(get_ast(dec)) for dec in cst.declarations]
@@ -262,7 +282,7 @@ def get_ast(cst) -> list:
         # ['eq', [a, b]]
         root.append(cst.type)  # string
         if not (is_number(get_ast(cst.comp1)) and is_number(get_ast(cst.comp2))):
-            sys.exit('Type error: cannot compare non numeric values.')
+            sys.exit('Oops. Type error: cannot compare non numeric values.')
         root.append([get_ast(cst.comp1), get_ast(cst.comp2)])
     elif _type == ComparedNode:
         # numlit, udi, or call
@@ -287,7 +307,7 @@ def get_ast(cst) -> list:
             print('Node class does not match:', _type)
             return
         if not type_check_operands(get_ast(cst.opd1), get_ast(cst.opd2)):
-            sys.exit(f'Type error: mismatched type on {root[0]} operation.')
+            sys.exit(f'Oops. Type error: mismatched type on {root[0]} operation.')
         root.append([get_ast(cst.opd1), get_ast(cst.opd2)])
     return root
     

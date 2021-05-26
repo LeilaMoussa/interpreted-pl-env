@@ -1,67 +1,6 @@
 import json, sys
 from static_semantics_analyzer import main as analyze
 
-'''
-NOTE: make sure the identifiers are 9 characters or less, otherwise truncate
-SPICY ADDITION: capitalize identifiers + if we have time, beautify assembly with space padding
-
-1.hlpl: 
-DATA.SECTION
-GLOB a +0002
-GLOB b +0000
-CODE.SECTION
-OUT 0000 [0002] // this is lit hello's address, from literal table
-HLT 0000 0000
-INPUT.SECTION
------------------------------------
-2.hlpl: 
-DATA.SECTION
-CODE.SECTION
-CALL GREET 0000
-HLT 0000 0000
-FUNC.GREET
-OUT 0000 [0001]
-HLT 0000 0000
-INPUT.SECTION
--------------------------
-3.hlpl: 
-DATA.SECTION
-GLOB init [0001]
-CODE.SECTION
-CALL GREET 0000
-HLT 0000 0000 
-FUNC.GREET
-OUT 0000 [0002]
-OUT 0000 initial
-HLT 0000 0000
-INPUT.SECTION
------------------------------------------
-4.hlpl:
-DATA.SECTION
-GLOB a +0010
-ENTR b +0000
-CODE.SECTION
-IN b 0000
-CALL product b
-HLT 0000 0000
-FUNC.PRODUCT
-MULT a b
-PUSH 0000 0000
-HLT 0000 0000
-// using b is not just a matter of accessing a memory cell
-// because b is not global
-// so here, CALL needs to push the VALUE of b onto the stack (forgetting about its address)
-// and when the name b is encountered in the function
-// the value is not retrieved from memory, but from the top of the stack!
-// weak points: make it clear that something is a parameter to stop the function from looking in global (?)
-// new instruction to move from AC to top of stack
-// (making the return value available)
-// i.e. push onto the stack the contents of the AC
-// give terminates the program
-// and the caller can have access to the top of the stack if the result is used
-// with a POP instruction
-'''
-
 data_section = ['DATA.SECTION', ]
 entry_code_section = ['CODE.SECTION', ]
 function_code_section = []
@@ -105,9 +44,8 @@ def create_call(call: list):
         line = 'IN ???? 0000'
     else:
         # function with no params: CALL <name> 0000
-        # one param: CALL <name> <identifier>
-        # how this works on the stack under the hood is suggested up above
-        line = f'CALL {name} '
+        # one param: CALL <name> <param as symbol or numeric literal or address>
+        line = f'CALL {name.upper()} '
         if len(args) == 0:
             line += '0000'
         else:
@@ -117,24 +55,26 @@ def create_call(call: list):
             # though theoretically it would be pretty easy to accommodate any number
             if type(arg) == list:
                 # literal or operation
-                # requires preceding assembly instructions and saving in memory (or stack right away, idk)
+                # requires preceding assembly instructions and saving in memory
                 pass
             else:
                 # udi
-                # pickle: PUSHING HERE? DOABLE? REASONABLE? CONSISENT?
                 line += arg  # identifier name
     if scope == 'ENTR': entry_code_section.append(line)
     elif scope == 'FUNC': function_code_section.append(line)
 
 def create_function_def(func: list):
     [name, _, _, body] = func  # anon: args & return_type
-    function_code_section.append(f'FUNC.{name}')
+    function_code_section.append(f'FUNC.{name.upper()}')
     [traverse(elt) for elt in body]
-    if function_code_section[-1] != 'HLT 0000 0000': function_code_section.append('HLT 0000 0000')
+    last_written = function_code_section[-1]
+    if last_written != 'HLT 0000 0000' and last_written != 'RETURN 0000 0000':
+        # idk
+        function_code_section.append('HLT 0000 0000')
 
 def create_assign(assign: list):
     [lhs, rhs] = assign
-    line = ''  # just a hack, looks bad
+    line = ''
     '''
     possible cases
     b := 1. ==> MOV b +0001 OR MOV b [0001]  // assuming 1 is in address 0001
@@ -226,8 +166,7 @@ def create_return(given: list):
     # give +(a, b) ==> ADD a b; PUSH 0000 0000; HLT...
     # give "yes". ==> ????
     traverse(given)
-    function_code_section.append('PUSH 0000 0000')
-    function_code_section.append('HLT 0000 0000')
+    function_code_section.append('RETURN 0000 0000')
 
 def traverse(ast: list):
     global scope
@@ -280,87 +219,80 @@ def test(asm: str, prog: str) -> bool:
     # HLT in the case of non-give function termination
     # do we even need input.section, when we can implement it as a scanf() in the interpreter?
     # because otherwise, we'd have to come up with input here
-    if prog == '1':
-        expect = '''
-            DATA.SECTION
-            GLOB a +0002
-            GLOB b +0000
-            CODE.SECTION
-            OUT 0000 [9999]
-            HLT 0000 0000 
-            INPUT.SECTION
-
-                 '''
+    if prog == 'default':
+        expect = '''DATA.SECTION
+CODE.SECTION
+HLT 0000 0000
+INPUT.SECTION
+'''
+    elif prog == '1':
+        expect = '''DATA.SECTION
+GLOB a +0002
+GLOB b +0000
+CODE.SECTION
+OUT 0000 [9998]
+HLT 0000 0000
+INPUT.SECTION
+'''
     elif prog == '2':
-        expect = '''
-            DATA.SECTION
-            CODE.SECTION
-            CALL GREET 0000
-            HLT 0000 0000
-            FUNC.GREET
-            OUT 0000 [9999]
-            HLT 0000 0000
-            INPUT.SECTION
-
-                 '''
+        expect = '''DATA.SECTION
+CODE.SECTION
+CALL GREET 0000
+HLT 0000 0000
+FUNC.GREET
+OUT 0000 [9999]
+HLT 0000 0000
+INPUT.SECTION
+'''
     elif prog == '3':
-        expect = '''
-            DATA.SECTION
-            GLOB initial [9999]
-            CODE.SECTION
-            CALL GREET 0000
-            HLT 0000 0000
-            FUNC.GREET
-            OUT 0000 [9998]
-            OUT 0000 [9997]
-            HLT 0000 0000
-            INPUT.SECTION
-
-                '''
+        expect = '''DATA.SECTION
+GLOB initial [9999]
+CODE.SECTION
+CALL GREET 0000
+HLT 0000 0000
+FUNC.GREET
+OUT 0000 [9998]
+OUT 0000 [9997]
+HLT 0000 0000
+INPUT.SECTION
+'''
     elif prog == '4':
-        expect = '''
-            DATA.SECTION
-            GLOB a +0010
-            ENTR b +0000
-            CODE.SECTION
-            IN b 0000
-            CALL product b
-            HLT 0000 0000
-            FUNC.PRODUCT
-            MULT a b
-            RETURN 0000 0000
-            INPUT.SECTION
-            0 0 0000 0012
-
-                 '''
+        expect = '''DATA.SECTION
+GLOB a +0010
+ENTR b +0000
+CODE.SECTION
+IN b 0000
+CALL product b
+HLT 0000 0000
+FUNC.PRODUCT
+MULT a b
+RETURN 0000 0000
+INPUT.SECTION
+'''   # notice what i mean with input issue, elaborated above
     elif prog == '5':
-        expect = '''
-            DATA.SECTION
-            CODE.SECTION
-            ADD +0002 0000
-            JMPGE [0004] +0001
-            OUT 0000 [9996]
-            HLT 0000 0000
-            OUT 0000 [9997]
-            HLT 0000 0000
-            INPUT.SECTION
-
-                 '''
+        expect = '''DATA.SECTION
+CODE.SECTION
+ADD +0002 0000
+JMPGE [0004] +0001
+OUT 0000 [9996]
+HLT 0000 0000
+OUT 0000 [9997]
+HLT 0000 0000
+INPUT.SECTION
+'''
     elif prog == '6':
-        expect = '''
-            DATA.SECTION
-            ENTR I 0000
-            CODE.SECTION
-            MOV I 0000
-            ADD I +0000
-            OUT 0000 [9997]
-            ADD I +0001
-            MOVAC I 0000
-            LOOP +0005 [0001]
-            HLT 0000 0000
-            INPUT.SECTION
-
-                 '''
+        expect = '''DATA.SECTION
+ENTR I 0000
+CODE.SECTION
+MOV I 0000
+ADD I +0000
+OUT 0000 [9997]
+ADD I +0001
+MOVAC I 0000
+LOOP +0005 [0001]
+HLT 0000 0000
+INPUT.SECTION
+'''
     else:
         return True
     return asm == expect
@@ -379,10 +311,12 @@ def main(filepath: str, default: bool, from_parser, from_analyzer, from_generato
     asm = traverse(ast)
     print('----ASSEMBLY----')
     print(asm)
-    prog_number = filepath.split('.')[0]
+    prog_number = 'default'
+    if filepath:
+        prog_number = filepath.split('.hlpl')[0].split('/')[-1]  # Unix-style path.
     if not test(asm, prog_number):
         sys.exit('Generated assembly was not expected.')
-    with open(f'./assembly/{prog_number}.asbl') as op:
+    with open(f'./assembly/{prog_number}.asbl', 'w') as op:
         op.write(asm)
 
 if __name__ == '__main__':
