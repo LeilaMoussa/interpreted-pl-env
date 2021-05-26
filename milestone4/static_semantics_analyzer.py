@@ -80,11 +80,29 @@ def match_return(returned):
         except:
             pass
 
-def match_argument(passed: list):
+def match_argument(passed: list, function_name: str):
     # this is tricky, because we can call 4 functions:
     # the userdefined function, entry (which should be an error), read, & write
-    # so we need to give the function's name to match_argument 
-    pass
+    # so we need to give the function's name to match_argument
+    print('passed', passed)
+    number_passed = len(passed)
+    if number_passed > 1:
+        return False
+    if function_name == 'entry':
+        sys.exit('Oops. Cannot call function entry.')
+    if function_name == 'read':
+        return number_passed == 0
+    if function_name == 'write':
+        print('supposed to be here')
+        return True  # we'll allow anything to be passed to write
+    # at this point, we're dealing with a userdefine function
+    params = symbol_table[function_name]['attributes']['arguments']
+    print('params', params)
+    if number_passed != len(params):
+        return False
+    if number_passed > 0:
+        return is_type(params[0]['type'], passed[0])
+    return True
 
 def in_ref_env(identifier: str) -> bool:
     # If we're not in the middle of declaring a var/const or defining a function,
@@ -201,10 +219,11 @@ def get_ast(cst) -> list:
     elif _type == OperandNode:
         return get_ast(cst.value)
     elif _type == CallNode:
-        root.append(get_ast(cst.name))
+        func_name = get_ast(cst.name)
+        root.append(func_name)
         arg_stuff = []
         [arg_stuff.append(get_ast(arg)) for arg in cst.args]
-        if not match_argument(arg_stuff):
+        if not match_argument(arg_stuff, func_name):
             sys.exit('Oops. Type error: argument data type (or number) mismatch.')
         root.append(arg_stuff)
         ## type checking needs to be done here => need to look at symbol table for function called cst.name
