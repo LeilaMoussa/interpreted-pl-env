@@ -30,6 +30,8 @@ def create_dec(dec: list, scope: str):
 def create_call(call: list):
     global input_count
 
+    print('in call......')
+
     [name, args] = call
     # args is a list, can be empty, or have one element only (that's all we want to handle, though theoretically
     # we could do any number)
@@ -82,6 +84,7 @@ def create_function_def(func: list):
 def create_assign(assign: list):
     global input_count
 
+    print('in assign......')
     [lhs, rhs] = assign
     line = ''
     '''
@@ -101,6 +104,7 @@ def create_assign(assign: list):
             literal = rhs[1]
             if type(literal) == int:
                 sign = '-' if literal < 0 else '+'
+                literal = str(literal).rjust(4, "0")
                 line = f'MOV {lhs} {sign}{literal}'  # padding
             else:
                 line = f'MOV {lhs} [{literal_table[literal]}]'  # padding
@@ -120,9 +124,14 @@ def create_assign(assign: list):
                 append_to_code(pop)
                 append_to_code(movac)
         else:
-            # arithmetic operation
-            # also involves MOVAC, not MOV, so the last few lines of this function are pretty dumb
-            pass
+            # arithmetic
+            [op, opds] = rhs
+            if op == 'add': op = 1
+            elif op == 'sub': op = 2
+            elif op == 'mult': op = 3
+            elif op == 'div': op = 4
+            create_arithmetic(op, opds)
+            line = f'MOVAC {lhs} 0000'
     else:
         # rhs is udi
         line = f'MOV {lhs} {rhs}'
@@ -155,7 +164,14 @@ def create_arithmetic(op: int, operands: list):
         # there will be traversing, but the tricky part here is that we're building an unfinished line
         line += 'stuff'
     else:
-        # just userdefined ids
+        # just userdefined ids or numeric literals
+        # $$
+        if opd2.isnumeric():
+            sign = '+' if int(opd2) >= 0 else '-'
+            opd2 = sign + opd2.rjust(4, "0")
+        if opd1.isnumeric():
+            sign = '+' if int(opd1) >= 0 else '-'
+            opd1 = sign + opd1.rjust(4, "0")
         line += f'{opd1} {opd2}'
     append_to_code(line)
 
@@ -214,11 +230,31 @@ def create_selection(select: list):
     append_to_code(halt)
     append_to_code('then')  # mark lines to determine jump line number, will be replaced by label
     [traverse(elt) for elt in then_stats]
-    # append_to_code(halt)
     # line at which then_stats starts is the jump address, can't be known at the time condition is being created
     # so i'll put it there when asm is being built, at the end of traverse()
 
 def create_loop(loop: list):
+    [[_, [comp1, comp2]], stats] = loop
+    append_to_code('LBL 0000 yyyy')
+    # i need to make sure all labels across the whole code (loops and selections) don't repeat
+    # structure: label, body, loop instruction
+    # condition can be eq or gt
+    # but LOOP keeps going while AC < upper bound
+    # so let's only handle GT in conditions, and i'll assume that's all there is
+    # comp1 is upperbound
+    # need to keep putting value of comp2 in AC at the beginning of the loop
+    if comp2.isnumeric():
+        val = int(comp2)
+        sign = '+' if val >= 0 else '-'
+        comp2 = f'{sign}{comp2.rjust(4, "0")}'
+    # i'm aware that this code needs to be put in a function
+    append_to_code(f'ADD +0000 {comp2}')
+    [traverse(elt) for elt in stats]
+    if comp1.isnumeric():
+        val = int(comp1)
+        sign = '+' if val >= 0 else '-'
+        comp1 = f'{sign}{comp1.rjust(4, "0")}'
+    append_to_code(f'LOOP {comp1} yyyy')
     pass
 
 def traverse(ast: list):
@@ -259,14 +295,24 @@ def build_asm():
     asm = ''
     for line in data_section:
         asm += line + '\n'
+    label_count = 0
     for line in entry_code_section:
         if line == 'then':
-            line = 'LBL 0000 L1'
-            asm = asm.replace('xxxx', 'L1')  # formatting, and not just L1
+            label_count += 1
+            label = 'L' + str(label_count)
+            line = 'LBL 0000 ' + label
+            asm = asm.replace('xxxx', label)
             print('just replaced')
+        elif 'yyyy' in line:
+            if line[:3] == 'LBL':
+                label_count += 1
+                label = 'L' + str(label_count)
+            line = line.replace('yyyy', label)
         asm += line + '\n'
     asm += 'HLT 0000 0000\n'
     for line in function_code_section:
+        # in theory, i need to do the same protocol for selection & loop labels here
+        # but it's not a priority
         asm += line + '\n'
     asm += 'INPUT.SECTION\n'
     for _ in range(input_count):
@@ -345,14 +391,15 @@ INPUT.SECTION
 '''
     elif prog == '6':
         expect = '''DATA.SECTION
-ENTR I 0000
+ENTR i +0000
 CODE.SECTION
-MOV I 0000
-ADD I +0000
+MOV i +0000
+LBL 0000 L1
+ADD +0000 i
 OUT 0000 [9997]
-ADD I +0001
-MOVAC I 0000
-LOOP +0005 [0001]
+ADD i +0001
+MOVAC i 0000
+LOOP +0005 L1
 HLT 0000 0000
 INPUT.SECTION
 '''
