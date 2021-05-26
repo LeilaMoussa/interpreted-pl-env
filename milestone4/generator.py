@@ -246,7 +246,7 @@ INPUT.SECTION
 '''
     elif prog == '3':
         expect = '''DATA.SECTION
-GLOB initial [9999]
+GLOB initial +0003
 CODE.SECTION
 CALL GREET 0000
 HLT 0000 0000
