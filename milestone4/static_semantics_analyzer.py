@@ -9,8 +9,16 @@ in_dec = False
 def is_number(operand) -> bool:
     if type(operand) == str:
         if not operand.isnumeric():
+            # just because they are identifiers does not mean they are declared variables or constants
+            # so if their data_type is None, check to see if we're in the function
+            # if so, check to see if they're the parameter and look at that type
             if symbol_table[operand]['attributes']['data_type'] != 'num':
-                return False
+                if current_scope == 3:
+                    for entry in symbol_table:
+                        if 'attributes' in symbol_table[entry]:
+                            if symbol_table[entry]['attributes']['class'] == 'function':
+                                return symbol_table[entry]['attributes']['arguments'][0] == {'name': operand,
+                                                                                             'type': 'num'}
     elif type(operand) == list:
         op = operand[0]
         if op != 'add' and op != 'sub' and op != 'mult' and op != 'div':
@@ -36,8 +44,9 @@ def is_type(typespec: str, y) -> bool:
         # op, funcall, or possibly a literal (the whole literal situation is a bit messy)
         root = y[0]
         if root == 'funcall':
-            # $ read & write don't have attributes!
-            return symbol_table[y[1][0]]['attributes']["return_type"] == typespec
+            if 'attributes' in symbol_table[y[1][0]]:
+                return symbol_table[y[1][0]]['attributes']["return_type"] == typespec
+            return True
         elif root == 'literal':
             v = y[1]
             if type(v) == int or v.isnumeric():
@@ -111,27 +120,26 @@ def in_ref_env(identifier: str) -> bool:
     #       but even if it's not, that's not necessarily an error (think function parameters).
     #       ==> parameters: we're in scope 3 and referend exists in arguments field of that function.
     symbol_info = symbol_table[identifier]['attributes']
-    print('symbol info of', symbol_info, identifier)
     symbol_scope = symbol_info['scope']
-    # parameters fail here
-    if not symbol_scope:
-        return False
     if symbol_scope == current_scope or symbol_scope == 1:
         return True
     # scope = 2 ==> in entry ==> a) ref to var/const ==> error; b) ref to function => defined because 
     # caught in one of the 2 previous conditions ==> not error
-    if symbol_scope == 2:
+    if current_scope == 2:
         return symbol_info['class'] == 'function'
     # in function ===> a) ref to var/const ==> check params; b) ref to function => we don't support
     #  multiple functions anyway or recursion lol
-    if symbol_scope == 3:
+    if current_scope == 3:
         if symbol_info['class'] == 'function':
             return False  # False for potentially different reasons, but error nonetheless
-        for elt in symbol_info['arguments']:
-            print('iterating over arguments')
-            if elt['name'] == identifier:
-                print('found b in arguments')
-                return True
+        # We're referencing a variable or constant that is not global and not a local variable
+        # So if it's not a parameter of the function, raise an error.
+        # First step: retrieve the function and its parameters
+        for entry in symbol_table:
+            if 'attributes' in symbol_table[entry]:
+                # not reserved
+                if symbol_table[entry]['attributes']['class'] == 'function':
+                    return symbol_table[entry]['attributes']['arguments'][0]['name'] == identifier
         return False
 
 def get_ast(cst) -> list:
@@ -270,7 +278,10 @@ def get_ast(cst) -> list:
         current_scope = 1
     elif _type == ParamNode:
         ## params from function definition, defined with typespec and udi
-        return [get_ast(cst.typespec), get_ast(cst.name)]  # these are strings
+        # in_dec = True
+        params = [get_ast(cst.typespec), get_ast(cst.name)]
+        # in_dec = False
+        return params  # these are strings
     elif _type == SelectionNode:
         root.append(get_ast(cst.condition))    # condition node
         then = []
