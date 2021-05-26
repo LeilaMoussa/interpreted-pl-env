@@ -9,4 +9,7 @@
     ~ () => somefunc.
 
     ~ Take a look at instructions, i think they talk about possible scenarios.
+    ~ Now that i think about it, all these scenarios can be summarized in checking
+    ~ UserDefinedNode, unless of course if we're in a declaration (flag?).
+    ~ I'll change that in the morning.
 ]
