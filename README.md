@@ -83,4 +83,9 @@ This project is definitely far from perfect. This can be a learning opportunity 
 - Assembler does not work correctly with all types of sample programs, notably subprogram call and return. All AL codes we'd like to translate to ML are correctly output by the generator, but the assembler does not support them yet.
 - There are some leftover AL sample programs with deprecated program structure and instructions. They should be re-written with the new AL design in mind and tested with the assembler.
 - The interpreter does not support subprogram call and return -- at all.
-- The interpreter needs to be able to load all literals into data memory before runtime, i.e. before the read-decode-execute cycle. We achieved a manual way of doing this: converting milestone3/lex_output/literal_table.json to a .txt file that is read by the interprter, but this requires manual intervention. A better around this would be to have the generator do
+- The interpreter needs to be able to load all literals into data memory before runtime, i.e. before the read-decode-execute cycle. We achieved a manual way of doing this: using a small standalone Python script to convert `milestone3/lex_output/literal_table.json` to a .txt file that is read by the interpreter, but this requires manual intervention. A better around this would be to have the generator do that conversion.
+- The generator omits a lot of cases and complex instructions for simplicity. The ommitted cases are specified in comments. To implement all these cases would allow for code generation of richer and more complex HLPL programs.
+- I'm gonna be honest. The code quality is... sub-optimal. A very very good contribution would be some refactoring and code cleanup.
+- The concrete syntax tree, i.e. parse tree, is theoretically supposed to contain all terminals, including punctuation. This contributes nothing to the meaning of the tree, but it's more compliant with the concept of a parse tree. This is an easy but tedious fix.
+- Testing and documentation is a very good contribution as well :) 
+
