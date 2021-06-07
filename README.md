@@ -36,7 +36,8 @@ We are constructing a basic but comprehensive programming language environment w
     * Lexical description: Regular Expressions that describe the syntax of the basic elements.
     * Syntactic description: EBNF description of a valid HLPL program.
     
-- Milestone 3: To be added soon...
+- Milestone 3: Lexical Analysis
+- Milestone 4: Syntactic and static semantics analysis and code generation
 
 ### Documentation & Design
 #### Usage
@@ -45,12 +46,12 @@ To run the interpreter, run the following commands which assume a gcc compiler i
 then  
 `$ ./a.exe <input_file_path> <-v>`  
 Where the `-v` refers to `verbose`.  
-For the moment, gcc outputs `a.exe`, we'll try to find a way to output `<file_name>.exe` instead.  
+gcc outputs `a.exe` by default -- you can specify a filename with `-o`. 
 If these 2 arguments are not specified, the default is `./code_samples/Rectangle.mlg` as input file path, and `FALSE` for verbose.
 
-*Assembler instructions coming soon...*
-
-*Other instructions will be added in future milestones.*
+To run the assembler, *add instructions*
+For the code in milestones 3 & 4, we recommend running the lexer-parser-static_semantics-generator pipeline as a chain, by simply running the generator:
+*add command and expected execution & output*
 
 #### Languages
 - Assembly:
@@ -58,10 +59,12 @@ If these 2 arguments are not specified, the default is `./code_samples/Rectangle
    
          Operation   |     Example     |     Description/Explanation
        --------------|-----------------|-------------------
-       DEC           |   DEC           |    Declare a variable
+       DEC           |   DEC           |    Declare a variable  // DEPRECATED INSTRUCTION!
        MOV           |   MOV           |    Move or assign
        MOVAC         |   MOVAC         |    Move from AC to data memory location
-       ADD           |   ADD           
+       ADD           |   ADD            // Need to finish this table...
+       
+  *quite important: how we designed the AL to support subprograms*
        
 - Machine Language:
    Our ML supports the following operations:
@@ -71,12 +74,13 @@ If these 2 arguments are not specified, the default is `./code_samples/Rectangle
 - High Level Programming Language:
    ...
 
-### Todos
-- Patches: continuous work on any previous material, either to fix bugs, introduce enhancements, optimize performance, clean/beautify, or make necessary tweaks due to new information/requirements. See
-[issue#1](https://github.com/LeilaMoussa/interpreted-pl-env/issues/1) for a list of patches.
-- Milestone 3: Lexical Analysis
-- Milestone 4: Parser & Generator
-- Milestone 5: Subprogram Call & Return
+#### Analysis logic, broadly
+*quickly go over what subset of the grammar we implemented and how we went about constructing the trees and generating the code*
 
-### Comments and Notes
-See [issue#2](https://github.com/LeilaMoussa/interpreted-pl-env/issues/2) for patches that have been accomplished between deliverables.
+### Deficiencies and Opportunities for Improvement / Call for Contribution
+
+This project is definitely far from perfect. This can be a learning opportunity for anyone wanting to contribute! Watch out for the following weaknesses and how they can be fixed, in order of importance:
+- Assembler does not work correctly with all types of sample programs, notably subprogram call and return. All AL codes we'd like to translate to ML are correctly output by the generator, but the assembler does not support them yet.
+- There are some leftover AL sample programs with deprecated program structure and instructions. They should be re-written with the new AL design in mind and tested with the assembler.
+- The interpreter does not support subprogram call and return -- at all.
+- The interpreter needs to be able to load all literals into data memory before runtime, i.e. before the read-decode-execute cycle. We achieved a manual way of doing this: converting milestone3/lex_output/literal_table.json to a .txt file that is read by the interprter, but this requires manual intervention. A better around this would be to have the generator do
